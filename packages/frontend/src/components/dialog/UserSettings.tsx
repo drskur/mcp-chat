@@ -134,15 +134,102 @@ const UserSettings: React.FC<UserSettingsProps> = ({ onSettingsChanged }) => {
     // 파일 저장
     setLogoFile(file);
     
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setPreviewImage(result);
-      setSettings(prev => ({
-        ...prev,
-        logoUrl: result
-      }));
+    // 이미지 리사이징을 위한 함수
+    const resizeImage = (imageUrl: string, targetWidth: number, targetHeight: number): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        // 브라우저 환경인지 확인
+        if (typeof window === 'undefined') {
+          reject(new Error('브라우저 환경이 아닙니다'));
+          return;
+        }
+        
+        // 브라우저 환경에서 HTMLImageElement 생성
+        const img = document.createElement('img');
+        
+        img.onload = () => {
+          // Canvas 생성
+          const canvas = document.createElement('canvas');
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            reject(new Error('Canvas 컨텍스트를 가져올 수 없습니다.'));
+            return;
+          }
+          
+          // 배경을 투명하게 설정
+          ctx.clearRect(0, 0, targetWidth, targetHeight);
+          
+          // 이미지를 캔버스 중앙에 그리기
+          const aspectRatio = img.width / img.height;
+          let drawWidth = targetWidth;
+          let drawHeight = targetHeight;
+          let offsetX = 0;
+          let offsetY = 0;
+          
+          // 이미지 비율 유지하면서 가운데 정렬
+          if (aspectRatio > 1) {
+            // 가로가 더 긴 경우
+            drawHeight = targetWidth / aspectRatio;
+            offsetY = (targetHeight - drawHeight) / 2;
+          } else {
+            // 세로가 더 긴 경우
+            drawWidth = targetHeight * aspectRatio;
+            offsetX = (targetWidth - drawWidth) / 2;
+          }
+          
+          ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+          
+          // 리사이징된 이미지를 데이터 URL로 변환
+          const resizedDataUrl = canvas.toDataURL(file.type || 'image/png', 0.9);
+          resolve(resizedDataUrl);
+        };
+        
+        img.onerror = () => {
+          reject(new Error('이미지 로드 실패'));
+        };
+        
+        img.src = imageUrl;
+      });
     };
+    
+    // 원본 이미지를 데이터 URL로 변환 후 리사이징
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const result = e.target?.result as string;
+        
+        // 이미지 리사이징 (512x512)
+        const resizedImage = await resizeImage(result, 512, 512);
+        
+        // 리사이징된 이미지로 상태 업데이트
+        setPreviewImage(resizedImage);
+        setSettings(prev => ({
+          ...prev,
+          logoUrl: resizedImage
+        }));
+        
+        // 리사이징 성공 메시지
+        setStatusMessage({
+          type: 'success',
+          message: '이미지가 512x512 크기로 조정되었습니다.'
+        });
+        
+        // 3초 후 메시지 제거
+        setTimeout(() => {
+          setStatusMessage(null);
+        }, 3000);
+        
+      } catch (error) {
+        console.error('이미지 리사이징 중 오류:', error);
+        setStatusMessage({
+          type: 'error',
+          message: '이미지 처리 중 오류가 발생했습니다.'
+        });
+      }
+    };
+    
     reader.readAsDataURL(file);
   };
 
@@ -219,14 +306,15 @@ const UserSettings: React.FC<UserSettingsProps> = ({ onSettingsChanged }) => {
           
           <div className="flex items-start gap-4 mb-3">
             {/* 로고 이미지 컨테이너 */}
-            <div className="w-20 h-20 bg-gray-800 border border-gray-700 hover:border-indigo-700 transition-colors rounded-lg flex items-center justify-center overflow-hidden shadow-inner">
+            <div className="w-20 h-20 bg-gray-800 border border-gray-700 hover:border-indigo-700 transition-colors rounded-lg flex items-center justify-center overflow-hidden shadow-inner relative">
               {previewImage ? (
                 <Image 
                   src={previewImage} 
                   alt="로고 미리보기" 
-                  className="w-full h-full object-contain rounded-md"
+                  className="object-contain"
                   style={{ opacity: settings.logoOpacity }}
-                  fill
+                  width={80}
+                  height={80}
                   unoptimized
                 />
               ) : (
@@ -314,14 +402,15 @@ const UserSettings: React.FC<UserSettingsProps> = ({ onSettingsChanged }) => {
             <div className="p-4 bg-gray-900 rounded-md">
               <p className="text-xs text-gray-500 mb-2">헤더</p>
               <div className="flex items-center gap-3">
-                <div className="rounded-lg overflow-hidden flex items-center justify-center" style={{ width: '50px', height: '38px' }}>
+                <div className="rounded-lg overflow-hidden flex items-center justify-center relative" style={{ width: '50px', height: '38px' }}>
                   {previewImage ? (
                     <Image 
                       src={previewImage} 
                       alt="로고" 
-                      className="w-full h-full object-cover rounded-lg"
+                      className="object-contain"
                       style={{ opacity: settings.logoOpacity }}
-                      fill
+                      width={50}
+                      height={38}
                       unoptimized
                     />
                   ) : (
@@ -348,9 +437,10 @@ const UserSettings: React.FC<UserSettingsProps> = ({ onSettingsChanged }) => {
                       <Image 
                         src={previewImage} 
                         alt="로고" 
-                        className="w-full h-full object-contain"
+                        className="object-contain max-w-[80%] max-h-[80%]"
                         style={{ opacity: settings.logoOpacity }}
-                        fill
+                        width={90}
+                        height={90}
                         unoptimized
                       />
                     ) : (

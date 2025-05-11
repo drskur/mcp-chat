@@ -610,7 +610,7 @@ export default function Home() {
         <Sidebar variant="inset" className="border-r border-gray-900 bg-[#0f0f10] overflow-y-auto overflow-x-hidden">
           <SidebarHeader className="p-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg overflow-hidden" style={{ width: '50px', height: '38px' }}>
+              <div className="rounded-lg overflow-hidden" style={{ width: '60px', height: '36px' }}>
                 {userSettings.logoUrl ? (
                   <img 
                     src={userSettings.logoUrl} 

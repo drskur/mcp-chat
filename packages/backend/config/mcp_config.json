@@ -1,0 +1,44 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/yunwoong/Desktop/MCP"
+      ]
+    },
+    "nova-canvas": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/Users/yunwoong/PersonalProjects/aws-nova-canvas-mcp/aws_nova_canvas_mcp",
+        "run",
+        "server.py"
+      ],
+      "env": {
+        "AWS_PROFILE": "cupix"
+      }
+    },
+    "basic-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/Users/yunwoong/PersonalProjects/pace-mcp-client/packages/backend/src/mcp_client/server",
+        "run",
+        "basic_server.py"
+      ]
+    },
+    "duckduckgo-mcp-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@nickclyde/duckduckgo-mcp-server",
+        "--key",
+        "44d6ad0d-2285-4269-9c1d-987411006559"
+      ]
+    }
+  }
+}

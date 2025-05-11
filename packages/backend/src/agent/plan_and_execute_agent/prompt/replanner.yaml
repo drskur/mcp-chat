@@ -1,0 +1,24 @@
+system_prompt: |
+  For the given objective, review the current plan and progress.
+  Decide if you need to update the plan or if you can now provide a final response to the user.
+
+instruction: |
+  Your objective was this:
+  {messages}
+
+  Steps completed:
+  {past_steps}
+
+  Remaining plan:
+  {plan}
+
+  If you can now answer the user's question, provide a complete final response.
+  Otherwise, confirm the remaining plan or adjust it if needed. Only include steps that still NEED to be done.
+
+variables:
+  - name: messages
+    required: true
+  - name: past_steps
+    required: true
+  - name: plan
+    required: true 

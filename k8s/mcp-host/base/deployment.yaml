@@ -18,7 +18,7 @@ spec:
       serviceAccountName: mcp-host-sa
       containers:
       - name: pace-mcp-host-api
-        image: 151166316313.dkr.ecr.us-east-1.amazonaws.com/pace-mcp-host-api:v0.0.5
+        image: 151166316313.dkr.ecr.us-east-1.amazonaws.com/pace-mcp-host-api:v0.0.6
         env:
         - name: AWS_REGION
           value: "us-east-1"
@@ -32,7 +32,7 @@ spec:
             cpu: "200m"
             memory: "256Mi"
       - name: pace-mcp-host-ui
-        image: 151166316313.dkr.ecr.us-east-1.amazonaws.com/pace-mcp-host-ui:v0.0.1
+        image: 151166316313.dkr.ecr.us-east-1.amazonaws.com/pace-mcp-host-ui:v0.0.6
         ports:
         - containerPort: 3000
         resources:

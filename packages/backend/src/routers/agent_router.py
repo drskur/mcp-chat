@@ -39,7 +39,7 @@ class ChatRequest(BaseModel):
     """chat request model"""
     message: str
     stream: bool = True
-    model_id: str = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+    model_id: str = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
 
 # attachment file information model
 class FileInfo(BaseModel):
@@ -77,16 +77,16 @@ def get_user_model() -> str:
     try:
         if not os.path.exists(USER_MODEL_FILE):
             logger.debug("user model setting not found, return default value")
-            return "anthropic.claude-3-5-sonnet-20241022-v2:0"
+            return "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
         
         with open(USER_MODEL_FILE, "r") as f:
             data = json.load(f)
-            model_id = data.get("model_id", "anthropic.claude-3-5-sonnet-20241022-v2:0")
+            model_id = data.get("model_id", "us.anthropic.claude-3-5-sonnet-20241022-v2:0")
             logger.debug(f"user model load success: {model_id}")
             return model_id
     except Exception as e:
         logger.error(f"user model load failed: {e}")
-        return "anthropic.claude-3-5-sonnet-20241022-v2:0"
+        return "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
 
 def load_model_config(model_id: str) -> Dict[str, Any]:
     """load model configuration"""
@@ -116,7 +116,7 @@ async def chat(
     request: Request,
     message: str = Form(None),
     stream: bool = Form(True),
-    model_id: str = Form("anthropic.claude-3-5-sonnet-20241022-v2:0"),
+    model_id: str = Form("us.anthropic.claude-3-5-sonnet-20241022-v2:0"),
     files: List[UploadFile] = File(None)
 ):
     """
@@ -142,7 +142,7 @@ async def chat(
             request_data = await request.json()
             message = request_data.get("message", "")
             stream = request_data.get("stream", True)
-            model_id = request_data.get("model_id", "anthropic.claude-3-5-sonnet-20241022-v2:0")
+            model_id = request_data.get("model_id", "us.anthropic.claude-3-5-sonnet-20241022-v2:0")
             files_data = None
             logger.info(f"JSON request processing: message length={len(message)}, streaming={stream}, model={model_id}")
         
@@ -553,7 +553,7 @@ async def reinit_agent(request: ReinitRequest = None):
         logger.error(f"agent reinitialization error: {e}")
         # retry with default model if error occurs
         try:
-            model_id = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+            model_id = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
             agent = ReactAgent(model_id=model_id, max_tokens=4096, mcp_json_path=MCP_CONFIG_PATH)
             
             return ReinitResponse(

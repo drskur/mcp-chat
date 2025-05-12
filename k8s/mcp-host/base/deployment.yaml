@@ -18,7 +18,7 @@ spec:
       serviceAccountName: mcp-host-sa
       containers:
       - name: pace-mcp-host-api
-        image: 151166316313.dkr.ecr.us-east-1.amazonaws.com/pace-mcp-host-api:v0.0.4
+        image: 151166316313.dkr.ecr.us-east-1.amazonaws.com/pace-mcp-host-api:v0.0.5
         env:
         - name: AWS_REGION
           value: "us-east-1"

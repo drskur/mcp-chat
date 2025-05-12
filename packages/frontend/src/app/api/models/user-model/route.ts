@@ -20,7 +20,7 @@ export async function GET() {
       // 백엔드 API가 실패하면 기본 모델 제공
       return new Response(
         JSON.stringify({
-          model_id: 'anthropic.claude-3-5-sonnet-20241022-v2:0'
+          model_id: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0'
         }),
         {
           status: 200,
@@ -44,7 +44,7 @@ export async function GET() {
     // 오류 발생 시 기본 모델 제공
     return new Response(
       JSON.stringify({
-        model_id: 'anthropic.claude-3-5-sonnet-20241022-v2:0'
+        model_id: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0'
       }),
       {
         status: 200,

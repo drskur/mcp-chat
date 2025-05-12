@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       return new Response(
         JSON.stringify({
           success: false,
-          model_id: model_id || 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+          model_id: model_id || 'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
           max_tokens: 4096,
           message: '에이전트 재초기화에 실패했습니다.'
         }),
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     return new Response(
       JSON.stringify({
         success: false,
-        model_id: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+        model_id: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
         max_tokens: 4096,
         message: '에이전트 재초기화 처리 중 오류가 발생했습니다.'
       }),

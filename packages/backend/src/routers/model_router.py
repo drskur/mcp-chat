@@ -180,16 +180,16 @@ class ModelService:
         try:
             if not os.path.exists(USER_MODEL_FILE):
                 logger.debug("user model setting not found, return default value")
-                return "anthropic.claude-3-5-sonnet-20241022-v2:0"  # default model change
+                return "us.anthropic.claude-3-5-sonnet-20241022-v2:0"  # default model change
             
             with open(USER_MODEL_FILE, "r") as f:
                 data = json.load(f)
-                model_id = data.get("model_id", "anthropic.claude-3-5-sonnet-20241022-v2:0")  # default value change
+                model_id = data.get("model_id", "us.anthropic.claude-3-5-sonnet-20241022-v2:0")  # default value change
                 logger.debug(f"user model loaded: {model_id}")
                 return model_id
         except Exception as e:
             logger.error(f"user model load failed: {e}")
-            return "anthropic.claude-3-5-sonnet-20241022-v2:0"  # error return default value
+            return "us.anthropic.claude-3-5-sonnet-20241022-v2:0"  # error return default value
 
 # create model service instance
 model_service = ModelService()

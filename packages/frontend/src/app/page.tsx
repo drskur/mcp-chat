@@ -98,7 +98,7 @@ interface FileAttachment {
 
 export default function Home() {
   const [activeSettings, setActiveSettings] = useState<'tools' | 'prompt' | 'model' | 'user' | 'help' | null>(null);
-  const [selectedModel, setSelectedModel] = useState('anthropic.claude-3-5-sonnet-20241022-v2:0');
+  const [selectedModel, setSelectedModel] = useState('us.anthropic.claude-3-5-sonnet-20241022-v2:0');
   const [tempSelectedModel, setTempSelectedModel] = useState('');
   const [needReinit, setNeedReinit] = useState(false);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
@@ -752,10 +752,6 @@ export default function Home() {
                       <div className="flex items-center gap-1.5 bg-purple-950/60 px-3 py-1.5 rounded-full text-xs text-purple-300">
                         <Brain className="h-3 w-3" />
                         <span>Amazon Nova</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-purple-950/60 px-3 py-1.5 rounded-full text-xs text-purple-300">
-                        <Brain className="h-3 w-3" />
-                        <span>Meta Llama</span>
                       </div>
                       <div className="flex items-center gap-1.5 bg-blue-950/60 px-3 py-1.5 rounded-full text-xs text-blue-300">
                         <Sparkles className="h-3 w-3" />

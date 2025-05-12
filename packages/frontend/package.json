@@ -5,10 +5,10 @@
   "private": true,
   "scripts": {
     "mcp-dev": "nx run-many --target=dev,serve --projects=frontend,backend --parallel=true",
-    "dev": "cd packages/frontend && next dev --turbopack",
-    "build": "cd packages/frontend && next build",
-    "start": "cd packages/frontend && next start",
-    "lint": "cd packages/frontend && next lint"
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "devDependencies": {
     "@aws/nx-plugin": "^0.18.3",

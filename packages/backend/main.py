@@ -5,10 +5,8 @@ MCP Client API server main module
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import boto3
 import os
 import logging
-import asyncio
 from pathlib import Path
 from contextlib import asynccontextmanager
 
@@ -87,7 +85,7 @@ def echo(message: str) -> EchoOutput:
     logger.info(f"Echo request received: {message}")
     return EchoOutput(message=f"{message}")
 
-if __name__ == "__main__":
-    import uvicorn
-    logger.info("MCP Client API server starting...")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+# if __name__ == "__main__":
+    # import uvicorn
+    # logger.info("MCP Client API server starting...")
+    # uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

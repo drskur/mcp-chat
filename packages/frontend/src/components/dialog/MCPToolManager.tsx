@@ -178,9 +178,7 @@ const autoFixJsonString = (jsonStr: string): string => {
     JSON.parse(jsonStr);
     return jsonStr; // 이미 유효하면 그대로 반환
   } catch (e) {
-    // 오류 메시지에서 힌트 얻기
-    const errorMsg = e instanceof Error ? e.message : '';
-    
+    console.error(e);
     // 처리할 문자열 준비
     let processedStr = jsonStr.trim();
     
@@ -194,6 +192,7 @@ const autoFixJsonString = (jsonStr: string): string => {
         JSON.parse(processedStr);
         return processedStr;
       } catch (innerError) {
+        console.error(innerError);
         // 계속 진행
       }
     }
@@ -212,6 +211,7 @@ const autoFixJsonString = (jsonStr: string): string => {
       JSON.parse(processedStr);
       return processedStr;
     } catch (finalError) {
+      console.error(finalError);
       // 실패한 경우 원본 반환
       return jsonStr;
     }
@@ -227,6 +227,7 @@ const JsonHelpMessage = ({ jsonString, onFix }: { jsonString: string, onFix: (fi
     // 유효한 JSON이면 메시지 없음
     return null;
   } catch (e) {
+    console.error(e);
     // 오류 메시지 생성
     const fixedJson = autoFixJsonString(jsonString);
     const isFixed = fixedJson !== jsonString;

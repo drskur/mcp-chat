@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: mcp-host
+
+resources:
+- namespace.yaml
+- serviceaccount.yaml
+- deployment.yaml
+- service.yaml
+
+images:
+- name: pace-mcp-host-api
+  newName: 151166316313.dkr.ecr.us-east-1.amazonaws.com/pace-mcp-host-api
+  newTag: v0.0.1

@@ -1,6 +1,7 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
+import eslintConfigPrettier from "eslint-config-prettier";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,11 +15,16 @@ const eslintConfig = [
   ...compat.config({
     extends: ["next/typescript"]
   }),
+  ...compat.plugins("react-hooks"),
   {
     ignores: [
       '{projectRoot}/eslint.config.{js,cjs,mjs}',
       '{projectRoot}/vite.config.{js,ts,mjs,mts}',
     ],
+    rules: {
+      "react-hooks/exhaustive-deps": "warn",
+      ...eslintConfigPrettier.rules
+    }
   }
 ];
 

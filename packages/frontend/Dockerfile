@@ -1,13 +1,13 @@
-# Use Caddy as base image
-FROM caddy:2-alpine
+FROM node:slim
 
-# Copy static assets
-COPY ./dist /usr/share/caddy
+WORKDIR /app
 
-# Copy Caddy configuration
-COPY Caddyfile /etc/caddy/Caddyfile
+COPY . .
+RUN npm ci
+RUN npm run build
 
-# Expose port 80
-EXPOSE 80
+ENV NODE_ENV production
 
-# Caddy will automatically start and serve the content 
+EXPOSE 3000
+
+CMD ["npm", "start"]

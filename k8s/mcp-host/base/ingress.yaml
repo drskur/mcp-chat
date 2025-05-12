@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mcp-host-ingress
+  annotations:
+    # Add SSL certificate configuration
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:151166316313:certificate/9a159270-272f-4815-84fb-f94e8fbf23d1
+    # Enable HTTPS
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+    # Set latest security policy
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+    # Add Cognito configuration
+    alb.ingress.kubernetes.io/auth-type: cognito
+    alb.ingress.kubernetes.io/auth-idp-cognito: '{"UserPoolArn":"arn:aws:cognito-idp:us-east-1:151166316313:userpool/us-east-1_Oq2eeKZab","UserPoolClientId":"1q54hj868op56ob6v13ko2jpoo","UserPoolDomain":"us-east-1oq2eekzab.auth.us-east-1.amazoncognito.com","UserPoolClientSecret":"92dmqov1sii7hepmsmttdt1kg43ibtfftn16ar2l1fj16oqpd1b"}'
+    alb.ingress.kubernetes.io/auth-on-unauthenticated-request: authenticate
+spec:
+  ingressClassName: alb
+  rules:
+  - host: mcp.summit.drskur.people.aws.dev
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: pace-mcp-host
+            port:
+              number: 3000

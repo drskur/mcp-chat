@@ -8,8 +8,4 @@ resources:
 - serviceaccount.yaml
 - deployment.yaml
 - service.yaml
-
-images:
-- name: pace-mcp-host-api
-  newName: 151166316313.dkr.ecr.us-east-1.amazonaws.com/pace-mcp-host-api
-  newTag: v0.0.1
+- ingress.yaml

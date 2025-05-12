@@ -1,11 +1,9 @@
 {
   "mcpServers": {
-    "filesystem": {
-      "command": "npx",
+    "ddg-search": {
+      "command": "uvx",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "~/Desktop/"
+        "duckduckgo-mcp-server"
       ]
     }
   }

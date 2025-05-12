@@ -13,19 +13,17 @@ ui: next-version push-ui
 
 login:
 	export AWS_PROFILE=detective
-	aws ecr get-login-password --region us-east-1 | podman login --username AWS --password-stdin 151166316313.dkr.ecr.us-east-1.amazonaws.com
+	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 151166316313.dkr.ecr.us-east-1.amazonaws.com
 
 push-api:
 	export AWS_PROFILE=detective
-	podman buildx build --platform linux/amd64,linux/arm64 -t $(API_ECR_REPO):$(VERSION) packages/backend/
-	podman push $(API_ECR_REPO):$(VERSION)
+	docker buildx build --platform linux/amd64,linux/arm64 -t $(API_ECR_REPO):$(VERSION) packages/backend/ --push
 
 push-ui:
 	export AWS_PROFILE=detective
-	cd game && npm run build
-	cd ..
-	podman buildx build --platform linux/amd64,linux/arm64 -t $(UI_ECR_REPO):$(VERSION) game/
-	podman push $(UI_ECR_REPO):$(VERSION)
+	cd packages/frontend && npm run build
+	cd ../..
+	docker buildx build --platform linux/amd64,linux/arm64 -t $(UI_ECR_REPO):$(VERSION) packages/frontend/ --push
 
 # 다음 버전으로 빌드하기
 next-version:

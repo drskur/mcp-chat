@@ -59,7 +59,7 @@ def get_llm(
     temp = temperature or float(os.environ.get("TEMPERATURE", 0.3))
     tokens = max_tokens or int(os.environ.get("MAX_TOKENS", 4096))
     region_name = region or os.environ.get("AWS_REGION", "us-west-2")
-    profile_name = profile_name or os.environ.get("AWS_PROFILE", "default")
+    profile_name = profile_name or os.environ.get("AWS_PROFILE", "")
     role_arn = os.environ.get("AWS_BEDROCK_ROLE_ARN", "")
 
     logger.info(f"initialize Bedrock model: {colorama.Fore.CYAN}{model_id}{colorama.Style.RESET_ALL}, temperature={colorama.Fore.CYAN}{temp}{colorama.Style.RESET_ALL}, max_tokens={colorama.Fore.CYAN}{tokens}{colorama.Style.RESET_ALL}, region={colorama.Fore.CYAN}{region_name}{colorama.Style.RESET_ALL}")
@@ -91,12 +91,14 @@ def get_llm(
     else:
         # model parameter configuration
         model_params = {
-            "credentials_profile_name": profile_name,
             "model": model_id,
             "region_name": region_name,
             "temperature": temp,
             "max_tokens": tokens,
         }
+
+        if profile_name != "":
+            model_params['credentials_profile_name'] = profile_name
     
     # add callbacks
     if callbacks:

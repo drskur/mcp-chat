@@ -1,29 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pace-mcp-host-api
+  name: pace-mcp-host
   namespace: mcp-host
   labels:
-    app: pace-mcp-host-api
+    app: pace-mcp-host
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
-      app: pace-mcp-host-api
+      app: pace-mcp-host
   template:
     metadata:
       labels:
-        app: pace-mcp-host-api
+        app: pace-mcp-host
     spec:
       serviceAccountName: mcp-host-sa
       containers:
       - name: pace-mcp-host-api
-        image: 151166316313.dkr.ecr.us-east-1.amazonaws.com/pace-mcp-host-api:v0.0.1
+        image: 151166316313.dkr.ecr.us-east-1.amazonaws.com/pace-mcp-host-api:v0.0.4
         env:
         - name: AWS_REGION
           value: "us-east-1"
         ports:
-        - containerPort: 8080
+        - containerPort: 8000
         resources:
           limits:
             cpu: "500m"
@@ -31,3 +31,14 @@ spec:
           requests:
             cpu: "200m"
             memory: "256Mi"
+      - name: pace-mcp-host-ui
+        image: 151166316313.dkr.ecr.us-east-1.amazonaws.com/pace-mcp-host-ui:v0.0.1
+        ports:
+        - containerPort: 3000
+        resources:
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"

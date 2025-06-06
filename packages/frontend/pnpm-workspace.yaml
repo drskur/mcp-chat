@@ -1,3 +1,10 @@
+onlyBuiltDependencies:
+  - '@swc/core'
+  - '@tailwindcss/oxide'
+  - esbuild
+  - nx
+  - sharp
+  - unrs-resolver
 overrides:
   esbuild@<=0.24.2: '>=0.25.0'
   koa@<2.16.1: '>=2.16.1'

@@ -1,49 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Settings, 
-  MessageCircle, 
-  PlusIcon, 
-  MessageSquare, 
-  Book, 
-  BarChart3, 
-  Menu,
-  Brain,
-  Server,
-  Sparkles,
-  Paperclip,
-  X,
-  FileIcon
-} from 'lucide-react';
-import { 
-  SidebarProvider, 
-  Sidebar, 
-  SidebarTrigger, 
-  SidebarHeader, 
-  SidebarContent, 
-  SidebarMenu, 
-  SidebarMenuItem, 
-  SidebarMenuButton,
-  SidebarGroup,
-  SidebarFooter,
-  SidebarSeparator,
-  useSidebar
-} from '@/components/ui/sidebar';
+import React, { useState, useEffect } from 'react';
+import { MessageSquare } from 'lucide-react';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { 
   ExpandableChat, 
   ExpandableChatHeader, 
   ExpandableChatBody
 } from '@/components/ui/expandable-chat';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
-  DialogFooter
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,46 +19,14 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { ChatInterface } from '@/components/chat/ChatInterface';
-import MCPToolManager from '@/components/dialog/MCPToolManager';
-import SystemPromptEditor from '@/components/dialog/SystemPromptEditor';
-import ModelSelector from '@/components/dialog/ModelSelector';
-import UserSettings from '@/components/dialog/UserSettings';
-import { Button } from '@/components/ui/button';
-import { PlaceholdersAndVanishInput } from '@/components/ui/placeholders-and-vanish-input';
-import HelpPanel from '@/components/dialog/HelpPanel';
+import { FloatingSidebarTrigger } from '@/components/sidebar/FloatingSidebarTrigger';
+import { MainSidebar } from '@/components/sidebar/MainSidebar';
+import { WelcomeScreen } from '@/components/welcome/WelcomeScreen';
+import { ChatSection } from '@/components/chat/ChatSection';
+import { SettingsDialog } from '@/components/settings/SettingsDialog';
+import { useFileAttachment } from '@/hooks/useFileAttachment';
+import { FileAttachment } from '@/types/file-attachment';
 
-// 사이드바 트리거 버튼 컴포넌트
-const FloatingSidebarTrigger = () => {
-  const { open, toggleSidebar } = useSidebar();
-  
-  if (open) {
-    return null;
-  }
-  
-  return (
-    <div className="fixed top-4 left-4 z-50 md:flex hidden group/trigger">
-      <Button 
-        size="icon" 
-        variant="outline" 
-        className="rounded-full w-10 h-10 bg-indigo-600 border-none hover:bg-indigo-700 text-white shadow-lg"
-        onClick={toggleSidebar}
-      >
-        <Menu className="h-5 w-5" />
-      </Button>
-      <div className="absolute left-12 top-2.5 opacity-0 group-hover/trigger:opacity-100 transition-opacity bg-indigo-600 px-3 py-1.5 rounded text-xs text-white whitespace-nowrap shadow-lg">
-        메뉴 열기 (⌘+B)
-      </div>
-    </div>
-  );
-};
-
-// 파일 첨부 아이템 타입
-interface FileAttachment {
-  id: string;
-  file: File;
-  type: string;
-  previewUrl?: string;
-}
 
 export default function Home() {
   const [activeSettings, setActiveSettings] = useState<'tools' | 'prompt' | 'model' | 'user' | 'help' | null>(null);
@@ -121,9 +53,16 @@ export default function Home() {
   const [pendingInitialMessage, setPendingInitialMessage] = useState<string | undefined>(undefined);
   const [pendingAttachments, setPendingAttachments] = useState<FileAttachment[]>([]);
   
-  // 파일 첨부 관련 상태 추가
-  const [attachments, setAttachments] = useState<FileAttachment[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // 파일 첨부 관련 상태 - useFileAttachment 훅 사용
+  const {
+    attachments,
+    fileInputRef,
+    handleFileUpload,
+    removeAttachment,
+    clearAttachments,
+    handleAttachButtonClick,
+    setAttachments
+  } = useFileAttachment();
 
   // 플레이스홀더 목록
   const placeholders = [
@@ -270,75 +209,6 @@ export default function Home() {
     setInputValue(e.target.value);
   };
 
-  // 파일 첨부 핸들러 추가
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    
-    // 파일 배열 복사
-    const files = Array.from(e.target.files);
-    
-    // 각 파일에 대한 처리를 Promise 배열로 모음
-    const filePromises = files.map(file => {
-      return new Promise<FileAttachment>((resolve) => {
-        const id = crypto.randomUUID();
-        const attachment: FileAttachment = {
-          id,
-          file,
-          type: file.type,
-        };
-        
-        // 이미지 파일의 경우 data URL 생성 (Blob URL 대신)
-        if (file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            attachment.previewUrl = result; // data URL
-            resolve(attachment);
-          };
-          reader.onerror = () => {
-            console.error('파일 읽기 오류:', file.name);
-            resolve(attachment); // 오류 발생 시 previewUrl 없이 반환
-          };
-          reader.readAsDataURL(file);
-        } else {
-          // 이미지가 아닌 파일은 바로 해결
-          resolve(attachment);
-        }
-      });
-    });
-    
-    // 모든 파일 처리가 완료된 후 상태 업데이트
-    Promise.all(filePromises).then(newAttachments => {
-      setAttachments(prev => [...prev, ...newAttachments]);
-    });
-    
-    // 입력 필드 초기화 (같은 파일 재선택 가능하도록)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-  
-  // 첨부 파일 제거 핸들러
-  const removeAttachment = (id: string) => {
-    setAttachments(prev => {
-      const updated = prev.filter(file => file.id !== id);
-      
-      // 제거할 파일의 미리보기 URL 해제 (blob URL인 경우에만)
-      const fileToRemove = prev.find(file => file.id === id);
-      if (fileToRemove?.previewUrl && fileToRemove.previewUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(fileToRemove.previewUrl);
-      }
-      
-      return updated;
-    });
-  };
-  
-  // 파일 첨부 버튼 클릭 핸들러
-  const handleAttachButtonClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
 
   // 입력 폼 제출 핸들러
   const handleInputSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -353,7 +223,7 @@ export default function Home() {
     showNewChatConfirm(message, [...attachments]);
     
     // 첨부 파일 초기화
-    setAttachments([]);
+    clearAttachments();
   };
 
   // 새 대화 시작 확인 대화상자를 표시하는 함수
@@ -566,150 +436,17 @@ export default function Home() {
   const [savedInitialMessage, setSavedInitialMessage] = useState<string>("");
   const [savedAttachments, setSavedAttachments] = useState<FileAttachment[]>([]);
   
-  // getDialogConfig 함수를 수정하여 사용자 설정 추가
-  const getDialogConfig = () => {
-    switch (activeSettings) {
-      case 'tools':
-        return {
-          title: 'MCP 도구 관리',
-          description: 'AI 어시스턴트가 사용할 MCP 도구를 관리합니다.'
-        };
-      case 'prompt':
-        return {
-          title: '시스템 프롬프트 설정',
-          description: 'AI 어시스턴트에게 지시할 시스템 프롬프트를 설정합니다.'
-        };
-      case 'model':
-        return {
-          title: 'AI 모델 선택',
-          description: '사용할 AI 모델을 선택합니다.'
-        };
-      case 'user':
-        return {
-          title: '사용자 인터페이스 설정',
-          description: '시스템 제목과 로고를 사용자 정의합니다.'
-        };
-      case 'help':
-        return {
-          title: '도움말',
-          description: 'MCP 시스템 사용법 및 안내'
-        };
-      default:
-        return {
-          title: '설정',
-          description: '설정을 변경합니다.'
-        };
-    }
-  };
-
-  const dialogConfig = getDialogConfig();
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] dark:bg-[#0a0a0a] text-gray-100 overflow-hidden">
       <SidebarProvider>
-        <Sidebar variant="inset" className="border-r border-gray-900 bg-[#0f0f10] overflow-y-auto overflow-x-hidden">
-          <SidebarHeader className="p-4 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg overflow-hidden" style={{ width: '60px', height: '36px' }}>
-                {userSettings.logoUrl ? (
-                  <img 
-                    src={userSettings.logoUrl} 
-                    alt="로고" 
-                    className="w-full h-full object-cover rounded-lg"
-                    style={{ opacity: userSettings.logoOpacity }}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-indigo-600 rounded-lg flex items-center justify-center">
-                    <Brain className="h-5 w-5" />
-                  </div>
-                )}
-              </div>
-              <div>
-                <h1 className="text-xl font-bold gradient-text">{userSettings.title}</h1>
-                <p className="text-xs text-gray-400">{userSettings.subtitle}</p>
-              </div>
-              <SidebarTrigger />
-            </div>
-          </SidebarHeader>
-          
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarMenu>
-
-                <SidebarMenuItem>
-                
-                  <SidebarMenuButton 
-                    className="w-full justify-start gap-2 py-2 mb-3 bg-indigo-600 hover:bg-indigo-700 rounded-md"
-                    onClick={() => showNewChatConfirm()}
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                    <span className="text-sm">새 대화</span>
-                  </SidebarMenuButton>
-
-                  <SidebarMenuButton 
-                    className="w-full justify-start gap-3"
-                    onClick={() => setActiveSettings('model')}
-                  >
-                    <BarChart3 className="h-5 w-5" />
-                    <span className="flex-grow text-left">AI 모델</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    className="w-full justify-start gap-3"
-                    onClick={() => setActiveSettings('tools')}
-                  >
-                    <Settings className="h-5 w-5" />
-                    <span>MCP 도구</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    className="w-full justify-start gap-3"
-                    onClick={() => setActiveSettings('prompt')}
-                  >
-                    <MessageCircle className="h-5 w-5" />
-                    <span>시스템 프롬프트</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    className="w-full justify-start gap-3"
-                    onClick={() => setActiveSettings('help')}
-                  >
-                    <Book className="h-5 w-5" />
-                    <span>도움말</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-
-              </SidebarMenu>
-            </SidebarGroup>
-
-            <SidebarSeparator className="my-3 bg-gray-800 w-[90%] mx-auto" />
-           
-          </SidebarContent>
-          
-          <SidebarFooter className="mt-auto p-4 border-t border-gray-900">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-yellow-300 font-medium">
-                {userName.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{userName}</p>
-                <p className="text-xs text-gray-400 truncate">{userEmail}</p>
-              </div>
-              <button 
-                className="p-1.5 hover:bg-gray-800 rounded-md transition-colors"
-                onClick={() => setActiveSettings('user')}
-              >
-                <Settings className="h-4 w-4" />
-              </button>
-            </div>
-          </SidebarFooter>
-        </Sidebar>
+        <MainSidebar 
+          userSettings={userSettings}
+          userName={userName}
+          userEmail={userEmail}
+          onNewChat={() => showNewChatConfirm()}
+          onSettingsClick={(type) => setActiveSettings(type)}
+        />
 
         {/* 접힌 상태에서만 보이는 플로팅 트리거 버튼 */}
         <FloatingSidebarTrigger />
@@ -717,186 +454,28 @@ export default function Home() {
         <div className="flex-1 overflow-hidden flex flex-col bg-gradient-to-b from-gray-900 to-black">
           <div className="flex-1 p-6 overflow-auto hero-gradient overflow-x-hidden">
             {!showChat ? (
-              <div className="h-full flex flex-col items-center justify-center max-w-full">
-                <div className="max-w-4xl w-full glass p-8 md:p-12 rounded-xl mb-8 fade-in overflow-hidden">
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <div className="relative w-24 h-24 mb-6">
-                      <div className="absolute inset-0 bg-indigo-600 rounded-xl blur-lg opacity-50"></div>
-                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl flex items-center justify-center">
-                        {userSettings.logoUrl ? (
-                          <img 
-                            src={userSettings.logoUrl} 
-                            alt="로고" 
-                            className="w-full h-full object-contain"
-                            style={{ opacity: userSettings.logoOpacity }}
-                          />
-                        ) : (
-                          <Brain className="h-10 w-10 text-white" />
-                        )}
-                      </div>
-                    </div>
-                    
-                    <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-300 to-indigo-400">
-                      {userSettings.title}
-                    </h1>
-                    
-                    <div className="flex gap-2 items-center justify-center mb-5">
-                      <div className="flex items-center gap-1.5 bg-indigo-950/60 px-3 py-1.5 rounded-full text-xs text-indigo-300">
-                        <Server className="h-3 w-3" />
-                        <span>AWS Bedrock</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-purple-950/60 px-3 py-1.5 rounded-full text-xs text-purple-300">
-                        <Brain className="h-3 w-3" />
-                        <span>Anthropic Claude</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-purple-950/60 px-3 py-1.5 rounded-full text-xs text-purple-300">
-                        <Brain className="h-3 w-3" />
-                        <span>Amazon Nova</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-blue-950/60 px-3 py-1.5 rounded-full text-xs text-blue-300">
-                        <Sparkles className="h-3 w-3" />
-                        <span>LangGraph</span>
-                      </div>
-                    </div>
-                    
-                    {/* 첨부 파일 미리보기 */}
-                    {attachments.length > 0 && (
-                      <div className="mb-4 flex flex-wrap gap-2 justify-center">
-                        {attachments.map(file => (
-                          <div key={file.id} className="relative group bg-gray-800 rounded-md border border-gray-700 p-2 flex items-center gap-2">
-                            {file.previewUrl ? (
-                              <div className="w-10 h-10 rounded overflow-hidden bg-gray-700 flex items-center justify-center">
-                                <img 
-                                  src={file.previewUrl} 
-                                  alt="미리보기" 
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            ) : (
-                              <div className="w-10 h-10 rounded bg-gray-700 flex items-center justify-center">
-                                {file.type.includes('pdf') && <FileIcon className="h-5 w-5 text-red-400" />}
-                                {(file.type.includes('word') || file.type.includes('doc')) && <FileIcon className="h-5 w-5 text-blue-400" />}
-                                {(file.type.includes('excel') || file.type.includes('sheet') || file.type.includes('xls') || file.type.includes('csv')) && 
-                                  <FileIcon className="h-5 w-5 text-green-400" />}
-                                {(file.type.includes('text') || file.type.includes('markdown') || file.type.includes('txt') || file.type.includes('md')) && 
-                                  <FileIcon className="h-5 w-5 text-gray-400" />}
-                                {(file.type.includes('image') || file.type.includes('png') || file.type.includes('jpg') || file.type.includes('jpeg') || file.type.includes('gif')) && 
-                                  <FileIcon className="h-5 w-5 text-purple-400" />}
-                                {(file.type.includes('html') || file.type.includes('htm')) && 
-                                  <FileIcon className="h-5 w-5 text-orange-400" />}
-                                {(file.type.includes('json') || file.type.includes('xml')) && 
-                                  <FileIcon className="h-5 w-5 text-cyan-400" />}
-                                {(file.type.includes('zip') || file.type.includes('rar') || file.type.includes('tar') || file.type.includes('gz')) && 
-                                  <FileIcon className="h-5 w-5 text-yellow-400" />}
-                                {(file.type.includes('ppt') || file.type.includes('presentation')) && 
-                                  <FileIcon className="h-5 w-5 text-pink-400" />}
-                                {!(file.type.includes('pdf') || file.type.includes('doc') || file.type.includes('word') || 
-                                   file.type.includes('excel') || file.type.includes('sheet') || file.type.includes('xls') || file.type.includes('csv') || 
-                                   file.type.includes('text') || file.type.includes('markdown') || file.type.includes('txt') || file.type.includes('md') ||
-                                   file.type.includes('image') || file.type.includes('png') || file.type.includes('jpg') || file.type.includes('jpeg') || file.type.includes('gif') ||
-                                   file.type.includes('html') || file.type.includes('htm') ||
-                                   file.type.includes('json') || file.type.includes('xml') ||
-                                   file.type.includes('zip') || file.type.includes('rar') || file.type.includes('tar') || file.type.includes('gz') ||
-                                   file.type.includes('ppt') || file.type.includes('presentation')) && 
-                                  <FileIcon className="h-5 w-5 text-gray-400" />}
-                              </div>
-                            )}
-                            <div className="text-xs">
-                              <p className="text-gray-300 max-w-[100px] truncate">{file.file.name}</p>
-                              <p className="text-gray-500">{(file.file.size / 1024).toFixed(0)} KB</p>
-                            </div>
-                            <button 
-                              onClick={() => removeAttachment(file.id)}
-                              className="absolute -top-2 -right-2 bg-gray-900 rounded-full p-1 border border-gray-700 text-gray-400 hover:text-white hover:bg-red-900 transition-colors"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    <PlaceholdersAndVanishInput
-                      placeholders={placeholders}
-                      onChange={handleInputChange}
-                      onSubmit={handleInputSubmit}
-                      value={inputValue}
-                      className="mb-8"
-                      rightElement={
-                        <button
-                          type="button"
-                          onClick={handleAttachButtonClick}
-                          className="p-2 text-gray-400 hover:text-indigo-400 transition-colors"
-                          title="파일 첨부"
-                        >
-                          <Paperclip className="h-5 w-5" />
-                        </button>
-                      }
-                    />
-                    
-                    {/* 숨겨진 파일 입력 필드 */}
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      multiple
-                      accept="image/*,.pdf,.doc,.docx,.txt,.xls,.xlsx,.csv"
-                    />
-
-                    <p className="text-gray-400 mb-8 max-w-2xl">
-                      Elevate your coding, problem-solving, and analysis with our advanced AI assistant.
-                      MCP Agent delivers powerful productivity enhancements through a diverse suite of tools.
-                    </p>
-                    
-                    <div className="flex flex-wrap justify-center gap-3">
-
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <WelcomeScreen 
+                userSettings={userSettings}
+                attachments={attachments}
+                inputValue={inputValue}
+                onInputChange={handleInputChange}
+                onInputSubmit={handleInputSubmit}
+                onAttachButtonClick={handleAttachButtonClick}
+                onRemoveAttachment={removeAttachment}
+                fileInputRef={fileInputRef}
+                onFileUpload={handleFileUpload}
+              />
             ) : (
-              <div className="h-full flex flex-col glass rounded-lg shadow-xl overflow-hidden">
-                {/* 채팅 헤더 - 간소화 */}
-                <div className="bg-gray-900/80 p-3 flex justify-between items-center border-b border-gray-900">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-md font-medium flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-indigo-400" />
-                      {activeConversation 
-                        ? conversations.find(c => c.id === activeConversation)?.title
-                        : '새 대화'}
-                    </h2>
-                    {selectedModel && (
-                      <div 
-                        className="flex items-center gap-1 px-2 py-1 rounded-full bg-indigo-900/50 text-xs text-indigo-200 cursor-pointer hover:bg-indigo-900/80 transition-colors"
-                        onClick={() => setActiveSettings('model')}
-                      >
-                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
-                        <span>{selectedModel}</span>
-                      </div>
-                    )}
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => setShowChat(false)}
-                    className="hover:bg-gray-800"
-                  >
-                    <span className="sr-only">닫기</span>
-                    <PlusIcon className="rotate-45 h-4 w-4" />
-                  </Button>
-                </div>
-                
-                {/* 채팅 인터페이스 */}
-                <div className="flex-1 overflow-hidden">
-                  <ChatInterface 
-                    key={chatSessionId}
-                    modelId={selectedModel}
-                    initialMessage={savedInitialMessage}
-                    initialAttachments={savedAttachments.length > 0 ? savedAttachments : undefined}
-                  />
-                </div>
-              </div>
+              <ChatSection 
+                activeConversation={activeConversation}
+                conversations={conversations}
+                selectedModel={selectedModel}
+                chatSessionId={chatSessionId}
+                savedInitialMessage={savedInitialMessage}
+                savedAttachments={savedAttachments}
+                onClose={() => setShowChat(false)}
+                onModelSelect={() => setActiveSettings('model')}
+              />
             )}
           </div>
           
@@ -916,82 +495,34 @@ export default function Home() {
         </div>
       </SidebarProvider>
       
-      {/* 설정 다이얼로그 */}
-      <Dialog 
-        open={activeSettings !== null} 
+      <SettingsDialog 
+        activeSettings={activeSettings}
         onOpenChange={(open) => {
           if (!open) {
             setActiveSettings(null);
-            setTempSelectedModel(''); // 취소 시 임시 모델 선택 초기화
+            setTempSelectedModel('');
           }
         }}
-      >
-        <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto bg-gray-900 border-gray-900 shadow-2xl">
-          <DialogHeader>
-            <div className="flex items-center justify-between mb-2">
-              <div className="space-y-1">
-                <DialogTitle asChild>
-                  <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-300 to-indigo-400">
-                    {dialogConfig.title}
-                  </h2>
-                </DialogTitle>
-                <DialogDescription asChild>
-                  <p className="text-sm text-gray-400">{dialogConfig.description}</p>
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          
-          <div className="py-4">
-            {activeSettings === 'tools' && (
-              <MCPToolManager onSettingsChanged={handleSettingsChanged} />
-            )}
-            {activeSettings === 'prompt' && (
-              <SystemPromptEditor onSettingsChanged={handleSettingsChanged} />
-            )}
-            {activeSettings === 'model' && (
-              <ModelSelector
-                selectedModel={tempSelectedModel || selectedModel}
-                onChange={(modelId) => {
-                  setTempSelectedModel(modelId);
-                  setNeedReinit(true);
-                }}
-              />
-            )}
-            {activeSettings === 'user' && (
-              <UserSettings 
-                onSettingsChanged={() => {
-                  // 사용자 설정이 변경되면 즉시 적용
-                  try {
-                    const savedSettings = localStorage.getItem('user_settings');
-                    if (savedSettings) {
-                      setUserSettings(JSON.parse(savedSettings));
-                    }
-                  } catch (error) {
-                    console.error('설정 적용 실패:', error);
-                  }
-                }} 
-              />
-            )}
-            {activeSettings === 'help' && (
-              <HelpPanel />
-            )}
-          </div>
-          
-          <DialogFooter>
-            {needReinit && activeSettings !== 'user' && activeSettings !== 'prompt' && activeSettings !== 'tools' && (
-              <Button onClick={handleApplySettings} className="w-full gradient-button">
-                설정 적용 & 에이전트 재시작
-              </Button>
-            )}
-            {(!needReinit || activeSettings === 'user') && (
-              <DialogClose asChild>
-                <Button variant="outline" className="border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700 hover:text-white">닫기</Button>
-              </DialogClose>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        needReinit={needReinit}
+        selectedModel={selectedModel}
+        tempSelectedModel={tempSelectedModel}
+        onModelChange={(modelId) => {
+          setTempSelectedModel(modelId);
+          setNeedReinit(true);
+        }}
+        onSettingsChanged={handleSettingsChanged}
+        onApplySettings={handleApplySettings}
+        onUserSettingsChanged={() => {
+          try {
+            const savedSettings = localStorage.getItem('user_settings');
+            if (savedSettings) {
+              setUserSettings(JSON.parse(savedSettings));
+            }
+          } catch (error) {
+            console.error('설정 적용 실패:', error);
+          }
+        }}
+      />
       
       {/* 경고 대화상자 - 새 대화 시작 확인 */}
       <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>

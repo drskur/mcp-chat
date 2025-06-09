@@ -31,7 +31,7 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
   // 서버 목록이 변경되면 JSON 텍스트 업데이트
   useEffect(() => {
     setJsonText(JSON.stringify(allServersConfig, null, 2));
-  }, [servers]);
+  }, [allServersConfig]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     // 현재 커서 위치 저장

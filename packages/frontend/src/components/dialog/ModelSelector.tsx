@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Image as LucideImage } from 'lucide-react';
 import { availableModels } from '@/lib/model-info';
 import { ModelsConfig } from '@/lib/model-info';
@@ -17,6 +17,29 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [savingModel, setSavingModel] = useState<boolean>(false);
+
+  // 모델 선택 처리 함수
+  const handleModelChange = useCallback(async (modelId: string) => {
+    // 상위 컴포넌트에 변경 알림
+    onChange(modelId);
+
+    // 선택한 모델 자동 저장
+    try {
+      setSavingModel(true);
+
+      const result = await saveUserModel(modelId);
+      
+      if (result.success) {
+        console.log('모델 자동 저장 성공:', modelId);
+      } else {
+        console.error('모델 자동 저장 실패');
+      }
+    } catch (error) {
+      console.error('모델 자동 저장 오류:', error);
+    } finally {
+      setSavingModel(false);
+    }
+  }, [onChange]);
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -47,30 +70,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     };
 
     fetchModels().catch(console.error);
-  }, []); // selectedModel 제거
-
-  // 모델 선택 처리 함수
-  const handleModelChange = async (modelId: string) => {
-    // 상위 컴포넌트에 변경 알림
-    onChange(modelId);
-
-    // 선택한 모델 자동 저장
-    try {
-      setSavingModel(true);
-
-      const result = await saveUserModel(modelId);
-      
-      if (result.success) {
-        console.log('모델 자동 저장 성공:', modelId);
-      } else {
-        console.error('모델 자동 저장 실패');
-      }
-    } catch (error) {
-      console.error('모델 자동 저장 오류:', error);
-    } finally {
-      setSavingModel(false);
-    }
-  };
+  }, [handleModelChange, selectedModel]);
 
   if (loading) {
     return (

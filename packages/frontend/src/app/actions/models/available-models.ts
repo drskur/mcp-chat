@@ -1,4 +1,4 @@
-import { availableModels, ModelsConfig, ProviderInfo } from '@/lib/model-info';
+import { availableModels, ProviderInfo } from '@/lib/model-info';
 import { env } from '@/lib/env';
 
 export function getAvailableModels(): ProviderInfo[] {

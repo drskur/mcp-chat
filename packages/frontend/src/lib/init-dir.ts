@@ -1,7 +1,6 @@
 import { mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
 import path from 'path';
-import { env, clientSettingDir } from '@/lib/env';
+import { clientSettingDir } from '@/lib/env';
 import { initSettingsFile } from '@/lib/settings';
 
 /**

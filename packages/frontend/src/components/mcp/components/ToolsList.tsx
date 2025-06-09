@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Zap } from 'lucide-react';
-import { MCPTool } from '../types';
+import { MCPTool } from '@/types/mcp';
 
 interface ToolsListProps {
   tools: MCPTool[];
@@ -9,14 +9,14 @@ interface ToolsListProps {
 
 export const ToolsList: React.FC<ToolsListProps> = ({ tools, serverName }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const filteredTools = searchTerm.trim()
-    ? tools.filter(tool => 
-        tool.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    ? tools.filter(tool =>
+        tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (tool.description || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
     : tools;
-    
+
   // 도구 이름에서 서버 접두사 제거 (serverName: 형식)
   const getDisplayName = (name: string) => {
     if (name.startsWith(`${serverName}:`)) {
@@ -24,7 +24,7 @@ export const ToolsList: React.FC<ToolsListProps> = ({ tools, serverName }) => {
     }
     return name;
   };
-  
+
   return (
     <div className="space-y-3">
       {tools.length > 6 && (
@@ -41,7 +41,7 @@ export const ToolsList: React.FC<ToolsListProps> = ({ tools, serverName }) => {
           />
         </div>
       )}
-      
+
       {filteredTools.length === 0 ? (
         <p className="text-gray-500 text-center py-2">검색 결과가 없습니다</p>
       ) : (

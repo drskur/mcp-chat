@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronDown, ChevronUp, Edit, Trash2 } from 'lucide-react';
-import { MCPServer, ServerConfig } from '../types';
+import { MCPServer, ServerConfig } from '@/types/mcp';
 import { ServerStatusIcon } from '@/components/mcp';
 import { ToolsList } from './ToolsList';
 

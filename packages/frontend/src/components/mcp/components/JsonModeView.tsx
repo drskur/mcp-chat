@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, Check, FileJson, Copy } from 'lucide-react';
-import { MCPServer, ServerConfig } from '../types';
+import { MCPServer, ServerConfig } from '@/types/mcp';
 import { autoFixJsonString } from '../utils';
 import { JsonHelpMessage } from '@/components/mcp';
 
@@ -16,7 +16,6 @@ interface JsonModeViewProps {
 export const JsonModeView: React.FC<JsonModeViewProps> = ({
   servers,
   isLoading,
-  error,
   onSave,
   onCopyJSON,
   setError

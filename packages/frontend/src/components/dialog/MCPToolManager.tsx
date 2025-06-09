@@ -7,7 +7,7 @@ import {
   ServerConfig,
   ServerActionResponse,
   RestartResult
-} from '../mcp/types';
+} from '@/types/mcp';
 import {
   ResultNotification,
   EditServerModal,

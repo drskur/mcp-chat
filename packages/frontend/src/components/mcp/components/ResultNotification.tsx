@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, AlertCircle, CheckCircle } from 'lucide-react';
-import { RestartResult } from '../types';
+import { RestartResult } from '@/types/mcp';
 
 interface ResultNotificationProps {
   result: RestartResult | null;
@@ -9,7 +9,7 @@ interface ResultNotificationProps {
 
 export const ResultNotification: React.FC<ResultNotificationProps> = ({ result, onClose }) => {
   if (!result) return null;
-  
+
   return (
     <div className={`fixed bottom-6 right-6 max-w-md ${result.success ? 'bg-emerald-900/90' : 'bg-red-900/90'} rounded-lg p-4 shadow-xl border ${result.success ? 'border-emerald-700' : 'border-red-700'} z-50 animate-fade-in`}>
       <div className="flex items-start gap-3">
@@ -23,7 +23,7 @@ export const ResultNotification: React.FC<ResultNotificationProps> = ({ result, 
             {result.message}
           </p>
         </div>
-        <button 
+        <button
           onClick={onClose}
           className="text-gray-400 hover:text-white"
         >

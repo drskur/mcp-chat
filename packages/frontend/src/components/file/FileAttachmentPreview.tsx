@@ -21,6 +21,8 @@ export const FileAttachmentPreview = ({ attachments, onRemove }: FileAttachmentP
               <Image
                 src={file.previewUrl}
                 alt="미리보기"
+                width={40}
+                height={40}
                 className="w-full h-full object-cover"
               />
             </div>

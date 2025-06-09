@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Image as LucideImage } from 'lucide-react';
 import { availableModels } from '@/lib/model-info';
 import { ModelsConfig } from '@/lib/model-info';
+import { saveUserModel } from '@/app/actions/models/user-model';
 
 interface ModelSelectorProps {
   selectedModel: string;
@@ -45,8 +46,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
       }
     };
 
-    fetchModels();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchModels().catch(console.error);
   }, []); // selectedModel 제거
 
   // 모델 선택 처리 함수
@@ -58,23 +58,12 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     try {
       setSavingModel(true);
 
-      const response = await fetch('/api/models/select', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ model_id: modelId }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          console.log('모델 자동 저장 성공:', modelId);
-        } else {
-          console.error('모델 자동 저장 실패:', data.message);
-        }
+      const result = await saveUserModel(modelId);
+      
+      if (result.success) {
+        console.log('모델 자동 저장 성공:', modelId);
       } else {
-        console.error('모델 자동 저장 요청 실패');
+        console.error('모델 자동 저장 실패');
       }
     } catch (error) {
       console.error('모델 자동 저장 오류:', error);

@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { 
-  ExpandableChat, 
-  ExpandableChatHeader, 
-  ExpandableChatBody
+import {
+  ExpandableChat,
+  ExpandableChatHeader,
+  ExpandableChatBody,
 } from '@/components/ui/expandable-chat';
 import {
   AlertDialog,
@@ -16,8 +16,8 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
-} from "@/components/ui/alert-dialog";
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { FloatingSidebarTrigger } from '@/components/sidebar/FloatingSidebarTrigger';
 import { MainSidebar } from '@/components/sidebar/MainSidebar';
@@ -26,33 +26,79 @@ import { ChatSection } from '@/components/chat/ChatSection';
 import { SettingsDialog } from '@/components/settings/SettingsDialog';
 import { useFileAttachment } from '@/hooks/useFileAttachment';
 import { FileAttachment } from '@/types/file-attachment';
-
+import { getUserModel } from '@/app/actions/models/user-model';
 
 export default function Home() {
-  const [activeSettings, setActiveSettings] = useState<'tools' | 'prompt' | 'model' | 'user' | 'help' | null>(null);
-  const [selectedModel, setSelectedModel] = useState('us.anthropic.claude-3-5-sonnet-20241022-v2:0');
+  const [activeSettings, setActiveSettings] = useState<
+    'tools' | 'prompt' | 'model' | 'user' | 'help' | null
+  >(null);
+  const [selectedModel, setSelectedModel] = useState(
+    'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
+  );
   const [tempSelectedModel, setTempSelectedModel] = useState('');
   const [needReinit, setNeedReinit] = useState(false);
-  const [activeConversation, setActiveConversation] = useState<string | null>(null);
+  const [activeConversation, setActiveConversation] = useState<string | null>(
+    null,
+  );
   const [conversations] = useState([
-    { id: 'conv1', title: '새 프로젝트 설정 도움말', lastMessage: '30분 전', starred: true, time: 'today' },
-    { id: 'conv2', title: '백엔드 API 개발 문의', lastMessage: '1시간 전', starred: false, time: 'today' },
-    { id: 'conv3', title: '채팅 인터페이스 디자인', lastMessage: '어제', starred: true, time: 'week' },
-    { id: 'conv4', title: 'LangChain 활용 방법', lastMessage: '3일 전', starred: false, time: 'week' },
-    { id: 'conv5', title: 'AWS 배포 설정', lastMessage: '1주 전', starred: false, time: 'month' },
-    { id: 'conv6', title: '데이터베이스 스키마 설계', lastMessage: '2주 전', starred: false, time: 'month' },
+    {
+      id: 'conv1',
+      title: '새 프로젝트 설정 도움말',
+      lastMessage: '30분 전',
+      starred: true,
+      time: 'today',
+    },
+    {
+      id: 'conv2',
+      title: '백엔드 API 개발 문의',
+      lastMessage: '1시간 전',
+      starred: false,
+      time: 'today',
+    },
+    {
+      id: 'conv3',
+      title: '채팅 인터페이스 디자인',
+      lastMessage: '어제',
+      starred: true,
+      time: 'week',
+    },
+    {
+      id: 'conv4',
+      title: 'LangChain 활용 방법',
+      lastMessage: '3일 전',
+      starred: false,
+      time: 'week',
+    },
+    {
+      id: 'conv5',
+      title: 'AWS 배포 설정',
+      lastMessage: '1주 전',
+      starred: false,
+      time: 'month',
+    },
+    {
+      id: 'conv6',
+      title: '데이터베이스 스키마 설계',
+      lastMessage: '2주 전',
+      starred: false,
+      time: 'month',
+    },
   ]);
   const [showChat, setShowChat] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  
+
   // 채팅 세션 관련 상태 추가
   const [chatSessionId, setChatSessionId] = useState(Date.now().toString());
-  
+
   // 경고 대화상자 관련 상태 추가
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
-  const [pendingInitialMessage, setPendingInitialMessage] = useState<string | undefined>(undefined);
-  const [pendingAttachments, setPendingAttachments] = useState<FileAttachment[]>([]);
-  
+  const [pendingInitialMessage, setPendingInitialMessage] = useState<
+    string | undefined
+  >(undefined);
+  const [pendingAttachments, setPendingAttachments] = useState<
+    FileAttachment[]
+  >([]);
+
   // 파일 첨부 관련 상태 - useFileAttachment 훅 사용
   const {
     attachments,
@@ -61,17 +107,16 @@ export default function Home() {
     removeAttachment,
     clearAttachments,
     handleAttachButtonClick,
-    setAttachments
   } = useFileAttachment();
 
   // 플레이스홀더 목록
   const placeholders = [
     "What's the latest news about AWS?",
-    "Can you search for news about AI developments?",
-    "Generate an image of a cloud architecture diagram",
-    "Create an illustration of a modern web application",
-    "Can you make an image of a futuristic data center?",
-    "Search for recent articles about cloud computing trends"
+    'Can you search for news about AI developments?',
+    'Generate an image of a cloud architecture diagram',
+    'Create an illustration of a modern web application',
+    'Can you make an image of a futuristic data center?',
+    'Search for recent articles about cloud computing trends',
   ];
 
   // 사용자 설정 관련 상태 추가
@@ -79,9 +124,9 @@ export default function Home() {
     title: 'PACE MCP AGENT',
     subtitle: 'Enterprise',
     logoUrl: '',
-    logoOpacity: 1.0 // 기본 투명도 추가
+    logoOpacity: 1.0, // 기본 투명도 추가
   });
-  
+
   // 사용자 정보 추가
   const [userName, setUserName] = useState('사용자');
   const [userEmail, setUserEmail] = useState('user@example.com');
@@ -98,7 +143,10 @@ export default function Home() {
             title: parsedSettings.title || 'PACE MCP AGENT',
             subtitle: parsedSettings.subtitle || 'Enterprise',
             logoUrl: parsedSettings.logoUrl || '',
-            logoOpacity: parsedSettings.logoOpacity !== undefined ? parsedSettings.logoOpacity : 1.0
+            logoOpacity:
+              parsedSettings.logoOpacity !== undefined
+                ? parsedSettings.logoOpacity
+                : 1.0,
           });
           console.log('사용자 설정 정보를 불러왔습니다', parsedSettings);
         }
@@ -106,7 +154,7 @@ export default function Home() {
         console.error('사용자 설정 정보를 불러오는데 실패했습니다:', error);
       }
     };
-    
+
     // 사용자 정보 로드 (실제로는 API 호출 또는 쿠키에서 가져올 수 있음)
     const loadUserInfo = () => {
       try {
@@ -117,31 +165,18 @@ export default function Home() {
         console.error('사용자 정보 로드 실패:', error);
       }
     };
-    
+
     // 기존 모델 정보 로드 코드
     const fetchUserModel = async () => {
-      try {
-        const response = await fetch('/api/models/user-model');
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.model_id) {
-            setSelectedModel(data.model_id);
-            console.log('사용자 모델 정보를 불러왔습니다:', data.model_id);
-          }
-        } else {
-          console.error('사용자 모델 정보를 불러오는데 실패했습니다.');
-        }
-      } catch (error) {
-        console.error('사용자 모델 정보 요청 오류:', error);
-      }
+      const { modelId } = await getUserModel();
+      setSelectedModel(modelId);
     };
 
     // 함수 실행
     loadUserSettings();
     loadUserInfo();
     fetchUserModel();
-    
+
     // 설정 변경 이벤트 리스너 추가
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'user_settings' && e.newValue) {
@@ -151,16 +186,19 @@ export default function Home() {
             title: parsedSettings.title || 'PACE MCP AGENT',
             subtitle: parsedSettings.subtitle || 'Enterprise',
             logoUrl: parsedSettings.logoUrl || '',
-            logoOpacity: parsedSettings.logoOpacity !== undefined ? parsedSettings.logoOpacity : 1.0
+            logoOpacity:
+              parsedSettings.logoOpacity !== undefined
+                ? parsedSettings.logoOpacity
+                : 1.0,
           });
         } catch (error) {
           console.error('설정 변경 감지 오류:', error);
         }
       }
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
@@ -175,7 +213,7 @@ export default function Home() {
     if (tempSelectedModel && tempSelectedModel !== selectedModel) {
       setSelectedModel(tempSelectedModel);
       setTempSelectedModel('');
-      
+
       // 에이전트 재초기화 API 호출
       try {
         const response = await fetch('/api/chat/reinit', {
@@ -185,11 +223,15 @@ export default function Home() {
           },
           body: JSON.stringify({ model_id: tempSelectedModel }),
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
-            console.log('에이전트 재초기화 성공:', data.model_id, `(Max Tokens: ${data.max_tokens})`);
+            console.log(
+              '에이전트 재초기화 성공:',
+              data.model_id,
+              `(Max Tokens: ${data.max_tokens})`,
+            );
           } else {
             console.error('에이전트 재초기화 실패:', data.message);
           }
@@ -200,7 +242,7 @@ export default function Home() {
         console.error('에이전트 재초기화 요청 오류:', error);
       }
     }
-    
+
     setNeedReinit(false);
     setActiveSettings(null); // 다이얼로그 닫기
   };
@@ -209,25 +251,27 @@ export default function Home() {
     setInputValue(e.target.value);
   };
 
-
   // 입력 폼 제출 핸들러
   const handleInputSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if ((!inputValue.trim() && attachments.length === 0)) return;
-    
+    if (!inputValue.trim() && attachments.length === 0) return;
+
     // 입력값 저장하고 초기화
     const message = inputValue;
     setInputValue('');
-    
+
     // 새 대화 시작 대화상자 표시
     showNewChatConfirm(message, [...attachments]);
-    
+
     // 첨부 파일 초기화
     clearAttachments();
   };
 
   // 새 대화 시작 확인 대화상자를 표시하는 함수
-  const showNewChatConfirm = (initialMessage?: string, files: FileAttachment[] = []) => {
+  const showNewChatConfirm = (
+    initialMessage?: string,
+    files: FileAttachment[] = [],
+  ) => {
     // 대화 중인 경우에만 확인 대화상자 표시
     if (showChat) {
       // 대화 내용이 있는 경우 초기화 확인 대화상자 표시
@@ -239,46 +283,41 @@ export default function Home() {
       initializeNewChat(initialMessage, files);
     }
   };
-  
+
   // 새 대화 초기화 실행 함수
-  const initializeNewChat = async (initialMessage?: string, files: FileAttachment[] = []) => {
+  const initializeNewChat = async (
+    initialMessage?: string,
+    files: FileAttachment[] = [],
+  ) => {
     // 새 대화 시작 전에 이전 대화 초기화 (localStorage 포함)
     localStorage.removeItem('mcp_initial_message');
     localStorage.removeItem('mcp_initial_attachments');
-    
+
     // 대화 내용 초기화를 위한 플래그 설정
     localStorage.setItem('mcp_reset_conversation', 'true');
-    
+
     // 대화 초기화 이벤트 발생 (같은 창에서도 동작하도록)
     window.dispatchEvent(new Event('mcp_reset_conversation'));
-    
+
     // 채팅 세션 ID 업데이트 (컴포넌트 강제 재마운트를 위해)
     setChatSessionId(Date.now().toString());
-    
+
     // 초기화 후 파라미터로 전달된 메시지와 첨부 파일만 사용
     // 이전 저장된 데이터는 초기화
     if (!initialMessage && files.length === 0) {
-      setSavedInitialMessage("");
+      setSavedInitialMessage('');
       setSavedAttachments([]);
     }
-    
+
     // 새 대화 시작 시 최신 모델 정보 불러오기
     let currentModelId = selectedModel;
-    try {
-      const response = await fetch('/api/models/user-model');
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.model_id && data.model_id !== selectedModel) {
-          console.log('저장된 모델 정보로 업데이트:', data.model_id);
-          setSelectedModel(data.model_id);
-          currentModelId = data.model_id;
-        }
-      }
-    } catch (error) {
-      console.error('모델 정보 로드 오류:', error);
+    const { modelId } = await getUserModel();
+    if (modelId !== selectedModel) {
+      console.log('저장된 모델 정보로 업데이트:', modelId);
+      setSelectedModel(modelId);
+      currentModelId = modelId;
     }
-    
+
     // 에이전트 초기화 API 호출
     try {
       console.log('에이전트 초기화 요청 시작...');
@@ -289,11 +328,15 @@ export default function Home() {
         },
         body: JSON.stringify({ model_id: currentModelId }),
       });
-      
+
       if (reinitResponse.ok) {
         const reinitData = await reinitResponse.json();
         if (reinitData.success) {
-          console.log('에이전트 초기화 성공:', reinitData.model_id, `(Max Tokens: ${reinitData.max_tokens})`);
+          console.log(
+            '에이전트 초기화 성공:',
+            reinitData.model_id,
+            `(Max Tokens: ${reinitData.max_tokens})`,
+          );
         } else {
           console.error('에이전트 초기화 실패:', reinitData.message);
         }
@@ -303,28 +346,37 @@ export default function Home() {
     } catch (error) {
       console.error('에이전트 초기화 오류:', error);
     }
-    
+
     // 첨부 파일 처리
     const initialChatAttachments: FileAttachment[] = [];
-    
+
     // 파일 데이터 처리를 위한 Promise 배열
     const fileProcessPromises: Promise<void>[] = [];
-    
+
     if (files.length > 0) {
       console.log('첨부 파일로 대화 시작:', files.length, '개 파일');
-      
+
       // 각 파일 처리
       for (const attachment of files) {
         // 이미지 파일 처리
         if (attachment.type.startsWith('image/')) {
           // previewUrl이 없거나 blob URL인 경우 data URL로 변환
-          if (!attachment.previewUrl || attachment.previewUrl.startsWith('blob:')) {
+          if (
+            !attachment.previewUrl ||
+            attachment.previewUrl.startsWith('blob:')
+          ) {
             const promise = new Promise<void>((resolve) => {
               // previewUrl이 blob URL인 경우 URL을 통해 파일 객체 다시 가져오기
-              if (attachment.previewUrl && attachment.previewUrl.startsWith('blob:')) {
-                console.log('blob URL을 data URL로 변환 중:', attachment.file.name);
+              if (
+                attachment.previewUrl &&
+                attachment.previewUrl.startsWith('blob:')
+              ) {
+                console.log(
+                  'blob URL을 data URL로 변환 중:',
+                  attachment.file.name,
+                );
               }
-              
+
               const reader = new FileReader();
               reader.onload = () => {
                 const result = reader.result as string;
@@ -332,7 +384,7 @@ export default function Home() {
                   id: attachment.id,
                   file: attachment.file,
                   type: attachment.type,
-                  previewUrl: result // data URL로 저장
+                  previewUrl: result, // data URL로 저장
                 });
                 resolve();
               };
@@ -342,7 +394,7 @@ export default function Home() {
                 initialChatAttachments.push({
                   id: attachment.id,
                   file: attachment.file,
-                  type: attachment.type
+                  type: attachment.type,
                 });
                 resolve();
               };
@@ -355,12 +407,15 @@ export default function Home() {
               id: attachment.id,
               file: attachment.file,
               type: attachment.type,
-              previewUrl: attachment.previewUrl
+              previewUrl: attachment.previewUrl,
             });
           } else {
             // 알 수 없는 형식의 URL - 무시하고 새로 생성
             const promise = new Promise<void>((resolve) => {
-              console.log('알 수 없는 형식의 URL, data URL로 변환 중:', attachment.file.name);
+              console.log(
+                '알 수 없는 형식의 URL, data URL로 변환 중:',
+                attachment.file.name,
+              );
               const reader = new FileReader();
               reader.onload = () => {
                 const result = reader.result as string;
@@ -368,15 +423,15 @@ export default function Home() {
                   id: attachment.id,
                   file: attachment.file,
                   type: attachment.type,
-                  previewUrl: result
+                  previewUrl: result,
                 });
                 resolve();
               };
               reader.onerror = () => {
                 initialChatAttachments.push({
                   id: attachment.id,
-                  file: attachment.file, 
-                  type: attachment.type
+                  file: attachment.file,
+                  type: attachment.type,
                 });
                 resolve();
               };
@@ -390,7 +445,7 @@ export default function Home() {
             id: attachment.id,
             file: attachment.file,
             type: attachment.type,
-            previewUrl: attachment.previewUrl
+            previewUrl: attachment.previewUrl,
           });
         }
       }
@@ -398,27 +453,27 @@ export default function Home() {
 
     // 모든 파일 처리 완료 후 채팅 시작
     await Promise.all(fileProcessPromises);
-    
+
     // 약간의 지연 후에 다시 채팅 인터페이스 마운트 (리셋 효과)
     setTimeout(() => {
       // 대화 시작 - 상태 변경으로 화면 전환
       setActiveConversation(null);
       setShowChat(true);
-      
+
       // 새로운 초기 메시지와 첨부파일만 사용
       if (initialMessage || files.length > 0) {
         // ChatInterface에 초기 메시지와 첨부파일 전달
         console.log('채팅 인터페이스로 전달: ', {
-          message: initialMessage || "",
+          message: initialMessage || '',
           attachments: initialChatAttachments.length,
-          hasImageUrls: initialChatAttachments.some(a => a.previewUrl)
+          hasImageUrls: initialChatAttachments.some((a) => a.previewUrl),
         });
-        
-        setSavedInitialMessage(initialMessage || "");
+
+        setSavedInitialMessage(initialMessage || '');
         setSavedAttachments(initialChatAttachments);
       } else {
         // 아무 것도 전달하지 않고 완전히 새로운 대화 시작
-        setSavedInitialMessage("");
+        setSavedInitialMessage('');
         setSavedAttachments([]);
         console.log('완전히 새로운 대화 시작 (초기 메시지/첨부 파일 없음)');
       }
@@ -433,14 +488,15 @@ export default function Home() {
   }, [activeSettings, selectedModel]);
 
   // 새로운 상태 추가
-  const [savedInitialMessage, setSavedInitialMessage] = useState<string>("");
-  const [savedAttachments, setSavedAttachments] = useState<FileAttachment[]>([]);
-  
+  const [savedInitialMessage, setSavedInitialMessage] = useState<string>('');
+  const [savedAttachments, setSavedAttachments] = useState<FileAttachment[]>(
+    [],
+  );
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] dark:bg-[#0a0a0a] text-gray-100 overflow-hidden">
       <SidebarProvider>
-        <MainSidebar 
+        <MainSidebar
           userSettings={userSettings}
           userName={userName}
           userEmail={userEmail}
@@ -454,7 +510,7 @@ export default function Home() {
         <div className="flex-1 overflow-hidden flex flex-col bg-gradient-to-b from-gray-900 to-black">
           <div className="flex-1 p-6 overflow-auto hero-gradient overflow-x-hidden">
             {!showChat ? (
-              <WelcomeScreen 
+              <WelcomeScreen
                 userSettings={userSettings}
                 attachments={attachments}
                 inputValue={inputValue}
@@ -466,7 +522,7 @@ export default function Home() {
                 onFileUpload={handleFileUpload}
               />
             ) : (
-              <ChatSection 
+              <ChatSection
                 activeConversation={activeConversation}
                 conversations={conversations}
                 selectedModel={selectedModel}
@@ -478,24 +534,41 @@ export default function Home() {
               />
             )}
           </div>
-          
+
           {/* 상태 표시줄 - AWS 정보로 수정 */}
           <div className="bg-gray-900/80 border-t border-gray-900 p-2 px-4 text-xs text-gray-500 flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-1 md:mb-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M14 5c.5 1.5 1.5 2 2.5 2h1a3 3 0 0 1 0 6h-.5A5.5 5.5 0 0 1 14 7.5V5Z"/><path d="M6 8h2a2 2 0 0 0 0-4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2a4 4 0 0 1-4 4v4h-2.5"/><path d="M4 14a4 4 0 0 1 4-4"/></svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-3 w-3"
+              >
+                <path d="M14 5c.5 1.5 1.5 2 2.5 2h1a3 3 0 0 1 0 6h-.5A5.5 5.5 0 0 1 14 7.5V5Z" />
+                <path d="M6 8h2a2 2 0 0 0 0-4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2a4 4 0 0 1-4 4v4h-2.5" />
+                <path d="M4 14a4 4 0 0 1 4-4" />
+              </svg>
               <span className="font-medium">POWERED BY AWS</span>
             </div>
             <div className="mb-1 md:mb-0">
               <span>Designed and built by the AWS KOREA PACE Team</span>
             </div>
             <div>
-              <span>&copy; 2025 Amazon Web Services, Inc. All rights reserved.</span>
+              <span>
+                &copy; 2025 Amazon Web Services, Inc. All rights reserved.
+              </span>
             </div>
           </div>
         </div>
       </SidebarProvider>
-      
-      <SettingsDialog 
+
+      <SettingsDialog
         activeSettings={activeSettings}
         onOpenChange={(open) => {
           if (!open) {
@@ -523,31 +596,35 @@ export default function Home() {
           }
         }}
       />
-      
+
       {/* 경고 대화상자 - 새 대화 시작 확인 */}
       <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
         <AlertDialogContent className="bg-gray-900 border-gray-800">
           <AlertDialogHeader>
             <AlertDialogTitle>대화 내용 초기화</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
-              새 대화를 시작하면 현재 대화 내용이 모두 초기화되고, 에이전트가 재시작됩니다. 계속하시겠습니까?
+              새 대화를 시작하면 현재 대화 내용이 모두 초기화되고, 에이전트가
+              재시작됩니다. 계속하시겠습니까?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white">취소</AlertDialogCancel>
+            <AlertDialogCancel className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white">
+              취소
+            </AlertDialogCancel>
             <AlertDialogAction
               className="bg-indigo-600 hover:bg-indigo-700 text-white border-0"
               onClick={() => {
                 // 현재 대화가 있는 상태에서 새 대화 시작
                 // 저장된 임시 메시지와 첨부 파일(있는 경우만)로 새 대화 초기화
-                const hasInitialData = !!pendingInitialMessage || pendingAttachments.length > 0;
-                
+                const hasInitialData =
+                  !!pendingInitialMessage || pendingAttachments.length > 0;
+
                 // 새 대화 초기화 함수 호출
                 initializeNewChat(
-                  hasInitialData ? pendingInitialMessage : undefined, 
-                  hasInitialData ? pendingAttachments : []
+                  hasInitialData ? pendingInitialMessage : undefined,
+                  hasInitialData ? pendingAttachments : [],
                 );
-                
+
                 // 임시 데이터 초기화
                 setPendingInitialMessage(undefined);
                 setPendingAttachments([]);
@@ -558,14 +635,13 @@ export default function Home() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
+
       {/* 모바일에서는 확장 가능한 채팅 인터페이스 */}
       <div className="md:hidden">
         <ExpandableChat position="bottom-right" size="lg">
           <ExpandableChatHeader>
             <h3 className="font-semibold flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-indigo-400" />
-              새 대화
+              <MessageSquare className="h-4 w-4 text-indigo-400" />새 대화
             </h3>
           </ExpandableChatHeader>
           <ExpandableChatBody className="bg-transparent">

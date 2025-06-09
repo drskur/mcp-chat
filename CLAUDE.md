@@ -88,3 +88,15 @@ python tests/test.py
 4. **MCP Tools**: Add new tools in `packages/backend/src/mcp_client/server/basic_server.py`
 5. **Model Updates**: Modify `packages/backend/config/models.yaml` to add new Bedrock models
 6. **Version Updates**: Use `make set-version` to update version across all deployment files
+
+## Recent Changes (ts branch)
+
+### Frontend Refactoring
+- **Server Actions Introduction**: Started implementing Next.js server actions to replace backend API calls
+  - Added `/app/actions/models/user-model.ts` for model management via server actions
+  - Utilizing settings.ts library for persistent configuration storage
+- **Component Modularization**: Split large page.tsx into smaller, maintainable components
+- **Utility Migration**: Moved init-upload-dir utility from API to utils directory for better organization
+
+### Project Goal
+The current objective is to re-implement all backend APIs (`/api/*` endpoints) as Next.js server actions, eliminating the need for the Python FastAPI backend and creating a pure Next.js application with MCP integration.

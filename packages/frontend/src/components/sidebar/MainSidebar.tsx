@@ -8,6 +8,7 @@ import {
   BarChart3,
   Brain,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { 
   Sidebar, 
   SidebarTrigger, 
@@ -43,6 +44,14 @@ export const MainSidebar = ({
   onNewChat, 
   onSettingsClick 
 }: MainSidebarProps) => {
+  const router = useRouter();
+  
+  const handleSettingsClick = (type: 'tools' | 'prompt' | 'model' | 'user' | 'help') => {
+    const params = new URLSearchParams();
+    params.set('settings', type);
+    router.push(`/?${params.toString()}`);
+    onSettingsClick(type);
+  };
   return (
     <Sidebar variant="inset" className="border-r border-gray-900 bg-[#0f0f10] overflow-y-auto overflow-x-hidden">
       <SidebarHeader className="p-4 flex justify-between items-center">
@@ -83,7 +92,7 @@ export const MainSidebar = ({
 
               <SidebarMenuButton 
                 className="w-full justify-start gap-3"
-                onClick={() => onSettingsClick('model')}
+                onClick={() => handleSettingsClick('model')}
               >
                 <BarChart3 className="h-5 w-5" />
                 <span className="flex-grow text-left">AI 모델</span>
@@ -93,7 +102,7 @@ export const MainSidebar = ({
             <SidebarMenuItem>
               <SidebarMenuButton 
                 className="w-full justify-start gap-3"
-                onClick={() => onSettingsClick('tools')}
+                onClick={() => handleSettingsClick('tools')}
               >
                 <Settings className="h-5 w-5" />
                 <span>MCP 도구</span>
@@ -103,7 +112,7 @@ export const MainSidebar = ({
             <SidebarMenuItem>
               <SidebarMenuButton 
                 className="w-full justify-start gap-3"
-                onClick={() => onSettingsClick('prompt')}
+                onClick={() => handleSettingsClick('prompt')}
               >
                 <MessageCircle className="h-5 w-5" />
                 <span>시스템 프롬프트</span>
@@ -113,7 +122,7 @@ export const MainSidebar = ({
             <SidebarMenuItem>
               <SidebarMenuButton 
                 className="w-full justify-start gap-3"
-                onClick={() => onSettingsClick('help')}
+                onClick={() => handleSettingsClick('help')}
               >
                 <Book className="h-5 w-5" />
                 <span>도움말</span>
@@ -136,7 +145,7 @@ export const MainSidebar = ({
           </div>
           <button 
             className="p-1.5 hover:bg-gray-800 rounded-md transition-colors"
-            onClick={() => onSettingsClick('user')}
+            onClick={() => handleSettingsClick('user')}
           >
             <Settings className="h-4 w-4" />
           </button>

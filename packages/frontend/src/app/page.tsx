@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { MessageSquare } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import {
   ExpandableChat,
@@ -29,6 +30,9 @@ import { FileAttachment } from '@/types/file-attachment';
 import { getUserModel } from '@/app/actions/models/user-model';
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
   const [activeSettings, setActiveSettings] = useState<
     'tools' | 'prompt' | 'model' | 'user' | 'help' | null
   >(null);
@@ -130,6 +134,14 @@ export default function Home() {
   // 사용자 정보 추가
   const [userName, setUserName] = useState('사용자');
   const [userEmail, setUserEmail] = useState('user@example.com');
+
+  // URL에서 설정 상태 초기화
+  useEffect(() => {
+    const settingsParam = searchParams.get('settings');
+    if (settingsParam && ['tools', 'prompt', 'model', 'user', 'help'].includes(settingsParam)) {
+      setActiveSettings(settingsParam as 'tools' | 'prompt' | 'model' | 'user' | 'help');
+    }
+  }, [searchParams]);
 
   // 컴포넌트 마운트 시 사용자 설정 정보 로드
   useEffect(() => {
@@ -574,6 +586,8 @@ export default function Home() {
           if (!open) {
             setActiveSettings(null);
             setTempSelectedModel('');
+            // URL에서 설정 파라미터 제거
+            router.push('/');
           }
         }}
         needReinit={needReinit}

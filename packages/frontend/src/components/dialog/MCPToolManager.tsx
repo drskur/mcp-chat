@@ -1,22 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plug, FileJson, Server, RefreshCw, ShieldAlert, AlertTriangle } from 'lucide-react';
+import {
+  Plug,
+  FileJson,
+  Server,
+  RefreshCw,
+  ShieldAlert,
+  AlertTriangle,
+} from 'lucide-react';
 import {
   MCPToolManagerProps,
   MCPServer,
   MCPServerInfo,
   ServerConfig,
   ServerActionResponse,
-  RestartResult
+  RestartResult,
 } from '@/types/mcp';
 import {
   ResultNotification,
   EditServerModal,
   JsonModeView,
   ServerCard,
-  EmptyServerState
+  EmptyServerState,
 } from '@/components/mcp';
+import { getMCPServers } from '@/app/actions/mcp/tools';
 
-const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) => {
+const MCPToolManager: React.FC<MCPToolManagerProps> = ({
+  onSettingsChanged,
+}) => {
   // 상태 관리
   const [servers, setServers] = useState<MCPServer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +43,9 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
   const [editedName, setEditedName] = useState('');
 
   // 재시작 결과 알림 상태
-  const [restartResult, setRestartResult] = useState<RestartResult | null>(null);
+  const [restartResult, setRestartResult] = useState<RestartResult | null>(
+    null,
+  );
 
   // 도구 목록 불러오기
   const fetchTools = async () => {
@@ -47,33 +59,14 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
     setError(null);
 
     try {
-      console.log('API 호출: /api/mcp-tools');
-      const response = await fetch('/api/mcp-tools', {
-        cache: 'no-store',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const { servers } = await getMCPServers();
 
-      if (!response.ok) {
-        throw new Error('도구 목록을 가져오는데 실패했습니다.');
-      }
-
-      const data = await response.json();
-      console.log(`API 응답 성공: 서버 ${data.servers?.length || 0}개`);
-
-      const serversList: MCPServer[] = data.servers.map((serverInfo: MCPServerInfo) => ({
-        name: serverInfo.name,
-        config: serverInfo.config,
-        status: serverInfo.status,
-        tools: serverInfo.tools,
-        expanded: servers.find(s => s.name === serverInfo.name)?.expanded || false
-      }));
-
-      setServers(serversList);
+      setServers(servers);
     } catch (err) {
       console.error('도구 목록 가져오기 오류:', err);
-      setError(`도구 목록을 가져오는데 실패했습니다. 서버 연결 상태를 확인해주세요.`);
+      setError(
+        `도구 목록을 가져오는데 실패했습니다. 서버 연결 상태를 확인해주세요.`,
+      );
     } finally {
       setIsLoading(false);
       isFetchingRef.current = false;
@@ -124,9 +117,12 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
     setError(null);
 
     try {
-      const response = await fetch(`/api/mcp-tools/${encodeURIComponent(serverName)}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/mcp-tools/${encodeURIComponent(serverName)}`,
+        {
+          method: 'DELETE',
+        },
+      );
 
       if (!response.ok) {
         throw new Error('서버 삭제에 실패했습니다.');
@@ -150,11 +146,11 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
 
   // 서버 확장/축소 토글
   const toggleServerExpanded = (index: number) => {
-    setServers(prev => {
+    setServers((prev) => {
       const updated = [...prev];
       updated[index] = {
         ...updated[index],
-        expanded: !updated[index].expanded
+        expanded: !updated[index].expanded,
       };
       return updated;
     });
@@ -162,11 +158,12 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
 
   // JSON 복사 기능
   const copyJSON = (text: string) => {
-    navigator.clipboard.writeText(text)
+    navigator.clipboard
+      .writeText(text)
       .then(() => {
         alert('클립보드에 복사되었습니다.');
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('복사 실패:', err);
         setError('클립보드에 복사하지 못했습니다.');
       });
@@ -219,16 +216,19 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/mcp-tools/${encodeURIComponent(editingServer)}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `/api/mcp-tools/${encodeURIComponent(editingServer)}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: editedName,
+            config: configObj,
+          }),
         },
-        body: JSON.stringify({
-          name: editedName,
-          config: configObj
-        }),
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -248,7 +248,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
       await fetchTools();
 
       if (onSettingsChanged) onSettingsChanged();
-
     } catch (err) {
       console.error('서버 수정 오류:', err);
       setError((err as Error).message);
@@ -274,11 +273,10 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
       const data = await response.json();
       setRestartResult({
         success: data.success,
-        message: data.message
+        message: data.message,
       });
 
       await fetchTools();
-
     } catch (err) {
       console.error('MCP 서비스 재시작 오류:', err);
       setError(`MCP 서비스 재시작에 실패했습니다: ${(err as Error).message}`);
@@ -293,15 +291,18 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
     setError(null);
 
     try {
-      const currentServerNames = servers.map(server => server.name);
+      const currentServerNames = servers.map((server) => server.name);
       const newServerNames = Object.keys(configObj);
 
       // 삭제된 서버 처리
       for (const serverName of currentServerNames) {
         if (!newServerNames.includes(serverName)) {
-          const response = await fetch(`/api/mcp-tools/${encodeURIComponent(serverName)}`, {
-            method: 'DELETE',
-          });
+          const response = await fetch(
+            `/api/mcp-tools/${encodeURIComponent(serverName)}`,
+            {
+              method: 'DELETE',
+            },
+          );
 
           if (!response.ok) {
             throw new Error(`서버 ${serverName} 삭제에 실패했습니다.`);
@@ -313,16 +314,19 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
       for (const [serverName, config] of Object.entries(configObj)) {
         if (currentServerNames.includes(serverName)) {
           // 기존 서버 업데이트
-          const response = await fetch(`/api/mcp-tools/${encodeURIComponent(serverName)}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
+          const response = await fetch(
+            `/api/mcp-tools/${encodeURIComponent(serverName)}`,
+            {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                name: serverName,
+                config,
+              }),
             },
-            body: JSON.stringify({
-              name: serverName,
-              config
-            }),
-          });
+          );
 
           if (!response.ok) {
             throw new Error(`서버 ${serverName} 업데이트에 실패했습니다.`);
@@ -419,7 +423,10 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
           <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
           <div className="text-amber-200 text-sm">
             <p className="font-medium mb-1">중요 안내</p>
-            <p>MCP 도구 설정을 변경(추가/수정/삭제)한 후에는 변경사항을 적용하기 위해 반드시 <strong>서비스 재시작</strong> 버튼을 눌러주세요.</p>
+            <p>
+              MCP 도구 설정을 변경(추가/수정/삭제)한 후에는 변경사항을 적용하기
+              위해 반드시 <strong>서비스 재시작</strong> 버튼을 눌러주세요.
+            </p>
           </div>
         </div>
       )}
@@ -463,7 +470,9 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
                     disabled={isLoading}
                   >
                     <span className="absolute inset-0 bg-white/20 rounded-lg animate-pulse group-hover:bg-transparent"></span>
-                    <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : 'group-hover:animate-spin'}`} />
+                    <RefreshCw
+                      className={`h-4 w-4 ${isLoading ? 'animate-spin' : 'group-hover:animate-spin'}`}
+                    />
                     <span className="font-medium">서비스 재시작</span>
                   </button>
 
@@ -474,7 +483,8 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ onSettingsChanged }) =>
                   >
                     {isCheckingStatus ? (
                       <>
-                        <RefreshCw className="h-4 w-4 animate-spin" /> 확인 중...
+                        <RefreshCw className="h-4 w-4 animate-spin" /> 확인
+                        중...
                       </>
                     ) : (
                       <>

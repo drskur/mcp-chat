@@ -2,15 +2,13 @@ import { clientSettingDir } from './env';
 import path from 'path';
 import { existsSync } from 'fs';
 import { readFile, writeFile } from 'fs/promises';
+import { Settings } from '@/types/settings.types';
 
 const settingFilePath = path.join(clientSettingDir, 'settings.json');
 
-export interface Settings {
-  modelId: string;
-}
-
 const initialSettings: Settings = {
   modelId: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
+  mcp: {},
 };
 
 /**
@@ -93,7 +91,7 @@ export async function saveSettings(settings: Settings): Promise<void> {
     await writeFile(
       settingFilePath,
       JSON.stringify(settings, null, 2),
-      'utf-8'
+      'utf-8',
     );
     console.log('설정 파일 저장 완료');
   } catch (error) {
@@ -107,7 +105,10 @@ export async function saveSettings(settings: Settings): Promise<void> {
  * @param path - 점(.)으로 구분된 JSON 경로 (예: "aws.region")
  * @param value - 저장할 값
  */
-export async function saveSettingByPath(path: string, value: any): Promise<void> {
+export async function saveSettingByPath(
+  path: string,
+  value: any,
+): Promise<void> {
   try {
     // 현재 설정 로드
     const currentSettings = await loadSettings();

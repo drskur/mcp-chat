@@ -10,7 +10,6 @@ import {
 import {
   MCPToolManagerProps,
   MCPServer,
-  MCPServerInfo,
   ServerConfig,
   ServerActionResponse,
   RestartResult,
@@ -107,42 +106,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
     };
   }, []);
 
-  // 서버 삭제
-  const handleDeleteServer = async (serverName: string) => {
-    if (!window.confirm(`MCP 서버 '${serverName}'을(를) 삭제하시겠습니까?`)) {
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(
-        `/api/mcp-tools/${encodeURIComponent(serverName)}`,
-        {
-          method: 'DELETE',
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error('서버 삭제에 실패했습니다.');
-      }
-
-      const data: ServerActionResponse = await response.json();
-      if (data.restart) {
-        setRestartResult(data.restart);
-      }
-
-      await fetchTools();
-
-      if (onSettingsChanged) onSettingsChanged();
-    } catch (err) {
-      console.error('서버 삭제 오류:', err);
-      setError(`서버 삭제에 실패했습니다. 서버 연결 상태를 확인해주세요.`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // 서버 확장/축소 토글
   const toggleServerExpanded = (index: number) => {
@@ -459,7 +422,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
                     serverIdx={serverIdx}
                     onToggleExpanded={toggleServerExpanded}
                     onEdit={handleEditServer}
-                    onDelete={handleDeleteServer}
                   />
                 ))}
 

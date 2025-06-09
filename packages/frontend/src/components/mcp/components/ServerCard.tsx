@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, ChevronUp, Edit, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Edit } from 'lucide-react';
 import { MCPServer, ServerConfig } from '@/types/mcp';
 import { ServerStatusIcon } from '@/components/mcp';
 import { ToolsList } from './ToolsList';
@@ -9,15 +9,13 @@ interface ServerCardProps {
   serverIdx: number;
   onToggleExpanded: (index: number) => void;
   onEdit: (serverName: string, serverConfig: ServerConfig) => void;
-  onDelete: (serverName: string) => void;
 }
 
 export const ServerCard: React.FC<ServerCardProps> = ({
   server,
   serverIdx,
   onToggleExpanded,
-  onEdit,
-  onDelete
+  onEdit
 }) => {
   return (
     <div className="bg-gray-900/30 rounded-lg border border-gray-800 overflow-hidden">
@@ -62,14 +60,6 @@ export const ServerCard: React.FC<ServerCardProps> = ({
             title="서버 수정"
           >
             <Edit className="h-5 w-5" />
-          </button>
-
-          <button
-            className="p-2 text-gray-500 hover:text-red-400 rounded-lg hover:bg-gray-800"
-            onClick={() => onDelete(server.name)}
-            title="서버 삭제"
-          >
-            <Trash2 className="h-5 w-5" />
           </button>
         </div>
       </div>

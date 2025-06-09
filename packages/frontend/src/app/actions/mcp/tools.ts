@@ -17,7 +17,7 @@ export async function getMCPServers(): Promise<{ servers: MCPServer[] }> {
       name,
       config,
       status: 'offline',
-      expanded: true,
+      expanded: false,
       tools: [],
     };
     try {

@@ -1,4 +1,4 @@
-import { ClientConfig, Connection } from '@langchain/mcp-adapters';
+import { ClientConfig } from '@langchain/mcp-adapters';
 
 export interface Settings {
   modelId: string;

@@ -1,4 +1,4 @@
-import { ClientConfig, MultiServerMCPClient } from '@langchain/mcp-adapters';
+import { MultiServerMCPClient } from '@langchain/mcp-adapters';
 import { loadMcpConfig } from '@/mcp/config';
 
 export class MCPClientManager {

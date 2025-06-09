@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import { Image as LucideImage } from 'lucide-react';
 import { availableModels } from '@/lib/model-info';
 import { ModelsConfig } from '@/lib/model-info';
@@ -103,10 +104,12 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
           <div className="flex items-center gap-2 mb-2 px-1">
             {provider.icon && (
               <div className="bg-white rounded-md p-1 flex items-center justify-center shadow-md">
-                <img
+                <Image
                   src={provider.icon}
                   alt={provider.name}
-                  className="w-6 h-6 object-contain"
+                  width={24}
+                  height={24}
+                  className="object-contain"
                   style={{ opacity: 1, filter: 'none' }}
                 />
               </div>

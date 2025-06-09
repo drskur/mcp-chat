@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Plug,
   FileJson,
@@ -31,7 +31,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [jsonMode, setJsonMode] = useState(false);
   const isFetchingRef = useRef(false);
-  const validationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
 
   // 재시작 결과 알림 상태
@@ -66,7 +65,7 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
   };
 
   // 서버 상태 확인
-  const refreshServerStatus = async () => {
+  const refreshServerStatus = useCallback(async () => {
     if (isFetchingRef.current) return;
 
     setIsCheckingStatus(true);
@@ -78,7 +77,7 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
     } finally {
       setIsCheckingStatus(false);
     }
-  };
+  }, []);
 
   // 초기 로드 및 주기적 갱신
   useEffect(() => {
@@ -97,7 +96,7 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
       console.log('컴포넌트 언마운트: 인터벌 정리');
       clearInterval(intervalId);
     };
-  }, []);
+  }, [refreshServerStatus]);
 
 
   // 서버 확장/축소 토글
@@ -227,15 +226,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
       setIsLoading(false);
     }
   };
-
-  // cleanup 타이머
-  useEffect(() => {
-    return () => {
-      if (validationTimerRef.current) {
-        clearTimeout(validationTimerRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div className="p-6 bg-gray-950 rounded-xl border border-gray-800 relative">

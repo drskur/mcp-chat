@@ -1,26 +1,27 @@
 'use client';
 
-import { 
-  Settings, 
-  MessageCircle, 
-  PlusIcon, 
-  Book, 
+import {
+  Settings,
+  MessageCircle,
+  PlusIcon,
+  Book,
   BarChart3,
   Brain,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { 
-  Sidebar, 
-  SidebarTrigger, 
-  SidebarHeader, 
-  SidebarContent, 
-  SidebarMenu, 
-  SidebarMenuItem, 
+import {
+  Sidebar,
+  SidebarTrigger,
+  SidebarHeader,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
   SidebarMenuButton,
   SidebarGroup,
   SidebarFooter,
   SidebarSeparator
 } from '@/components/ui/sidebar';
+import Image from 'next/image';
 
 interface UserSettings {
   title: string;
@@ -37,15 +38,15 @@ interface MainSidebarProps {
   onSettingsClick: (type: 'tools' | 'prompt' | 'model' | 'user' | 'help') => void;
 }
 
-export const MainSidebar = ({ 
-  userSettings, 
-  userName, 
-  userEmail, 
-  onNewChat, 
-  onSettingsClick 
+export const MainSidebar = ({
+  userSettings,
+  userName,
+  userEmail,
+  onNewChat,
+  onSettingsClick
 }: MainSidebarProps) => {
   const router = useRouter();
-  
+
   const handleSettingsClick = (type: 'tools' | 'prompt' | 'model' | 'user' | 'help') => {
     const params = new URLSearchParams();
     params.set('settings', type);
@@ -58,9 +59,9 @@ export const MainSidebar = ({
         <div className="flex items-center gap-3">
           <div className="rounded-lg overflow-hidden" style={{ width: '60px', height: '36px' }}>
             {userSettings.logoUrl ? (
-              <img 
-                src={userSettings.logoUrl} 
-                alt="로고" 
+              <Image
+                src={userSettings.logoUrl}
+                alt="로고"
                 className="w-full h-full object-cover rounded-lg"
                 style={{ opacity: userSettings.logoOpacity }}
               />
@@ -77,12 +78,12 @@ export const MainSidebar = ({
           <SidebarTrigger />
         </div>
       </SidebarHeader>
-      
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 className="w-full justify-start gap-2 py-2 mb-3 bg-indigo-600 hover:bg-indigo-700 rounded-md"
                 onClick={onNewChat}
               >
@@ -90,7 +91,7 @@ export const MainSidebar = ({
                 <span className="text-sm">새 대화</span>
               </SidebarMenuButton>
 
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 className="w-full justify-start gap-3"
                 onClick={() => handleSettingsClick('model')}
               >
@@ -100,7 +101,7 @@ export const MainSidebar = ({
             </SidebarMenuItem>
 
             <SidebarMenuItem>
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 className="w-full justify-start gap-3"
                 onClick={() => handleSettingsClick('tools')}
               >
@@ -108,9 +109,9 @@ export const MainSidebar = ({
                 <span>MCP 도구</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            
+
             <SidebarMenuItem>
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 className="w-full justify-start gap-3"
                 onClick={() => handleSettingsClick('prompt')}
               >
@@ -118,9 +119,9 @@ export const MainSidebar = ({
                 <span>시스템 프롬프트</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            
+
             <SidebarMenuItem>
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 className="w-full justify-start gap-3"
                 onClick={() => handleSettingsClick('help')}
               >
@@ -133,7 +134,7 @@ export const MainSidebar = ({
 
         <SidebarSeparator className="my-3 bg-gray-800 w-[90%] mx-auto" />
       </SidebarContent>
-      
+
       <SidebarFooter className="mt-auto p-4 border-t border-gray-900">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-yellow-300 font-medium">
@@ -143,7 +144,7 @@ export const MainSidebar = ({
             <p className="font-medium truncate">{userName}</p>
             <p className="text-xs text-gray-400 truncate">{userEmail}</p>
           </div>
-          <button 
+          <button
             className="p-1.5 hover:bg-gray-800 rounded-md transition-colors"
             onClick={() => handleSettingsClick('user')}
           >

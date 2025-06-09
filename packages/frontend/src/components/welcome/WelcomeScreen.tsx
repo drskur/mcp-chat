@@ -5,6 +5,7 @@ import { PlaceholdersAndVanishInput } from '@/components/ui/placeholders-and-van
 import { FileAttachmentPreview } from '@/components/file/FileAttachmentPreview';
 import { FileAttachment } from '@/types/file-attachment';
 import React from 'react';
+import Image from 'next/image';
 
 interface UserSettings {
   title: string;
@@ -27,11 +28,11 @@ interface WelcomeScreenProps {
 
 const placeholders = [
   "What's the latest news about AWS?",
-  "Can you search for news about AI developments?",
-  "Generate an image of a cloud architecture diagram",
-  "Create an illustration of a modern web application",
-  "Can you make an image of a futuristic data center?",
-  "Search for recent articles about cloud computing trends"
+  'Can you search for news about AI developments?',
+  'Generate an image of a cloud architecture diagram',
+  'Create an illustration of a modern web application',
+  'Can you make an image of a futuristic data center?',
+  'Search for recent articles about cloud computing trends',
 ];
 
 export const WelcomeScreen = ({
@@ -43,7 +44,7 @@ export const WelcomeScreen = ({
   onAttachButtonClick,
   onRemoveAttachment,
   fileInputRef,
-  onFileUpload
+  onFileUpload,
 }: WelcomeScreenProps) => {
   return (
     <div className="h-full flex flex-col items-center justify-center max-w-full">
@@ -53,7 +54,7 @@ export const WelcomeScreen = ({
             <div className="absolute inset-0 bg-indigo-600 rounded-xl blur-lg opacity-50"></div>
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl flex items-center justify-center">
               {userSettings.logoUrl ? (
-                <img
+                <Image
                   src={userSettings.logoUrl}
                   alt="로고"
                   className="w-full h-full object-contain"
@@ -121,8 +122,9 @@ export const WelcomeScreen = ({
           />
 
           <p className="text-gray-400 mb-8 max-w-2xl">
-            Elevate your coding, problem-solving, and analysis with our advanced AI assistant.
-            MCP Agent delivers powerful productivity enhancements through a diverse suite of tools.
+            Elevate your coding, problem-solving, and analysis with our advanced
+            AI assistant. MCP Agent delivers powerful productivity enhancements
+            through a diverse suite of tools.
           </p>
         </div>
       </div>

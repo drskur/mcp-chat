@@ -13,7 +13,7 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.config({
-    extends: ["next/typescript"]
+    extends: ["next/core-web-vitals", "next/typescript"]
   }),
   ...compat.plugins("react-hooks"),
   {

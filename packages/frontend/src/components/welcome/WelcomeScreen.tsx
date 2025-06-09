@@ -94,13 +94,14 @@ export const WelcomeScreen = ({
             onRemove={onRemoveAttachment}
           />
 
-          <PlaceholdersAndVanishInput
-            placeholders={placeholders}
-            onChange={onInputChange}
-            onSubmit={onInputSubmit}
-            value={inputValue}
-            className="mb-8"
-            rightElement={
+          <div data-component="welcome-screen-input" className="w-full max-w-4xl">
+            <PlaceholdersAndVanishInput
+              placeholders={placeholders}
+              onChange={onInputChange}
+              onSubmit={onInputSubmit}
+              value={inputValue}
+              className="mb-8 max-w-full"
+              rightElement={
               <button
                 type="button"
                 onClick={onAttachButtonClick}
@@ -111,6 +112,7 @@ export const WelcomeScreen = ({
               </button>
             }
           />
+          </div>
 
           <input
             type="file"

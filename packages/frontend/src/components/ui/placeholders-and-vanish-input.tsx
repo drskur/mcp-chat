@@ -87,12 +87,16 @@ export function PlaceholdersAndVanishInput({
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation(); // 이벤트 버블링 방지
+    
     if (currentValue.trim()) {
       if (onSubmit) {
         onSubmit(e);
       }
-    } else if (inputRef.current) {
-      inputRef.current.focus();
+    } else {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }
   };
   

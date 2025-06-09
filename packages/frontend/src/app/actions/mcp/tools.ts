@@ -36,7 +36,7 @@ export async function getMCPServers(): Promise<{ servers: MCPServer[] }> {
 
       server.status = 'online';
       return server;
-    } catch (e) {
+    } catch (_e) {
       return server;
     }
   });

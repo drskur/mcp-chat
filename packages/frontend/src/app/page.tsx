@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import {
@@ -22,7 +22,7 @@ import { useFileAttachment } from '@/hooks/useFileAttachment';
 import { FileAttachment } from '@/types/file-attachment';
 import { getUserModel } from '@/app/actions/models/user-model';
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -585,5 +585,13 @@ export default function Home() {
       </AlertDialog>
 
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="flex h-screen bg-[#0a0a0a] items-center justify-center text-gray-100">로딩 중...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

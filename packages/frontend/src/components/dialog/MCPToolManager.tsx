@@ -11,7 +11,6 @@ import {
   MCPToolManagerProps,
   MCPServer,
   ServerConfig,
-  ServerActionResponse,
   RestartResult,
 } from '@/types/mcp';
 import {

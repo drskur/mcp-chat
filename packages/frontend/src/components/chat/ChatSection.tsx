@@ -6,14 +6,6 @@ import { ChatInterface } from '@/components/chat/ChatInterface';
 import { FileAttachment } from '@/types/file-attachment';
 
 interface ChatSectionProps {
-  activeConversation: string | null;
-  conversations: Array<{
-    id: string;
-    title: string;
-    lastMessage: string;
-    starred: boolean;
-    time: string;
-  }>;
   selectedModel: string;
   chatSessionId: string;
   savedInitialMessage: string;
@@ -23,8 +15,6 @@ interface ChatSectionProps {
 }
 
 export const ChatSection = ({
-  activeConversation,
-  conversations,
   selectedModel,
   chatSessionId,
   savedInitialMessage,
@@ -38,9 +28,7 @@ export const ChatSection = ({
         <div className="flex items-center gap-3">
           <h2 className="text-md font-medium flex items-center gap-2">
             <MessageSquare className="h-4 w-4 text-indigo-400" />
-            {activeConversation 
-              ? conversations.find(c => c.id === activeConversation)?.title
-              : '새 대화'}
+            새 대화
           </h2>
           {selectedModel && (
             <div 

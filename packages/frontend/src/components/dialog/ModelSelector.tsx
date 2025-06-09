@@ -1,37 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Image as LucideImage } from 'lucide-react';
-
-interface ModelCapability {
-  text: boolean;
-  image: boolean;
-  code: boolean;
-}
-
-interface ModelInfo {
-  id: string;
-  name: string;
-  provider: string;
-  provider_name: string;
-  icon_url: string;
-  provider_icon_url: string;
-  capabilities: ModelCapability;
-  max_output_tokens: number;
-}
-
-interface ProviderInfo {
-  id: string;
-  name: string;
-  icon_url: string;
-  models: ModelInfo[];
-}
+import { availableModels } from '@/lib/model-info';
+import { ModelsConfig } from '@/lib/model-info';
 
 interface ModelSelectorProps {
   selectedModel: string;
   onChange: (modelId: string) => void;
 }
 
-const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onChange }) => {
-  const [providers, setProviders] = useState<ProviderInfo[]>([]);
+const ModelSelector: React.FC<ModelSelectorProps> = ({
+  selectedModel,
+  onChange,
+}) => {
+  const [modelsConfig, setModelsConfig] = useState<ModelsConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [savingModel, setSavingModel] = useState<boolean>(false);
@@ -40,23 +21,25 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onChange }
     const fetchModels = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/models');
-        
-        if (!response.ok) {
-          throw new Error(`API 응답 오류: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setProviders(data.providers);
+
+        const config = availableModels('us-east-1'); // 기본 리전
+
+        setModelsConfig(config);
         setError(null);
-        
+
         // 기본 모델이 없으면 첫 번째 모델로 설정
-        if (!selectedModel && data.providers.length > 0 && data.providers[0].models.length > 0) {
-          handleModelChange(data.providers[0].models[0].id);
+        if (!selectedModel && config) {
+          const firstProvider = Object.values(config.providers)[0];
+          const firstModel = Object.values(firstProvider.models)[0];
+          if (firstModel) {
+            await handleModelChange(firstModel.id);
+          }
         }
       } catch (err) {
         console.error('모델 정보를 가져오는데 실패했습니다:', err);
-        setError('모델 정보를 가져오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
+        setError(
+          '모델 정보를 가져오는데 실패했습니다. 잠시 후 다시 시도해주세요.',
+        );
       } finally {
         setLoading(false);
       }
@@ -70,11 +53,11 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onChange }
   const handleModelChange = async (modelId: string) => {
     // 상위 컴포넌트에 변경 알림
     onChange(modelId);
-    
+
     // 선택한 모델 자동 저장
     try {
       setSavingModel(true);
-      
+
       const response = await fetch('/api/models/select', {
         method: 'POST',
         headers: {
@@ -82,7 +65,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onChange }
         },
         body: JSON.stringify({ model_id: modelId }),
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -101,38 +84,58 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onChange }
   };
 
   if (loading) {
-    return <div className="p-8 text-center animate-pulse text-indigo-400 font-semibold text-lg">모델 정보를 불러오는 중...</div>;
+    return (
+      <div className="p-8 text-center animate-pulse text-indigo-400 font-semibold text-lg">
+        모델 정보를 불러오는 중...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-6 text-center text-red-400 bg-red-900/20 border border-red-700/40 rounded-lg shadow-lg animate-fade-in">{error}</div>;
+    return (
+      <div className="p-6 text-center text-red-400 bg-red-900/20 border border-red-700/40 rounded-lg shadow-lg animate-fade-in">
+        {error}
+      </div>
+    );
+  }
+
+  if (!modelsConfig) {
+    return null;
   }
 
   return (
     <div className="space-y-6">
-      {providers.map((provider, idx) => (
-        <div key={provider.id} className="space-y-2 fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
+      {Object.values(modelsConfig.providers).map((provider, idx) => (
+        <div
+          key={provider.id}
+          className="space-y-2 fade-in"
+          style={{ animationDelay: `${idx * 80}ms` }}
+        >
           <div className="flex items-center gap-2 mb-2 px-1">
-            {provider.icon_url && (
+            {provider.icon && (
               <div className="bg-white rounded-md p-1 flex items-center justify-center shadow-md">
-                <img 
-                  src={provider.icon_url} 
+                <img
+                  src={provider.icon}
                   alt={provider.name}
-                  className="w-6 h-6 object-contain" 
+                  className="w-6 h-6 object-contain"
                   style={{ opacity: 1, filter: 'none' }}
                 />
               </div>
             )}
-            <h3 className="text-base font-semibold text-gray-200 tracking-wide gradient-text drop-shadow">{provider.name}</h3>
+            <h3 className="text-base font-semibold text-gray-200 tracking-wide gradient-text drop-shadow">
+              {provider.name}
+            </h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            {provider.models.map((model, mIdx) => (
+            {Object.values(provider.models).map((model, mIdx) => (
               <div
                 key={model.id}
                 className={`relative group p-4 border rounded-2xl cursor-pointer transition-all duration-200 bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-md shadow-lg overflow-hidden
-                  ${selectedModel === model.id
-                    ? 'border-indigo-500 ring-2 ring-indigo-400/40 scale-[1.03] shadow-indigo-700/30 z-10'
-                    : 'border-gray-700 hover:border-indigo-400 hover:scale-105 hover:shadow-xl'}
+                  ${
+                    selectedModel === model.id
+                      ? 'border-indigo-500 ring-2 ring-indigo-400/40 scale-[1.03] shadow-indigo-700/30 z-10'
+                      : 'border-gray-700 hover:border-indigo-400 hover:scale-105 hover:shadow-xl'
+                  }
                 animate-fade-in`}
                 style={{ animationDelay: `${mIdx * 60}ms` }}
                 onClick={() => handleModelChange(model.id)}
@@ -148,14 +151,17 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onChange }
                     name="model"
                     checked={selectedModel === model.id}
                     onChange={() => handleModelChange(model.id)}
-                    className="w-4 h-4 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
+                    className="w-4 h-4 text-indigo-600 accent-indigo-600 focus:ring-indigo-500 focus:outline-none"
+                    tabIndex={-1}
                   />
                   <label
                     htmlFor={`model-${model.id}`}
                     className={`font-semibold cursor-pointer text-base truncate max-w-[160px] transition-colors
-                      ${selectedModel === model.id 
-                        ? 'text-indigo-400 drop-shadow' 
-                        : 'text-gray-200 group-hover:text-indigo-300'}
+                      ${
+                        selectedModel === model.id
+                          ? 'text-indigo-400 drop-shadow'
+                          : 'text-gray-200 group-hover:text-indigo-300'
+                      }
                     `}
                   >
                     {model.name}
@@ -165,36 +171,48 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onChange }
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {model.capabilities.text && (
-                    <span className={`px-2 py-0.5 text-xs rounded-md flex items-center gap-1 font-medium transition-all
-                      ${selectedModel === model.id
-                        ? 'bg-indigo-700/30 text-indigo-200 shadow-md'
-                        : 'bg-indigo-900/20 text-indigo-300'}
-                    `}>
+                  {model.capabilities.includes('text') && (
+                    <span
+                      className={`px-2 py-0.5 text-xs rounded-md flex items-center gap-1 font-medium transition-all
+                      ${
+                        selectedModel === model.id
+                          ? 'bg-indigo-700/30 text-indigo-200 shadow-md'
+                          : 'bg-indigo-900/20 text-indigo-300'
+                      }
+                    `}
+                    >
                       <span className="rounded-full bg-indigo-600 p-0.5 flex items-center justify-center">
                         <LucideImage className="h-3 w-3 text-white" />
                       </span>
                       텍스트
                     </span>
                   )}
-                  {model.capabilities.image && (
-                    <span className={`px-2 py-0.5 text-xs rounded-md flex items-center gap-1 font-medium transition-all
-                      ${selectedModel === model.id
-                        ? 'bg-purple-700/30 text-purple-200 shadow-md'
-                        : 'bg-purple-900/20 text-purple-300'}
-                    `}>
+                  {model.capabilities.includes('image') && (
+                    <span
+                      className={`px-2 py-0.5 text-xs rounded-md flex items-center gap-1 font-medium transition-all
+                      ${
+                        selectedModel === model.id
+                          ? 'bg-purple-700/30 text-purple-200 shadow-md'
+                          : 'bg-purple-900/20 text-purple-300'
+                      }
+                    `}
+                    >
                       <span className="rounded-full bg-purple-600 p-0.5 flex items-center justify-center">
                         <LucideImage className="h-3 w-3 text-white" />
                       </span>
                       이미지
                     </span>
                   )}
-                  {model.capabilities.code && (
-                    <span className={`px-2 py-0.5 text-xs rounded-md flex items-center gap-1 font-medium transition-all
-                      ${selectedModel === model.id
-                        ? 'bg-green-700/30 text-green-200 shadow-md'
-                        : 'bg-green-900/20 text-green-300'}
-                    `}>
+                  {model.capabilities.includes('code') && (
+                    <span
+                      className={`px-2 py-0.5 text-xs rounded-md flex items-center gap-1 font-medium transition-all
+                      ${
+                        selectedModel === model.id
+                          ? 'bg-green-700/30 text-green-200 shadow-md'
+                          : 'bg-green-900/20 text-green-300'
+                      }
+                    `}
+                    >
                       <span className="rounded-full bg-green-600 p-0.5 flex items-center justify-center">
                         <LucideImage className="h-3 w-3 text-white" />
                       </span>
@@ -212,12 +230,17 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onChange }
           <LucideImage className="w-5 h-5 text-white flex-shrink-0 animate-pulse" />
         </span>
         <p className="text-sm text-indigo-200">
-          모델을 변경하면 새로운 대화가 시작됩니다. AWS Bedrock API를 통해 호출됩니다.
-          {savingModel && <span className="ml-1 text-xs text-indigo-400 animate-pulse">(저장 중...)</span>}
+          모델을 변경하면 새로운 대화가 시작됩니다. AWS Bedrock API를 통해
+          호출됩니다.
+          {savingModel && (
+            <span className="ml-1 text-xs text-indigo-400 animate-pulse">
+              (저장 중...)
+            </span>
+          )}
         </p>
       </div>
     </div>
   );
 };
 
-export default ModelSelector; 
+export default ModelSelector;

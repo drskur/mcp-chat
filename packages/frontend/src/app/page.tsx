@@ -1,14 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MessageSquare } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import {
-  ExpandableChat,
-  ExpandableChatHeader,
-  ExpandableChatBody,
-} from '@/components/ui/expandable-chat';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +13,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ChatInterface } from '@/components/chat/ChatInterface';
 import { FloatingSidebarTrigger } from '@/components/sidebar/FloatingSidebarTrigger';
 import { MainSidebar } from '@/components/sidebar/MainSidebar';
 import { WelcomeScreen } from '@/components/welcome/WelcomeScreen';
@@ -41,53 +34,6 @@ export default function Home() {
   );
   const [tempSelectedModel, setTempSelectedModel] = useState('');
   const [needReinit, setNeedReinit] = useState(false);
-  const [activeConversation, setActiveConversation] = useState<string | null>(
-    null,
-  );
-  const [conversations] = useState([
-    {
-      id: 'conv1',
-      title: '새 프로젝트 설정 도움말',
-      lastMessage: '30분 전',
-      starred: true,
-      time: 'today',
-    },
-    {
-      id: 'conv2',
-      title: '백엔드 API 개발 문의',
-      lastMessage: '1시간 전',
-      starred: false,
-      time: 'today',
-    },
-    {
-      id: 'conv3',
-      title: '채팅 인터페이스 디자인',
-      lastMessage: '어제',
-      starred: true,
-      time: 'week',
-    },
-    {
-      id: 'conv4',
-      title: 'LangChain 활용 방법',
-      lastMessage: '3일 전',
-      starred: false,
-      time: 'week',
-    },
-    {
-      id: 'conv5',
-      title: 'AWS 배포 설정',
-      lastMessage: '1주 전',
-      starred: false,
-      time: 'month',
-    },
-    {
-      id: 'conv6',
-      title: '데이터베이스 스키마 설계',
-      lastMessage: '2주 전',
-      starred: false,
-      time: 'month',
-    },
-  ]);
   const [showChat, setShowChat] = useState(false);
   const [inputValue, setInputValue] = useState('');
 
@@ -113,15 +59,6 @@ export default function Home() {
     handleAttachButtonClick,
   } = useFileAttachment();
 
-  // 플레이스홀더 목록
-  const placeholders = [
-    "What's the latest news about AWS?",
-    'Can you search for news about AI developments?',
-    'Generate an image of a cloud architecture diagram',
-    'Create an illustration of a modern web application',
-    'Can you make an image of a futuristic data center?',
-    'Search for recent articles about cloud computing trends',
-  ];
 
   // 사용자 설정 관련 상태 추가
   const [userSettings, setUserSettings] = useState({
@@ -469,7 +406,6 @@ export default function Home() {
     // 약간의 지연 후에 다시 채팅 인터페이스 마운트 (리셋 효과)
     setTimeout(() => {
       // 대화 시작 - 상태 변경으로 화면 전환
-      setActiveConversation(null);
       setShowChat(true);
 
       // 새로운 초기 메시지와 첨부파일만 사용
@@ -535,8 +471,6 @@ export default function Home() {
               />
             ) : (
               <ChatSection
-                activeConversation={activeConversation}
-                conversations={conversations}
                 selectedModel={selectedModel}
                 chatSessionId={chatSessionId}
                 savedInitialMessage={savedInitialMessage}
@@ -650,19 +584,6 @@ export default function Home() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 모바일에서는 확장 가능한 채팅 인터페이스 */}
-      <div className="md:hidden">
-        <ExpandableChat position="bottom-right" size="lg">
-          <ExpandableChatHeader>
-            <h3 className="font-semibold flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-indigo-400" />새 대화
-            </h3>
-          </ExpandableChatHeader>
-          <ExpandableChatBody className="bg-transparent">
-            <ChatInterface key={chatSessionId} modelId={selectedModel} />
-          </ExpandableChatBody>
-        </ExpandableChat>
-      </div>
     </div>
   );
 }

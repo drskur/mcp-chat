@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { ChevronDown, ChevronRight, Wrench, Cog, FileIcon, ExternalLink } from "lucide-react";
 import type { ContentItem, ToolUseContentItem, ToolResultContentItem, ImageContentItem, DocumentContentItem, ZoomedImageState } from '../types/chat.types';
 
@@ -174,19 +175,24 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
     
     return (
       <div key={imageItem.id} className="mt-2 mb-2 max-w-full">
-        <img 
-          src={imgSrc}
-          alt="첨부 이미지"
-          className="rounded-md border border-indigo-500/30 max-w-full cursor-pointer hover:opacity-90 transition-opacity"
+        <div 
+          className="relative rounded-md border border-indigo-500/30 cursor-pointer hover:opacity-90 transition-opacity inline-block"
           style={{ maxHeight: "200px" }}
           onClick={() => onSetZoomedImage({
             isOpen: true,
             imageData: imageItem.imageData,
             mimeType: imageItem.mimeType
           })}
-          onLoad={() => {}}
-          onError={() => {}}
-        />
+        >
+          <Image 
+            src={imgSrc}
+            alt="첨부 이미지"
+            width={200}
+            height={200}
+            className="rounded-md max-h-[200px] w-auto object-contain"
+            unoptimized
+          />
+        </div>
       </div>
     );
   }

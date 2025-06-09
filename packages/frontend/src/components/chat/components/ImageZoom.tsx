@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Download } from "lucide-react";
 import type { ZoomedImageState } from '../types/chat.types';
 
@@ -56,11 +57,16 @@ export const ImageZoom: React.FC<ImageZoomProps> = ({ zoomedImage, onClose }) =>
             </svg>
           </button>
         </div>
-        <img 
-          src={`data:${zoomedImage.mimeType};base64,${zoomedImage.imageData}`}
-          alt="확대된 이미지"
-          className="max-w-full max-h-[80vh] object-contain mx-auto shadow-2xl rounded-md"
-        />
+        <div className="relative max-w-full max-h-[80vh] mx-auto">
+          <Image 
+            src={`data:${zoomedImage.mimeType};base64,${zoomedImage.imageData}`}
+            alt="확대된 이미지"
+            width={800}
+            height={600}
+            className="max-w-full max-h-[80vh] object-contain mx-auto shadow-2xl rounded-md w-auto h-auto"
+            unoptimized
+          />
+        </div>
       </div>
     </div>
   );

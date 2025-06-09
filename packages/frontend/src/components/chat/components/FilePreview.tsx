@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { X, FileIcon } from "lucide-react";
 import type { FileAttachment } from '../types/chat.types';
 
@@ -16,10 +17,13 @@ export const FilePreview: React.FC<FilePreviewProps> = ({ attachments, onRemoveA
         <div key={file.id} className="relative group bg-gray-800 rounded-md border border-gray-700 p-2 flex items-center gap-2">
           {file.previewUrl ? (
             <div className="w-10 h-10 rounded overflow-hidden bg-gray-700 flex items-center justify-center">
-              <img 
+              <Image 
                 src={file.previewUrl} 
                 alt="미리보기" 
+                width={40}
+                height={40}
                 className="w-full h-full object-cover"
+                unoptimized
               />
             </div>
           ) : (

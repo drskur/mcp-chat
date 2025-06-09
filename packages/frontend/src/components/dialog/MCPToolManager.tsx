@@ -16,7 +16,6 @@ import {
 } from '@/types/mcp';
 import {
   ResultNotification,
-  EditServerModal,
   JsonModeView,
   ServerCard,
   EmptyServerState,
@@ -35,11 +34,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
   const isFetchingRef = useRef(false);
   const validationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 편집 모드 상태
-  const [editMode, setEditMode] = useState(false);
-  const [editingServer, setEditingServer] = useState<string | null>(null);
-  const [editedConfig, setEditedConfig] = useState('');
-  const [editedName, setEditedName] = useState('');
 
   // 재시작 결과 알림 상태
   const [restartResult, setRestartResult] = useState<RestartResult | null>(
@@ -132,92 +126,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
       });
   };
 
-  // 서버 수정 시작
-  const handleEditServer = (serverName: string, serverConfig: ServerConfig) => {
-    if (validationTimerRef.current) {
-      clearTimeout(validationTimerRef.current);
-      validationTimerRef.current = null;
-    }
-
-    const configStr = JSON.stringify(serverConfig, null, 2);
-
-    setEditMode(true);
-    setEditingServer(serverName);
-    setEditedName(serverName);
-    setEditedConfig(configStr);
-    setError(null);
-  };
-
-  // 서버 수정 취소
-  const handleCancelEdit = () => {
-    setEditMode(false);
-    setEditingServer(null);
-    setEditedConfig('');
-    setEditedName('');
-    setError(null);
-  };
-
-  // 서버 수정 저장
-  const handleSaveEdit = async () => {
-    if (!editingServer) return;
-
-    try {
-      if (!editedName.trim()) {
-        setError('서버 이름은 비워둘 수 없습니다.');
-        return;
-      }
-
-      let configObj;
-      try {
-        configObj = JSON.parse(editedConfig);
-      } catch (e: unknown) {
-        const errorMessage = e instanceof Error ? e.message : '구문 오류';
-        setError(`유효하지 않은 JSON 형식입니다: ${errorMessage}`);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch(
-        `/api/mcp-tools/${encodeURIComponent(editingServer)}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: editedName,
-            config: configObj,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || '서버 수정에 실패했습니다.');
-      }
-
-      const data: ServerActionResponse = await response.json();
-      if (data.restart) {
-        setRestartResult(data.restart);
-      }
-
-      setEditMode(false);
-      setEditingServer(null);
-      setEditedConfig('');
-      setEditedName('');
-
-      await fetchTools();
-
-      if (onSettingsChanged) onSettingsChanged();
-    } catch (err) {
-      console.error('서버 수정 오류:', err);
-      setError((err as Error).message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // MCP 서비스 재시작
   const handleRestartService = async () => {
@@ -332,18 +240,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
 
   return (
     <div className="p-6 bg-gray-950 rounded-xl border border-gray-800 relative">
-      {/* 수정 모달 */}
-      <EditServerModal
-        isOpen={editMode}
-        editedName={editedName}
-        editedConfig={editedConfig}
-        error={error}
-        isLoading={isLoading}
-        onNameChange={setEditedName}
-        onConfigChange={setEditedConfig}
-        onCancel={handleCancelEdit}
-        onSave={handleSaveEdit}
-      />
 
       {/* 재시작 결과 알림 */}
       <ResultNotification
@@ -373,7 +269,7 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
         </button>
       )}
 
-      {error && !editMode && (
+      {error && (
         <div className="my-4 p-3 bg-red-950/30 border border-red-800 rounded-lg flex items-start gap-3">
           <ShieldAlert className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
           <p className="text-red-200 text-sm">{error}</p>
@@ -381,21 +277,19 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
       )}
 
       {/* 재시작 필요 안내 메시지 */}
-      {!editMode && (
-        <div className="my-4 p-3 bg-amber-950/30 border border-amber-800 rounded-lg flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
-          <div className="text-amber-200 text-sm">
-            <p className="font-medium mb-1">중요 안내</p>
-            <p>
-              MCP 도구 설정을 변경(추가/수정/삭제)한 후에는 변경사항을 적용하기
-              위해 반드시 <strong>서비스 재시작</strong> 버튼을 눌러주세요.
-            </p>
-          </div>
+      <div className="my-4 p-3 bg-amber-950/30 border border-amber-800 rounded-lg flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+        <div className="text-amber-200 text-sm">
+          <p className="font-medium mb-1">중요 안내</p>
+          <p>
+            MCP 도구 설정을 변경(추가/수정/삭제)한 후에는 변경사항을 적용하기
+            위해 반드시 <strong>서비스 재시작</strong> 버튼을 눌러주세요.
+          </p>
         </div>
-      )}
+      </div>
 
       <div className="mt-6">
-        {isLoading && !editMode ? (
+        {isLoading ? (
           <div className="flex items-center justify-center p-8">
             <RefreshCw className="h-5 w-5 text-indigo-400 animate-spin" />
             <span className="ml-2 text-gray-400">도구 목록 로드 중...</span>
@@ -421,7 +315,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
                     server={server}
                     serverIdx={serverIdx}
                     onToggleExpanded={toggleServerExpanded}
-                    onEdit={handleEditServer}
                   />
                 ))}
 

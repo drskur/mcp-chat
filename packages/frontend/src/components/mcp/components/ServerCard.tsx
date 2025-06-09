@@ -1,6 +1,6 @@
 import React from 'react';
-import { ChevronDown, ChevronUp, Edit } from 'lucide-react';
-import { MCPServer, ServerConfig } from '@/types/mcp';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { MCPServer } from '@/types/mcp';
 import { ServerStatusIcon } from '@/components/mcp';
 import { ToolsList } from './ToolsList';
 
@@ -8,14 +8,12 @@ interface ServerCardProps {
   server: MCPServer;
   serverIdx: number;
   onToggleExpanded: (index: number) => void;
-  onEdit: (serverName: string, serverConfig: ServerConfig) => void;
 }
 
 export const ServerCard: React.FC<ServerCardProps> = ({
   server,
   serverIdx,
-  onToggleExpanded,
-  onEdit
+  onToggleExpanded
 }) => {
   return (
     <div className="bg-gray-900/30 rounded-lg border border-gray-800 overflow-hidden">
@@ -41,27 +39,17 @@ export const ServerCard: React.FC<ServerCardProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            className="p-2 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-gray-800"
-            onClick={() => onToggleExpanded(serverIdx)}
-            title={server.expanded ? '접기' : '펼치기'}
-          >
-            {server.expanded ? (
-              <ChevronUp className="h-5 w-5" />
-            ) : (
-              <ChevronDown className="h-5 w-5" />
-            )}
-          </button>
-
-          <button
-            className="p-2 text-gray-500 hover:text-indigo-400 rounded-lg hover:bg-gray-800"
-            onClick={() => onEdit(server.name, server.config)}
-            title="서버 수정"
-          >
-            <Edit className="h-5 w-5" />
-          </button>
-        </div>
+        <button
+          className="p-2 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-gray-800"
+          onClick={() => onToggleExpanded(serverIdx)}
+          title={server.expanded ? '접기' : '펼치기'}
+        >
+          {server.expanded ? (
+            <ChevronUp className="h-5 w-5" />
+          ) : (
+            <ChevronDown className="h-5 w-5" />
+          )}
+        </button>
       </div>
 
       {server.expanded && (

@@ -3,15 +3,15 @@ import { RefreshCw, Check, FileJson, Copy, CheckCircle2, XCircle, X } from 'luci
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ServerConfig } from '@/types/mcp';
 import { autoFixJsonString } from '../utils';
 import { JsonHelpMessage } from '@/components/mcp';
 import { getMCPConfig } from '@/app/actions/mcp/server';
+import { ClientConfig } from '@langchain/mcp-adapters';
 
 interface JsonModeViewProps {
   isLoading: boolean;
   error: string | null;
-  onSave: (configObj: Record<string, ServerConfig>) => Promise<void>;
+  onSave: (configObj: ClientConfig) => Promise<void>;
   onCopyJSON: (text: string) => void;
   setError: (error: string | null) => void;
 }
@@ -82,6 +82,8 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
         setError(`유효하지 않은 JSON 형식입니다: ${errorMessage}`);
         return;
       }
+
+      console.log(configObj);
 
       await onSave(configObj);
     } catch (err) {

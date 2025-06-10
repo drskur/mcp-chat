@@ -17,9 +17,6 @@ export class MCPClientManager {
   }
 
   async getClient(): Promise<MultiServerMCPClient | null> {
-    if (this.configCache && Object.keys(this.configCache).length === 0) {
-      await this.updateConfig();
-    }
     return this.mcpClient;
   }
 
@@ -30,6 +27,8 @@ export class MCPClientManager {
     const needsUpdate =
       this.currentConfigName !== configName ||
       JSON.stringify(this.configCache) !== JSON.stringify(newConfig);
+
+    console.log("needsUpdate", needsUpdate);
 
     if (needsUpdate) {
       // 클라이언트 생성 또는 재생성

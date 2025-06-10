@@ -2,10 +2,22 @@
 
 import { MCPServer, MCPTool } from '@/types/mcp';
 import { MCPClientManager } from '@/mcp/mcp-client-manager';
-import { loadMcpConfig } from '@/mcp/config';
+import { loadMcpConfig, saveMcpConfig } from '@/mcp/config';
+import { ClientConfig } from '@langchain/mcp-adapters';
 
-export async function getMCPConfig(name: string = 'default') {
+export async function getMCPConfig(
+  name: string = 'default',
+): Promise<ClientConfig> {
   return loadMcpConfig(name);
+}
+
+export async function setMCPConfig(name: string, config: ClientConfig) {
+  return saveMcpConfig(name, config);
+}
+
+export async function updateMCPConfig(configName: string) {
+  const manager = MCPClientManager.getInstance();
+  await manager.updateConfig(configName);
 }
 
 export async function getMCPServers(): Promise<{ servers: MCPServer[] }> {

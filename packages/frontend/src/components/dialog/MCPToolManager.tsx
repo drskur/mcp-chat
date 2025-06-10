@@ -3,11 +3,16 @@ import { Plug, FileJson, Server, RefreshCw, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MCPToolManagerProps, MCPServer, ServerConfig } from '@/types/mcp';
 import { JsonModeView, ServerCard, EmptyServerState } from '@/components/mcp';
-import { getMCPServers } from '@/app/actions/mcp/server';
+import {
+  getMCPServers,
+  setMCPConfig,
+  updateMCPConfig,
+} from '@/app/actions/mcp/server';
+import { ClientConfig } from '@langchain/mcp-adapters';
 
-const MCPToolManager: React.FC<MCPToolManagerProps> = ({
-  onSettingsChanged,
-}) => {
+const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
+  const defaultAgentName = 'default';
+  const configName = agentName ?? defaultAgentName;
   // 상태 관리
   const [servers, setServers] = useState<MCPServer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +33,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
 
     try {
       const { servers } = await getMCPServers();
-
       setServers(servers);
     } catch (err) {
       console.error('도구 목록 가져오기 오류:', err);
@@ -41,9 +45,12 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
     }
   };
 
+  const updateAndFetchTools = () =>
+    updateMCPConfig(configName).then(fetchTools);
+
   // 초기 로드 및 주기적 갱신
   useEffect(() => {
-    fetchTools().catch(console.error);
+    updateAndFetchTools().catch(console.error);
   }, []);
 
   // 서버 확장/축소 토글
@@ -65,76 +72,13 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
   };
 
   // JSON 모드 저장 핸들러
-  const handleJsonSave = async (configObj: Record<string, ServerConfig>) => {
+  const handleJsonSave = async (configObj: ClientConfig) => {
     setIsLoading(true);
     setError(null);
-
-    try {
-      const currentServerNames = servers.map((server) => server.name);
-      const newServerNames = Object.keys(configObj);
-
-      // 삭제된 서버 처리
-      for (const serverName of currentServerNames) {
-        if (!newServerNames.includes(serverName)) {
-          const response = await fetch(
-            `/api/mcp-tools/${encodeURIComponent(serverName)}`,
-            {
-              method: 'DELETE',
-            },
-          );
-
-          if (!response.ok) {
-            throw new Error(`서버 ${serverName} 삭제에 실패했습니다.`);
-          }
-        }
-      }
-
-      // 새로운/수정된 서버 처리
-      for (const [serverName, config] of Object.entries(configObj)) {
-        if (currentServerNames.includes(serverName)) {
-          // 기존 서버 업데이트
-          const response = await fetch(
-            `/api/mcp-tools/${encodeURIComponent(serverName)}`,
-            {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                name: serverName,
-                config,
-              }),
-            },
-          );
-
-          if (!response.ok) {
-            throw new Error(`서버 ${serverName} 업데이트에 실패했습니다.`);
-          }
-        } else {
-          // 새 서버 추가
-          const response = await fetch('/api/mcp-tools', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              name: serverName,
-              config,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error(`서버 ${serverName} 추가에 실패했습니다.`);
-          }
-        }
-      }
-
-      await fetchTools();
-
-      if (onSettingsChanged) onSettingsChanged();
-    } finally {
-      setIsLoading(false);
-    }
+    await setMCPConfig(configName, configObj);
+    await updateAndFetchTools();
+    setJsonMode(false);
+    setIsLoading(false);
   };
 
   return (

@@ -60,20 +60,17 @@ export async function loadSettings(): Promise<Settings> {
  */
 export function setValueByPath(obj: any, path: string, value: any): any {
   if (!path) {
-    return { ...obj, [path]: value };
+    return value;
   }
 
   const keys = path.split('.');
-  const result = { ...obj };
+  const result = JSON.parse(JSON.stringify(obj)); // 깊은 복사
 
   let current = result;
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i];
-    if (!current[key] || typeof current[key] !== 'object') {
+    if (!current[key] || typeof current[key] !== 'object' || Array.isArray(current[key])) {
       current[key] = {};
-    } else {
-      // 중첩 객체를 깊은 복사
-      current[key] = { ...current[key] };
     }
     current = current[key];
   }
@@ -113,6 +110,8 @@ export async function saveSettingByPath(
     // 현재 설정 로드
     const currentSettings = await loadSettings();
 
+    console.log("settings", currentSettings);
+
     // 경로를 사용하여 값 설정
     const updatedSettings = setValueByPath(currentSettings, path, value);
 
@@ -125,3 +124,5 @@ export async function saveSettingByPath(
     throw error;
   }
 }
+
+export const DEFAULT_AGENT_NAME = 'default';

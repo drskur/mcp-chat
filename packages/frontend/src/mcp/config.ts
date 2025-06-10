@@ -7,9 +7,9 @@ export async function loadMcpConfig(
 ): Promise<ClientConfig> {
   const settings = await loadSettings();
 
-  return settings.mcp?.[name] ?? { mcpServers: {} };
+  return settings.agents?.[name]?.mcp ?? { mcpServers: {} };
 }
 
 export async function saveMcpConfig(name: string, config: ClientConfig) {
-  return saveSettingByPath(`mcp.${name}`, config);
+  return saveSettingByPath(`agents.${name}.mcp`, config);
 }

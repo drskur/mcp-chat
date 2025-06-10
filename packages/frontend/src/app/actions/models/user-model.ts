@@ -11,7 +11,7 @@ export async function getUserModel(name: string): Promise<{ modelId: string }> {
   try {
     // 설정 로드
     const settings = await loadSettings();
-    const modelId = settings.model?.[name] ?? DEFAULT_MODEL_ID;
+    const modelId = settings.agents?.[name]?.model ?? DEFAULT_MODEL_ID;
 
     console.log(`사용자 모델 로드됨 (${name}): ${modelId}`);
     return { modelId };
@@ -28,7 +28,7 @@ export async function saveUserModel(
 ): Promise<{ success: boolean; modelId: string }> {
   try {
     // agent name별로 모델 저장
-    await saveSettingByPath(`model.${name}`, modelId);
+    await saveSettingByPath(`agents.${name}.model`, modelId);
 
     console.log(`사용자 모델 저장됨 (${name}): ${modelId}`);
     return { success: true, modelId };

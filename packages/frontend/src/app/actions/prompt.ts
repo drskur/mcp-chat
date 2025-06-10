@@ -50,11 +50,11 @@ const DEFAULT_SYSTEM_PROMPT = `
 const getDefaultSystemPrompt = () => DEFAULT_SYSTEM_PROMPT.trim();
 
 export async function loadSystemPrompt(name: string): Promise<string> {
-  const mcpConfig = await loadSettings();
+  const settings = await loadSettings();
 
-  return mcpConfig.prompt?.[name] ?? getDefaultSystemPrompt();
+  return settings.agents?.[name]?.prompt ?? getDefaultSystemPrompt();
 }
 
 export async function saveSystemPrompt(name: string, prompt: string): Promise<void> {
-  await saveSettingByPath(`prompt.${name}`, prompt)
+  await saveSettingByPath(`agents.${name}.prompt`, prompt)
 }

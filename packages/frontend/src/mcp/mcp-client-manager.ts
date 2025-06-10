@@ -1,10 +1,11 @@
 import { MultiServerMCPClient } from '@langchain/mcp-adapters';
 import { loadMcpConfig } from '@/mcp/config';
+import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
 
 export class MCPClientManager {
   private static instance: MCPClientManager;
   private mcpClient: MultiServerMCPClient | null = null;
-  private currentConfigName: string = 'default';
+  private currentConfigName: string = DEFAULT_AGENT_NAME;
   private configCache: any = {};
 
   private constructor() {}
@@ -17,10 +18,13 @@ export class MCPClientManager {
   }
 
   async getClient(): Promise<MultiServerMCPClient | null> {
+    if (!this.isInitialized()) {
+      await this.updateConfig(this.currentConfigName);
+    }
     return this.mcpClient;
   }
 
-  async updateConfig(configName: string = 'default'): Promise<boolean> {
+  async updateConfig(configName: string = DEFAULT_AGENT_NAME): Promise<boolean> {
     const newConfig = await loadMcpConfig(configName);
 
     // 클라이언트가 없거나 설정이 변경되었는지 확인
@@ -28,11 +32,8 @@ export class MCPClientManager {
       this.currentConfigName !== configName ||
       JSON.stringify(this.configCache) !== JSON.stringify(newConfig);
 
-    console.log("needsUpdate", needsUpdate);
-
     if (needsUpdate) {
       // 클라이언트 생성 또는 재생성
-      console.log(newConfig);
       this.mcpClient = new MultiServerMCPClient(newConfig);
       this.currentConfigName = configName;
       this.configCache = newConfig;
@@ -40,16 +41,6 @@ export class MCPClientManager {
     }
 
     return false; // 변경사항 없음
-  }
-
-  async resetClient(): Promise<void> {
-    this.mcpClient = null;
-    this.configCache = {};
-    this.currentConfigName = 'default';
-  }
-
-  getCurrentConfigName(): string {
-    return this.currentConfigName;
   }
 
   isInitialized(): boolean {

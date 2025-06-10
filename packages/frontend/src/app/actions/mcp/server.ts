@@ -4,9 +4,10 @@ import { MCPServer, MCPTool } from '@/types/mcp';
 import { MCPClientManager } from '@/mcp/mcp-client-manager';
 import { loadMcpConfig, saveMcpConfig } from '@/mcp/config';
 import { ClientConfig } from '@langchain/mcp-adapters';
+import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
 
 export async function getMCPConfig(
-  name: string = 'default',
+  name: string = DEFAULT_AGENT_NAME,
 ): Promise<ClientConfig> {
   return loadMcpConfig(name);
 }

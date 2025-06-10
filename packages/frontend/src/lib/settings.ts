@@ -9,6 +9,7 @@ const settingFilePath = path.join(clientSettingDir, 'settings.json');
 const initialSettings: Settings = {
   modelId: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
   mcp: {},
+  prompt: {},
 };
 
 /**
@@ -69,7 +70,11 @@ export function setValueByPath(obj: any, path: string, value: any): any {
   let current = result;
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i];
-    if (!current[key] || typeof current[key] !== 'object' || Array.isArray(current[key])) {
+    if (
+      !current[key] ||
+      typeof current[key] !== 'object' ||
+      Array.isArray(current[key])
+    ) {
       current[key] = {};
     }
     current = current[key];
@@ -110,7 +115,7 @@ export async function saveSettingByPath(
     // 현재 설정 로드
     const currentSettings = await loadSettings();
 
-    console.log("settings", currentSettings);
+    console.log('settings', currentSettings);
 
     // 경로를 사용하여 값 설정
     const updatedSettings = setValueByPath(currentSettings, path, value);
@@ -118,11 +123,9 @@ export async function saveSettingByPath(
     // 파일에 저장
     await saveSettings(updatedSettings);
 
-    console.log(`설정 저장 완료: ${path} = ${JSON.stringify(value)}`);
+    console.log(`설정 저장 완료: ${path}`);
   } catch (error) {
     console.error('설정 저장 오류:', error);
     throw error;
   }
 }
-
-export const DEFAULT_AGENT_NAME = 'default';

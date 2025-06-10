@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plug, FileJson, Server, RefreshCw, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MCPToolManagerProps, MCPServer, ServerConfig } from '@/types/mcp';
+import { MCPToolManagerProps, MCPServer } from '@/types/mcp';
 import { JsonModeView, ServerCard, EmptyServerState } from '@/components/mcp';
 import {
   getMCPServers,
@@ -9,10 +9,10 @@ import {
   updateMCPConfig,
 } from '@/app/actions/mcp/server';
 import { ClientConfig } from '@langchain/mcp-adapters';
+import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
 
 const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
-  const defaultAgentName = 'default';
-  const configName = agentName ?? defaultAgentName;
+  const configName = agentName ?? DEFAULT_AGENT_NAME;
   // 상태 관리
   const [servers, setServers] = useState<MCPServer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,7 +51,7 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
   // 초기 로드 및 주기적 갱신
   useEffect(() => {
     updateAndFetchTools().catch(console.error);
-  }, []);
+  }, [updateAndFetchTools]);
 
   // 서버 확장/축소 토글
   const toggleServerExpanded = (index: number) => {
@@ -66,7 +66,7 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
   };
 
   // JSON 복사 기능 (실제 복사는 JsonModeView 내부에서 처리)
-  const copyJSON = (text: string) => {
+  const copyJSON = (_text: string) => {
     // JsonModeView에서 복사 성공 시 호출되는 콜백
     console.log('JSON 복사됨');
   };

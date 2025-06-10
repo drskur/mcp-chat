@@ -26,7 +26,7 @@ import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
 function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
   const [activeSettings, setActiveSettings] = useState<
     'tools' | 'prompt' | 'model' | 'user' | null
   >(null);
@@ -37,7 +37,7 @@ function HomeContent() {
   const [needReinit, setNeedReinit] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  const [agentName, setAgentName] = useState(DEFAULT_AGENT_NAME);
+  const [agentName, _setAgentName] = useState(DEFAULT_AGENT_NAME);
 
   // 채팅 세션 관련 상태 추가
   const [chatSessionId, setChatSessionId] = useState(Date.now().toString());
@@ -532,12 +532,12 @@ function HomeContent() {
         onModelChange={async (modelId) => {
           setTempSelectedModel(modelId);
           setNeedReinit(true);
-          
+
           // 모델 변경 시 즉시 저장
           try {
             const { saveUserModel } = await import('@/app/actions/models/user-model');
             const result = await saveUserModel(agentName, modelId);
-            
+
             if (result.success) {
               console.log('모델 자동 저장 성공:', modelId);
               // 저장 성공 시 selectedModel도 업데이트

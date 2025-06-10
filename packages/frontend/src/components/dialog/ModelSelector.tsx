@@ -8,13 +8,11 @@ import { env } from '@/lib/env';
 interface ModelSelectorProps {
   selectedModel: string;
   onChange: (modelId: string) => void;
-  agentName?: string;
 }
 
 const ModelSelector: React.FC<ModelSelectorProps> = ({
   selectedModel,
   onChange,
-  agentName,
 }) => {
   const [modelsConfig, setModelsConfig] = useState<ModelsConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);

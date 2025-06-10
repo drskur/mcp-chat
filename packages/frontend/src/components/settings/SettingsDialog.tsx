@@ -65,15 +65,13 @@ export const SettingsDialog = ({
   onModelChange,
   onSettingsChanged,
   onUserSettingsChanged,
-  needReinit,
-  onApplySettings,
   agentName
 }: SettingsDialogProps) => {
   const dialogConfig = getDialogConfig(activeSettings);
 
   return (
-    <Dialog 
-      open={activeSettings !== null} 
+    <Dialog
+      open={activeSettings !== null}
       onOpenChange={onOpenChange}
     >
       <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto bg-gray-900 border-gray-900 shadow-2xl">
@@ -91,7 +89,7 @@ export const SettingsDialog = ({
             </div>
           </div>
         </DialogHeader>
-        
+
         <div className="py-4">
           {activeSettings === 'tools' && (
             <MCPToolManager onSettingsChanged={onSettingsChanged} agentName={agentName} />
@@ -103,14 +101,13 @@ export const SettingsDialog = ({
             <ModelSelector
               selectedModel={tempSelectedModel || selectedModel}
               onChange={onModelChange}
-              agentName={agentName}
             />
           )}
           {activeSettings === 'user' && (
             <UserSettings onSettingsChanged={onUserSettingsChanged} />
           )}
         </div>
-        
+
       </DialogContent>
     </Dialog>
   );

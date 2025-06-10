@@ -3,24 +3,16 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { FloatingSidebarTrigger } from '@/components/sidebar/FloatingSidebarTrigger';
 import { MainSidebar } from '@/components/sidebar/MainSidebar';
 import { WelcomeScreen } from '@/components/welcome/WelcomeScreen';
 import { ChatSection } from '@/components/chat/ChatSection';
 import { SettingsDialog } from '@/components/settings/SettingsDialog';
-import { useFileAttachment } from '@/hooks/useFileAttachment';
-import { FileAttachment } from '@/types/file-attachment';
-import { getUserModel } from '@/app/actions/models/user-model';
+import { StatusBar } from '@/components/layout/StatusBar';
+import { AlertDialogManager } from '@/components/dialog/AlertDialogManager';
+import { useUserSettings } from '@/hooks/useUserSettings';
+import { useModelManager } from '@/hooks/useModelManager';
+import { useChatState } from '@/hooks/useChatState';
 import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
 
 function HomeContent() {
@@ -30,50 +22,39 @@ function HomeContent() {
   const [activeSettings, setActiveSettings] = useState<
     'tools' | 'prompt' | 'model' | 'user' | null
   >(null);
-  const [selectedModel, setSelectedModel] = useState(
-    'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
-  );
-  const [tempSelectedModel, setTempSelectedModel] = useState('');
-  const [needReinit, setNeedReinit] = useState(false);
-  const [showChat, setShowChat] = useState(false);
-  const [inputValue, setInputValue] = useState('');
   const [agentName, _setAgentName] = useState(DEFAULT_AGENT_NAME);
 
-  // 채팅 세션 관련 상태 추가
-  const [chatSessionId, setChatSessionId] = useState(Date.now().toString());
-
-  // 경고 대화상자 관련 상태 추가
-  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
-  const [pendingInitialMessage, setPendingInitialMessage] = useState<
-    string | undefined
-  >(undefined);
-  const [pendingAttachments, setPendingAttachments] = useState<
-    FileAttachment[]
-  >([]);
-
-  // 파일 첨부 관련 상태 - useFileAttachment 훅 사용
+  // 커스텀 훅들 사용
+  const { userSettings, userInfo, updateUserSettings } = useUserSettings();
   const {
+    selectedModel,
+    tempSelectedModel,
+    needReinit,
+    handleModelChange,
+    handleApplySettings,
+    resetTempModel,
+    initializeTempModel,
+    setNeedReinit,
+  } = useModelManager(agentName);
+  const {
+    showChat,
+    setShowChat,
+    inputValue,
+    chatSessionId,
+    savedInitialMessage,
+    savedAttachments,
+    alertDialogOpen,
+    setAlertDialogOpen,
     attachments,
     fileInputRef,
+    handleInputChange,
+    handleInputSubmit,
     handleFileUpload,
     removeAttachment,
-    clearAttachments,
     handleAttachButtonClick,
-    prepareFilesForChat,
-  } = useFileAttachment();
-
-
-  // 사용자 설정 관련 상태 추가
-  const [userSettings, setUserSettings] = useState({
-    title: 'PACE MCP AGENT',
-    subtitle: 'Enterprise',
-    logoUrl: '',
-    logoOpacity: 1.0, // 기본 투명도 추가
-  });
-
-  // 사용자 정보 추가
-  const [userName, setUserName] = useState('사용자');
-  const [userEmail, setUserEmail] = useState('user@example.com');
+    showNewChatConfirm,
+    handleAlertConfirm,
+  } = useChatState(agentName);
 
   // URL에서 설정 상태 초기화
   useEffect(() => {
@@ -83,241 +64,24 @@ function HomeContent() {
     }
   }, [searchParams]);
 
-  // 컴포넌트 마운트 시 사용자 설정 정보 로드
+  // 다이얼로그 열릴 때 임시 모델 초기화
   useEffect(() => {
-    // 사용자 설정 로드
-    const loadUserSettings = () => {
-      try {
-        const savedSettings = localStorage.getItem('user_settings');
-        if (savedSettings) {
-          const parsedSettings = JSON.parse(savedSettings);
-          setUserSettings({
-            title: parsedSettings.title || 'PACE MCP AGENT',
-            subtitle: parsedSettings.subtitle || 'Enterprise',
-            logoUrl: parsedSettings.logoUrl || '',
-            logoOpacity:
-              parsedSettings.logoOpacity !== undefined
-                ? parsedSettings.logoOpacity
-                : 1.0,
-          });
-          console.log('사용자 설정 정보를 불러왔습니다', parsedSettings);
-        }
-      } catch (error) {
-        console.error('사용자 설정 정보를 불러오는데 실패했습니다:', error);
-      }
-    };
-
-    // 사용자 정보 로드 (실제로는 API 호출 또는 쿠키에서 가져올 수 있음)
-    const loadUserInfo = () => {
-      try {
-        // 여기서는 임시 데이터를 사용합니다
-        setUserName('USER');
-        setUserEmail('user@example.com');
-      } catch (error) {
-        console.error('사용자 정보 로드 실패:', error);
-      }
-    };
-
-    // 기존 모델 정보 로드 코드
-    const fetchUserModel = async () => {
-      const { modelId } = await getUserModel(agentName);
-      setSelectedModel(modelId);
-    };
-
-    // 함수 실행
-    loadUserSettings();
-    loadUserInfo();
-    fetchUserModel().catch(console.error);
-
-    // 설정 변경 이벤트 리스너 추가
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'user_settings' && e.newValue) {
-        try {
-          const parsedSettings = JSON.parse(e.newValue);
-          setUserSettings({
-            title: parsedSettings.title || 'PACE MCP AGENT',
-            subtitle: parsedSettings.subtitle || 'Enterprise',
-            logoUrl: parsedSettings.logoUrl || '',
-            logoOpacity:
-              parsedSettings.logoOpacity !== undefined
-                ? parsedSettings.logoOpacity
-                : 1.0,
-          });
-        } catch (error) {
-          console.error('설정 변경 감지 오류:', error);
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [agentName]);
+    if (activeSettings === 'model') {
+      initializeTempModel(selectedModel);
+    }
+  }, [activeSettings, selectedModel, initializeTempModel]);
 
   const handleSettingsChanged = () => {
     setNeedReinit(true);
   };
-
-  const handleApplySettings = async () => {
-    // 임시 저장된 모델이 있으면 적용
-    if (tempSelectedModel && tempSelectedModel !== selectedModel) {
-      setSelectedModel(tempSelectedModel);
-      setTempSelectedModel('');
-
-      // 에이전트 재초기화 API 호출
-      try {
-        const response = await fetch('/api/chat/reinit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ model_id: tempSelectedModel }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            console.log(
-              '에이전트 재초기화 성공:',
-              data.model_id,
-              `(Max Tokens: ${data.max_tokens})`,
-            );
-          } else {
-            console.error('에이전트 재초기화 실패:', data.message);
-          }
-        } else {
-          console.error('에이전트 재초기화 요청 실패');
-        }
-      } catch (error) {
-        console.error('에이전트 재초기화 요청 오류:', error);
-      }
-    }
-
-    setNeedReinit(false);
-    setActiveSettings(null); // 다이얼로그 닫기
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  };
-
-  // 입력 폼 제출 핸들러
-  const handleInputSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!inputValue.trim() && attachments.length === 0) return;
-
-    // 입력값 저장하고 초기화
-    const message = inputValue;
-    setInputValue('');
-
-    // 새 대화 시작 대화상자 표시
-    showNewChatConfirm(message, [...attachments]);
-
-    // 첨부 파일 초기화
-    clearAttachments();
-  };
-
-  // 새 대화 시작 확인 대화상자를 표시하는 함수
-  const showNewChatConfirm = (
-    initialMessage?: string,
-    files: FileAttachment[] = [],
-  ) => {
-    // 대화 중인 경우에만 확인 대화상자 표시
-    if (showChat) {
-      // 대화 내용이 있는 경우 초기화 확인 대화상자 표시
-      setPendingInitialMessage(initialMessage);
-      setPendingAttachments([...files]);
-      setAlertDialogOpen(true);
-    } else {
-      // 대화가 없는 경우 바로 새 대화 시작
-      initializeNewChat(initialMessage, files);
-    }
-  };
-
-  // 새 대화 초기화 실행 함수
-  const initializeNewChat = async (
-    initialMessage?: string,
-    files: FileAttachment[] = [],
-  ) => {
-    // 새 대화 시작 전에 이전 대화 초기화 (localStorage 포함)
-    localStorage.removeItem('mcp_initial_message');
-    localStorage.removeItem('mcp_initial_attachments');
-
-    // 대화 내용 초기화를 위한 플래그 설정
-    localStorage.setItem('mcp_reset_conversation', 'true');
-
-    // 대화 초기화 이벤트 발생 (같은 창에서도 동작하도록)
-    window.dispatchEvent(new Event('mcp_reset_conversation'));
-
-    // 채팅 세션 ID 업데이트 (컴포넌트 강제 재마운트를 위해)
-    setChatSessionId(Date.now().toString());
-
-    // 초기화 후 파라미터로 전달된 메시지와 첨부 파일만 사용
-    // 이전 저장된 데이터는 초기화
-    if (!initialMessage && files.length === 0) {
-      setSavedInitialMessage('');
-      setSavedAttachments([]);
-    }
-
-    // 새 대화 시작 시 최신 모델 정보 불러오기
-    let currentModelId = selectedModel;
-    const { modelId } = await getUserModel(agentName);
-    if (modelId !== selectedModel) {
-      console.log('저장된 모델 정보로 업데이트:', modelId);
-      setSelectedModel(modelId);
-      currentModelId = modelId;
-    }
-
-    // 첨부 파일 처리 - useFileAttachment 훅의 prepareFilesForChat 사용
-    const initialChatAttachments = await prepareFilesForChat(files);
-
-    // 약간의 지연 후에 다시 채팅 인터페이스 마운트 (리셋 효과)
-    setTimeout(() => {
-      // 대화 시작 - 상태 변경으로 화면 전환
-      setShowChat(true);
-
-      // 새로운 초기 메시지와 첨부파일만 사용
-      if (initialMessage || files.length > 0) {
-        // ChatInterface에 초기 메시지와 첨부파일 전달
-        console.log('채팅 인터페이스로 전달: ', {
-          message: initialMessage || '',
-          attachments: initialChatAttachments.length,
-          hasImageUrls: initialChatAttachments.some((a) => a.previewUrl),
-        });
-
-        setSavedInitialMessage(initialMessage || '');
-        setSavedAttachments(initialChatAttachments);
-      } else {
-        // 아무 것도 전달하지 않고 완전히 새로운 대화 시작
-        setSavedInitialMessage('');
-        setSavedAttachments([]);
-        console.log('완전히 새로운 대화 시작 (초기 메시지/첨부 파일 없음)');
-      }
-    }, 100);
-  };
-
-  // 다이얼로그 열릴 때 임시 모델 초기화
-  useEffect(() => {
-    if (activeSettings === 'model') {
-      setTempSelectedModel(selectedModel);
-    }
-  }, [activeSettings, selectedModel]);
-
-  // 새로운 상태 추가
-  const [savedInitialMessage, setSavedInitialMessage] = useState<string>('');
-  const [savedAttachments, setSavedAttachments] = useState<FileAttachment[]>(
-    [],
-  );
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] dark:bg-[#0a0a0a] text-gray-100 overflow-hidden">
       <SidebarProvider>
         <MainSidebar
           userSettings={userSettings}
-          userName={userName}
-          userEmail={userEmail}
+          userName={userInfo.name}
+          userEmail={userInfo.email}
           onNewChat={() => showNewChatConfirm()}
           onSettingsClick={(type) => setActiveSettings(type)}
         />
@@ -351,36 +115,7 @@ function HomeContent() {
             )}
           </div>
 
-          {/* 상태 표시줄 - AWS 정보로 수정 */}
-          <div className="bg-gray-900/80 border-t border-gray-900 p-2 px-4 text-xs text-gray-500 flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center gap-2 mb-1 md:mb-0">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-3 w-3"
-              >
-                <path d="M14 5c.5 1.5 1.5 2 2.5 2h1a3 3 0 0 1 0 6h-.5A5.5 5.5 0 0 1 14 7.5V5Z" />
-                <path d="M6 8h2a2 2 0 0 0 0-4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2a4 4 0 0 1-4 4v4h-2.5" />
-                <path d="M4 14a4 4 0 0 1 4-4" />
-              </svg>
-              <span className="font-medium">POWERED BY AWS</span>
-            </div>
-            <div className="mb-1 md:mb-0">
-              <span>Designed and built by the AWS KOREA PACE Team</span>
-            </div>
-            <div>
-              <span>
-                &copy; 2025 Amazon Web Services, Inc. All rights reserved.
-              </span>
-            </div>
-          </div>
+          <StatusBar />
         </div>
       </SidebarProvider>
 
@@ -389,7 +124,7 @@ function HomeContent() {
         onOpenChange={(open) => {
           if (!open) {
             setActiveSettings(null);
-            setTempSelectedModel('');
+            resetTempModel();
             // URL에서 설정 파라미터 제거
             router.push('/');
           }
@@ -397,80 +132,18 @@ function HomeContent() {
         needReinit={needReinit}
         selectedModel={selectedModel}
         tempSelectedModel={tempSelectedModel}
-        onModelChange={async (modelId) => {
-          setTempSelectedModel(modelId);
-          setNeedReinit(true);
-
-          // 모델 변경 시 즉시 저장
-          try {
-            const { saveUserModel } = await import('@/app/actions/models/user-model');
-            const result = await saveUserModel(agentName, modelId);
-
-            if (result.success) {
-              console.log('모델 자동 저장 성공:', modelId);
-              // 저장 성공 시 selectedModel도 업데이트
-              setSelectedModel(modelId);
-            } else {
-              console.error('모델 자동 저장 실패');
-            }
-          } catch (error) {
-            console.error('모델 자동 저장 오류:', error);
-          }
-        }}
+        onModelChange={handleModelChange}
         onSettingsChanged={handleSettingsChanged}
         onApplySettings={handleApplySettings}
-        onUserSettingsChanged={() => {
-          try {
-            const savedSettings = localStorage.getItem('user_settings');
-            if (savedSettings) {
-              setUserSettings(JSON.parse(savedSettings));
-            }
-          } catch (error) {
-            console.error('설정 적용 실패:', error);
-          }
-        }}
+        onUserSettingsChanged={updateUserSettings}
         agentName={agentName}
       />
 
-      {/* 경고 대화상자 - 새 대화 시작 확인 */}
-      <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
-        <AlertDialogContent className="bg-gray-900 border-gray-800">
-          <AlertDialogHeader>
-            <AlertDialogTitle>대화 내용 초기화</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
-              새 대화를 시작하면 현재 대화 내용이 모두 초기화되고, 에이전트가
-              재시작됩니다. 계속하시겠습니까?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white">
-              취소
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-indigo-600 hover:bg-indigo-700 text-white border-0"
-              onClick={() => {
-                // 현재 대화가 있는 상태에서 새 대화 시작
-                // 저장된 임시 메시지와 첨부 파일(있는 경우만)로 새 대화 초기화
-                const hasInitialData =
-                  !!pendingInitialMessage || pendingAttachments.length > 0;
-
-                // 새 대화 초기화 함수 호출
-                initializeNewChat(
-                  hasInitialData ? pendingInitialMessage : undefined,
-                  hasInitialData ? pendingAttachments : [],
-                );
-
-                // 임시 데이터 초기화
-                setPendingInitialMessage(undefined);
-                setPendingAttachments([]);
-              }}
-            >
-              확인
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
+      <AlertDialogManager
+        isOpen={alertDialogOpen}
+        onOpenChange={setAlertDialogOpen}
+        onConfirm={handleAlertConfirm}
+      />
     </div>
   );
 }

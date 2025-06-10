@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, Check, FileJson, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { ServerConfig } from '@/types/mcp';
 import { autoFixJsonString } from '../utils';
 import { JsonHelpMessage } from '@/components/mcp';
@@ -126,17 +127,17 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
           <span className="text-sm text-gray-300">MCP 서버 설정 (JSON)</span>
         </div>
         <div className="p-1">
-          <textarea
+          <Textarea
             ref={jsonTextareaRef}
             rows={24}
-            className="w-full p-3 text-sm bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-transparent text-gray-300 font-mono border border-gray-700 rounded resize-none block"
+            className="min-h-[600px] bg-gray-900/30 focus-visible:ring-gray-600 text-gray-300 font-mono border-gray-700 resize-none"
             value={jsonText}
             onChange={handleTextChange}
-            spellCheck="false"
+            spellCheck={false}
             autoComplete="off"
             autoCorrect="off"
             wrap="off"
-          ></textarea>
+          />
         </div>
       </div>
 

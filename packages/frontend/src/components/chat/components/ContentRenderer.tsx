@@ -45,8 +45,8 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
   // 텍스트 아이템 렌더링
   if (item.type === "text") {
     return (
-      <span 
-        key={item.id} 
+      <span
+        key={item.id}
         className={shouldAnimate ? "fade-in" : ""}
       >
         {item.content}
@@ -58,25 +58,25 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
   if (item.type === "tool_use") {
     const toolUseItem = item as ToolUseContentItem;
     const isCollapsed = toolUseItem.collapsed;
-    
+
     return (
-      <div 
-        key={item.id} 
+      <div
+        key={item.id}
         className={`mt-4 mb-4 ${shouldAnimate ? "fade-in" : ""}`}
       >
         <div className="bg-gray-800/70 rounded-md p-3 text-xs border border-gray-700">
-          <div className="font-medium text-gray-300 mb-1 flex justify-between items-center cursor-pointer" 
+          <div className="font-medium text-gray-300 mb-1 flex justify-between items-center cursor-pointer"
               onClick={() => onToggleToolCollapse(messageId, item.id)}>
             <div className="flex items-center">
               <Wrench className="h-4 w-4 mr-1" />
               <span>도구 사용: {toolUseItem.name}</span>
             </div>
-            {isCollapsed ? 
-              <ChevronRight className="h-4 w-4 text-gray-400" /> : 
+            {isCollapsed ?
+              <ChevronRight className="h-4 w-4 text-gray-400" /> :
               <ChevronDown className="h-4 w-4 text-gray-400" />
             }
           </div>
-          
+
           {!isCollapsed && (
             <div className="font-mono text-gray-400 overflow-auto max-h-40 bg-gray-900/70 p-2 rounded border border-gray-800 overflow-x-hidden">
               <pre className="text-xs text-green-400 whitespace-pre-wrap break-all">
@@ -85,24 +85,22 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
                     if (!toolUseItem.input || toolUseItem.input === '') {
                       return '도구 입력 데이터가 로딩 중...';
                     }
-                    
+
                     if (toolUseItem.name === "text_to_image") {
-                      const completedJson = /^\s*\{[\s\S]*\}\s*$/.test(toolUseItem.input);
-                      
+                      const completedJson = /^\s*\{[\s\S]*}\s*$/.test(toolUseItem.input);
+
                       if (!completedJson) {
                         return `${toolUseItem.input} (데이터 로딩 중...)`;
                       }
-                      
+
                       const parsedInput = JSON.parse(toolUseItem.input);
                       return `{\n  "width": ${parsedInput.width || 1024},\n  "height": ${parsedInput.height || 1024},\n  "prompt": "${parsedInput.prompt || ''}",\n  "negative_prompt": "${parsedInput.negative_prompt || ''}"\n}`;
                     }
-                    
-                    if (typeof toolUseItem.input !== 'string') {
-                      return JSON.stringify(toolUseItem.input, null, 2);
-                    }
-                    
-                    const looksLikeJson = /^\s*[\{\[]/.test(toolUseItem.input) && /[\}\]]\s*$/.test(toolUseItem.input);
-                    
+
+
+
+                    const looksLikeJson = /^\s*[{\[]/.test(toolUseItem.input) && /[}\]]\s*$/.test(toolUseItem.input);
+
                     if (looksLikeJson) {
                       try {
                         const parsedJson = JSON.parse(toolUseItem.input);
@@ -129,10 +127,10 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
   if (item.type === "tool_result") {
     const toolResultItem = item as ToolResultContentItem;
     const isCollapsed = toolResultItem.collapsed;
-    
+
     return (
-      <div 
-        key={item.id} 
+      <div
+        key={item.id}
         className={`mt-4 mb-4 ${shouldAnimate ? "fade-in" : ""}`}
       >
         <div className="bg-gray-800/70 rounded-md p-3 text-xs border border-gray-700">
@@ -142,12 +140,12 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
               <Cog className="h-4 w-4 mr-1" />
               <span>도구 결과</span>
             </div>
-            {isCollapsed ? 
-              <ChevronRight className="h-4 w-4 text-gray-400" /> : 
+            {isCollapsed ?
+              <ChevronRight className="h-4 w-4 text-gray-400" /> :
               <ChevronDown className="h-4 w-4 text-gray-400" />
             }
           </div>
-          
+
           {!isCollapsed && (
             <div className="font-mono text-gray-400 overflow-auto max-h-40 bg-gray-900/70 p-2 rounded border border-gray-800 overflow-x-hidden">
               <pre className="text-xs text-green-400 whitespace-pre-wrap break-all">{toolResultItem.result}</pre>
@@ -161,7 +159,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
   // 이미지 아이템 렌더링
   if (item.type === "image") {
     const imageItem = item as ImageContentItem;
-    
+
     if (!imageItem.imageData) {
       return (
         <div key={imageItem.id} className="p-2 bg-red-900/30 rounded-md">
@@ -169,12 +167,12 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
         </div>
       );
     }
-    
+
     const imgSrc = `data:${imageItem.mimeType};base64,${imageItem.imageData}`;
-    
+
     return (
       <div key={imageItem.id} className="mt-2 mb-2 max-w-full">
-        <div 
+        <div
           className="relative rounded-md border border-indigo-500/30 cursor-pointer hover:opacity-90 transition-opacity inline-block"
           style={{ maxHeight: "200px" }}
           onClick={() => onSetZoomedImage({
@@ -184,7 +182,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
           })}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
+          <img
             src={imgSrc}
             alt="첨부 이미지"
             className="rounded-md max-h-[200px] w-auto object-contain"
@@ -199,12 +197,12 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
   if (item.type === "document") {
     const documentItem = item as DocumentContentItem;
     const fileIcon = getFileIcon(documentItem.fileType);
-    const fileSize = documentItem.fileSize < 1024 * 1024 
-      ? `${Math.round(documentItem.fileSize / 1024)} KB` 
+    const fileSize = documentItem.fileSize < 1024 * 1024
+      ? `${Math.round(documentItem.fileSize / 1024)} KB`
       : `${(documentItem.fileSize / (1024 * 1024)).toFixed(1)} MB`;
-    
+
     const fileExtension = documentItem.filename.split('.').pop()?.toUpperCase() || '';
-    
+
     return (
       <div key={documentItem.id} className={`mt-2 mb-2 ${shouldAnimate ? "fade-in" : ""}`}>
         <div className="flex border border-gray-700 bg-gray-800/50 rounded-md p-3 max-w-[350px]">
@@ -231,7 +229,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
               <p className="text-xs text-gray-400">
                 {fileSize}
               </p>
-              <button 
+              <button
                 className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center"
                 onClick={() => {
                   if (documentItem.fileId) {

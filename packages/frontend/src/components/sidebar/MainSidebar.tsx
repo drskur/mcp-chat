@@ -4,7 +4,6 @@ import {
   Settings,
   MessageCircle,
   PlusIcon,
-  Book,
   BarChart3,
   Brain,
 } from 'lucide-react';
@@ -35,7 +34,7 @@ interface MainSidebarProps {
   userName: string;
   userEmail: string;
   onNewChat: () => void;
-  onSettingsClick: (type: 'tools' | 'prompt' | 'model' | 'user' | 'help') => void;
+  onSettingsClick: (type: 'tools' | 'prompt' | 'model' | 'user') => void;
 }
 
 export const MainSidebar = ({
@@ -47,7 +46,7 @@ export const MainSidebar = ({
 }: MainSidebarProps) => {
   const router = useRouter();
 
-  const handleSettingsClick = (type: 'tools' | 'prompt' | 'model' | 'user' | 'help') => {
+  const handleSettingsClick = (type: 'tools' | 'prompt' | 'model' | 'user') => {
     const params = new URLSearchParams();
     params.set('settings', type);
     router.push(`/?${params.toString()}`);
@@ -120,15 +119,6 @@ export const MainSidebar = ({
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                className="w-full justify-start gap-3"
-                onClick={() => handleSettingsClick('help')}
-              >
-                <Book className="h-5 w-5" />
-                <span>도움말</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
 

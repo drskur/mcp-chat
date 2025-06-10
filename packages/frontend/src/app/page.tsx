@@ -27,7 +27,7 @@ function HomeContent() {
   const router = useRouter();
   
   const [activeSettings, setActiveSettings] = useState<
-    'tools' | 'prompt' | 'model' | 'user' | 'help' | null
+    'tools' | 'prompt' | 'model' | 'user' | null
   >(null);
   const [selectedModel, setSelectedModel] = useState(
     'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
@@ -75,8 +75,8 @@ function HomeContent() {
   // URL에서 설정 상태 초기화
   useEffect(() => {
     const settingsParam = searchParams.get('settings');
-    if (settingsParam && ['tools', 'prompt', 'model', 'user', 'help'].includes(settingsParam)) {
-      setActiveSettings(settingsParam as 'tools' | 'prompt' | 'model' | 'user' | 'help');
+    if (settingsParam && ['tools', 'prompt', 'model', 'user'].includes(settingsParam)) {
+      setActiveSettings(settingsParam as 'tools' | 'prompt' | 'model' | 'user');
     }
   }, [searchParams]);
 

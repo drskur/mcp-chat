@@ -12,10 +12,9 @@ import MCPToolManager from '@/components/dialog/MCPToolManager';
 import SystemPromptEditor from '@/components/dialog/SystemPromptEditor';
 import ModelSelector from '@/components/dialog/ModelSelector';
 import UserSettings from '@/components/dialog/UserSettings';
-import HelpPanel from '@/components/dialog/HelpPanel';
 import { Button } from '@/components/ui/button';
 
-type SettingsType = 'tools' | 'prompt' | 'model' | 'user' | 'help';
+type SettingsType = 'tools' | 'prompt' | 'model' | 'user';
 
 interface SettingsDialogProps {
   activeSettings: SettingsType | null;
@@ -50,11 +49,6 @@ const getDialogConfig = (activeSettings: SettingsType | null) => {
       return {
         title: '사용자 인터페이스 설정',
         description: '시스템 제목과 로고를 사용자 정의합니다.'
-      };
-    case 'help':
-      return {
-        title: '도움말',
-        description: 'MCP 시스템 사용법 및 안내'
       };
     default:
       return {
@@ -113,9 +107,6 @@ export const SettingsDialog = ({
           )}
           {activeSettings === 'user' && (
             <UserSettings onSettingsChanged={onUserSettingsChanged} />
-          )}
-          {activeSettings === 'help' && (
-            <HelpPanel />
           )}
         </div>
         

@@ -21,6 +21,7 @@ import { SettingsDialog } from '@/components/settings/SettingsDialog';
 import { useFileAttachment } from '@/hooks/useFileAttachment';
 import { FileAttachment } from '@/types/file-attachment';
 import { getUserModel } from '@/app/actions/models/user-model';
+import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -36,6 +37,7 @@ function HomeContent() {
   const [needReinit, setNeedReinit] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [agentName, setAgentName] = useState(DEFAULT_AGENT_NAME);
 
   // 채팅 세션 관련 상태 추가
   const [chatSessionId, setChatSessionId] = useState(Date.now().toString());
@@ -117,7 +119,7 @@ function HomeContent() {
 
     // 기존 모델 정보 로드 코드
     const fetchUserModel = async () => {
-      const { modelId } = await getUserModel();
+      const { modelId } = await getUserModel(agentName);
       setSelectedModel(modelId);
     };
 
@@ -151,7 +153,7 @@ function HomeContent() {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, [agentName]);
 
   const handleSettingsChanged = () => {
     setNeedReinit(true);
@@ -260,7 +262,7 @@ function HomeContent() {
 
     // 새 대화 시작 시 최신 모델 정보 불러오기
     let currentModelId = selectedModel;
-    const { modelId } = await getUserModel();
+    const { modelId } = await getUserModel(agentName);
     if (modelId !== selectedModel) {
       console.log('저장된 모델 정보로 업데이트:', modelId);
       setSelectedModel(modelId);
@@ -527,9 +529,25 @@ function HomeContent() {
         needReinit={needReinit}
         selectedModel={selectedModel}
         tempSelectedModel={tempSelectedModel}
-        onModelChange={(modelId) => {
+        onModelChange={async (modelId) => {
           setTempSelectedModel(modelId);
           setNeedReinit(true);
+          
+          // 모델 변경 시 즉시 저장
+          try {
+            const { saveUserModel } = await import('@/app/actions/models/user-model');
+            const result = await saveUserModel(agentName, modelId);
+            
+            if (result.success) {
+              console.log('모델 자동 저장 성공:', modelId);
+              // 저장 성공 시 selectedModel도 업데이트
+              setSelectedModel(modelId);
+            } else {
+              console.error('모델 자동 저장 실패');
+            }
+          } catch (error) {
+            console.error('모델 자동 저장 오류:', error);
+          }
         }}
         onSettingsChanged={handleSettingsChanged}
         onApplySettings={handleApplySettings}
@@ -543,6 +561,7 @@ function HomeContent() {
             console.error('설정 적용 실패:', error);
           }
         }}
+        agentName={agentName}
       />
 
       {/* 경고 대화상자 - 새 대화 시작 확인 */}

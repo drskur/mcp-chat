@@ -22,6 +22,8 @@ interface SettingsDialogProps {
   onModelChange: (modelId: string) => void;
   onSettingsChanged: () => void;
   onUserSettingsChanged: () => void;
+  needReinit?: boolean;
+  onApplySettings?: () => void;
   agentName?: string;
 }
 
@@ -63,6 +65,8 @@ export const SettingsDialog = ({
   onModelChange,
   onSettingsChanged,
   onUserSettingsChanged,
+  needReinit,
+  onApplySettings,
   agentName
 }: SettingsDialogProps) => {
   const dialogConfig = getDialogConfig(activeSettings);

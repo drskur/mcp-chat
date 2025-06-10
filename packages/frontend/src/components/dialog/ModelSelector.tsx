@@ -3,9 +3,7 @@ import Image from 'next/image';
 import { Image as LucideImage } from 'lucide-react';
 import { availableModels } from '@/lib/model-info';
 import { ModelsConfig } from '@/lib/model-info';
-import { saveUserModel } from '@/app/actions/models/user-model';
 import { env } from '@/lib/env';
-import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
 
 interface ModelSelectorProps {
   selectedModel: string;
@@ -21,28 +19,14 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   const [modelsConfig, setModelsConfig] = useState<ModelsConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const configName = agentName ?? DEFAULT_AGENT_NAME;
 
   // 모델 선택 처리 함수
   const handleModelChange = useCallback(
-    async (modelId: string) => {
-      // 상위 컴포넌트에 변경 알림
+    (modelId: string) => {
+      // 상위 컴포넌트에 변경 알림만 수행 (임시 상태 업데이트)
       onChange(modelId);
-
-      // 선택한 모델 자동 저장
-      try {
-        const result = await saveUserModel(configName, modelId);
-
-        if (result.success) {
-          console.log('모델 자동 저장 성공:', modelId);
-        } else {
-          console.error('모델 자동 저장 실패');
-        }
-      } catch (error) {
-        console.error('모델 자동 저장 오류:', error);
-      }
     },
-    [onChange, configName],
+    [onChange],
   );
 
   useEffect(() => {
@@ -60,7 +44,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
           const firstProvider = Object.values(config.providers)[0];
           const firstModel = Object.values(firstProvider.models)[0];
           if (firstModel) {
-            await handleModelChange(firstModel.id);
+            handleModelChange(firstModel.id);
           }
         }
       } catch (err) {

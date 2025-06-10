@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { RefreshCw, Check, FileJson, Copy } from 'lucide-react';
+import { RefreshCw, Check, FileJson, Copy, CheckCircle2, XCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ServerConfig } from '@/types/mcp';
 import { autoFixJsonString } from '../utils';
 import { JsonHelpMessage } from '@/components/mcp';
@@ -22,12 +23,14 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
   setError,
 }) => {
   const [jsonText, setJsonText] = useState('{}');
+  const [copyStatus, setCopyStatus] = useState<'success' | 'error' | null>(null);
 
   useEffect(() => {
     getMCPConfig().then((conf) => {
       setJsonText(JSON.stringify(conf, null, 2));
     });
   }, []);
+
 
   const jsonTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -112,7 +115,18 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
           포맷
         </Button>
         <Button
-          onClick={() => onCopyJSON(jsonText)}
+          onClick={() => {
+            navigator.clipboard
+              .writeText(jsonText)
+              .then(() => {
+                setCopyStatus('success');
+                onCopyJSON(jsonText);
+              })
+              .catch((err) => {
+                console.error('복사 실패:', err);
+                setCopyStatus('error');
+              });
+          }}
           variant="ghost"
           className="px-3 py-2 h-auto bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm"
         >
@@ -120,6 +134,28 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
           복사
         </Button>
       </div>
+
+      {/* 복사 알림 */}
+      {copyStatus && (
+        <Alert className={`relative border-white ${copyStatus === 'success' ? 'bg-green-950/30' : 'bg-red-950/30'}`}>
+          {copyStatus === 'success' ? (
+            <CheckCircle2 className="h-4 w-4 text-white stroke-white" />
+          ) : (
+            <XCircle className="h-4 w-4 text-white stroke-white" />
+          )}
+          <AlertDescription className="text-white">
+            {copyStatus === 'success' ? '클립보드에 복사되었습니다.' : '클립보드에 복사하지 못했습니다.'}
+          </AlertDescription>
+          <Button
+            onClick={() => setCopyStatus(null)}
+            variant="ghost"
+            size="sm"
+            className="absolute top-2 right-2 h-6 w-6 p-0 hover:bg-gray-800/50"
+          >
+            <X className="h-3 w-3 text-white stroke-white" />
+          </Button>
+        </Alert>
+      )}
 
       {/* JSON 텍스트 에디터 */}
       <div className="bg-gray-900/40 border border-gray-800 rounded-lg overflow-hidden">

@@ -58,17 +58,10 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
     });
   };
 
-  // JSON 복사 기능
+  // JSON 복사 기능 (실제 복사는 JsonModeView 내부에서 처리)
   const copyJSON = (text: string) => {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        alert('클립보드에 복사되었습니다.');
-      })
-      .catch((err) => {
-        console.error('복사 실패:', err);
-        setError('클립보드에 복사하지 못했습니다.');
-      });
+    // JsonModeView에서 복사 성공 시 호출되는 콜백
+    console.log('JSON 복사됨');
   };
 
   // JSON 모드 저장 핸들러

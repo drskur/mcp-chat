@@ -1,5 +1,4 @@
 import React from 'react';
-import Image from 'next/image';
 import { ChevronDown, ChevronRight, Wrench, Cog, FileIcon, ExternalLink } from "lucide-react";
 import type { ContentItem, ToolUseContentItem, ToolResultContentItem, ImageContentItem, DocumentContentItem, ZoomedImageState } from '../types/chat.types';
 
@@ -184,13 +183,12 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
             mimeType: imageItem.mimeType
           })}
         >
-          <Image 
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
             src={imgSrc}
             alt="첨부 이미지"
-            width={200}
-            height={200}
             className="rounded-md max-h-[200px] w-auto object-contain"
-            unoptimized
+            loading="lazy"
           />
         </div>
       </div>

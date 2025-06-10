@@ -5,7 +5,6 @@ import { ArrowDown } from "lucide-react";
 import { ChatMessageList } from "@/components/ui/chat-message-list";
 
 // 새로운 hooks과 components import
-import { useFileAttachment } from './hooks/useFileAttachment';
 import { useScrollManager } from './hooks/useScrollManager';
 import { useMessageManager } from './hooks/useMessageManager';
 import { useStreamingService } from './hooks/useStreamingService';
@@ -16,6 +15,7 @@ import { ChatInput } from './components/ChatInput';
 import { ImageZoom } from './components/ImageZoom';
 
 import type { ChatInterfaceProps, ZoomedImageState } from './types/chat.types';
+import { useFileAttachment } from '@/hooks/useFileAttachment';
 
 export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, initialAttachments }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
@@ -24,14 +24,14 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
     imageData: "",
     mimeType: ""
   });
-  
+
   const inputRef = useRef<HTMLInputElement>(null);
   const FADE_DURATION = 800;
 
   // Custom hooks 사용
   const fileAttachment = useFileAttachment();
   const scrollManager = useScrollManager();
-  
+
   const messageManager = useMessageManager({
     initialMessage,
     initialAttachments,
@@ -71,7 +71,7 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation(); // 이벤트 버블링 방지
-    
+
     if ((!input.trim() && fileAttachment.attachments.length === 0) || streamingService.isStreaming) {
       return;
     }
@@ -79,17 +79,17 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
     // 사용자 메시지 추가
     await messageManager.addUserMessage(input, fileAttachment.attachments);
     setInput("");
-    
+
     // 보낼 첨부 파일 복사본 저장
     const attachmentsCopy = [...fileAttachment.attachments];
-    
+
     // 첨부 파일 목록 초기화 (UI에서 먼저 비우기)
     fileAttachment.clearAttachments();
-    
+
     // AI 메시지 추가 및 스트리밍 시작
     const aiMessageId = messageManager.addAiMessage();
     streamingService.startStreaming(input, attachmentsCopy, aiMessageId);
-    
+
     // 하단으로 스크롤
     setTimeout(() => scrollManager.scrollToBottom(), 100);
   };
@@ -113,11 +113,11 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
   // 페이드 효과를 위한 주기적 리렌더링
   useEffect(() => {
     if (!streamingService.isStreaming) return;
-    
+
     const timer = setInterval(() => {
       messageManager.setMessages(prev => [...prev]);
     }, 50);
-    
+
     return () => clearInterval(timer);
   }, [streamingService.isStreaming, messageManager]);
 
@@ -150,10 +150,10 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
             display: none; /* Chrome, Safari, Opera */
           }
         `}} />
-        
+
         <div className="flex flex-col w-full h-full">
           {/* 메시지 영역 */}
-          <div 
+          <div
             ref={scrollManager.scrollContainerRef}
             className="flex-1 overflow-y-auto hide-scrollbar relative"
           >
@@ -173,7 +173,7 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
               {/* 스크롤 위치 참조를 위한 빈 div */}
               <div ref={scrollManager.messagesEndRef} />
             </div>
-            
+
             {/* 하단으로 스크롤 버튼 */}
             {scrollManager.showScrollButton && (
               <button
@@ -185,7 +185,7 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
               </button>
             )}
           </div>
-          
+
           {/* 입력창 영역 */}
           <div className="p-4 border-t border-gray-800">
             <div className="max-w-3xl mx-auto w-full">
@@ -194,7 +194,7 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
                 attachments={fileAttachment.attachments}
                 onRemoveAttachment={fileAttachment.removeAttachment}
               />
-              
+
               <ChatInput
                 input={input}
                 isStreaming={streamingService.isStreaming}

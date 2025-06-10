@@ -1,5 +1,4 @@
 import React from 'react';
-import Image from 'next/image';
 import { FileIcon, ExternalLink } from "lucide-react";
 import { ChatBubble, ChatBubbleMessage } from "@/components/ui/chat-bubble";
 import { MessageLoading } from "@/components/ui/message-loading";
@@ -69,13 +68,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         mimeType: imageItem.mimeType
                       })}
                     >
-                      <Image 
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img 
                         src={imgSrc}
                         alt="첨부 이미지"
-                        width={200}
-                        height={200}
                         className="rounded-md max-h-[200px] w-auto object-contain"
-                        unoptimized
+                        loading="lazy"
                       />
                     </div>
                   </div>

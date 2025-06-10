@@ -3,4 +3,5 @@ export interface FileAttachment {
   file: File;
   type: string;
   previewUrl?: string;
+  fileId?: string;
 }

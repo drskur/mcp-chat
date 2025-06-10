@@ -6,7 +6,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogClose,
   DialogFooter
 } from "@/components/ui/dialog";
 import MCPToolManager from '@/components/dialog/MCPToolManager';
@@ -120,18 +119,13 @@ export const SettingsDialog = ({
           )}
         </div>
         
-        <DialogFooter>
-          {needReinit && activeSettings !== 'user' && activeSettings !== 'prompt' && activeSettings !== 'tools' && (
+        {needReinit && activeSettings !== 'user' && activeSettings !== 'prompt' && activeSettings !== 'tools' && (
+          <DialogFooter>
             <Button onClick={onApplySettings} className="w-full gradient-button">
               설정 적용 & 에이전트 재시작
             </Button>
-          )}
-          {(!needReinit || activeSettings === 'user') && (
-            <DialogClose asChild>
-              <Button variant="outline" className="border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700 hover:text-white">닫기</Button>
-            </DialogClose>
-          )}
-        </DialogFooter>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

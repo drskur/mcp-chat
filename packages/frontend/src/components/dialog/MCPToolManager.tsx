@@ -1,21 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Plug,
-  FileJson,
-  Server,
-  RefreshCw,
-  ShieldAlert,
-} from 'lucide-react';
-import {
-  MCPToolManagerProps,
-  MCPServer,
-  ServerConfig,
-} from '@/types/mcp';
-import {
-  JsonModeView,
-  ServerCard,
-  EmptyServerState,
-} from '@/components/mcp';
+import { Plug, FileJson, Server, RefreshCw, ShieldAlert } from 'lucide-react';
+import { MCPToolManagerProps, MCPServer, ServerConfig } from '@/types/mcp';
+import { JsonModeView, ServerCard, EmptyServerState } from '@/components/mcp';
 import { getMCPServers } from '@/app/actions/mcp/tools';
 
 const MCPToolManager: React.FC<MCPToolManagerProps> = ({
@@ -27,8 +13,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [jsonMode, setJsonMode] = useState(false);
   const isFetchingRef = useRef(false);
-
-
 
   // 도구 목록 불러오기
   const fetchTools = async () => {
@@ -56,26 +40,10 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
     }
   };
 
-
   // 초기 로드 및 주기적 갱신
   useEffect(() => {
-    const initialFetch = async () => {
-      await fetchTools();
-    };
-
-    initialFetch();
-
-    const intervalId = setInterval(() => {
-      console.log('30초 주기 갱신 시작');
-      fetchTools();
-    }, 30000);
-
-    return () => {
-      console.log('컴포넌트 언마운트: 인터벌 정리');
-      clearInterval(intervalId);
-    };
+    fetchTools().catch(console.error);
   }, []);
-
 
   // 서버 확장/축소 토글
   const toggleServerExpanded = (index: number) => {
@@ -101,8 +69,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
         setError('클립보드에 복사하지 못했습니다.');
       });
   };
-
-
 
   // JSON 모드 저장 핸들러
   const handleJsonSave = async (configObj: Record<string, ServerConfig>) => {
@@ -179,8 +145,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
 
   return (
     <div className="p-6 bg-gray-950 rounded-xl border border-gray-800 relative">
-
-
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
         <Plug className="h-5 w-5 text-indigo-400" /> MCP 도구 관리
       </h2>
@@ -209,7 +173,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
           <p className="text-red-200 text-sm">{error}</p>
         </div>
       )}
-
 
       <div className="mt-6">
         {isLoading ? (
@@ -240,7 +203,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
                     onToggleExpanded={toggleServerExpanded}
                   />
                 ))}
-
               </div>
             )}
           </div>

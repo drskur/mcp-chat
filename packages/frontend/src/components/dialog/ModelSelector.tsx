@@ -4,6 +4,7 @@ import { Image as LucideImage } from 'lucide-react';
 import { availableModels } from '@/lib/model-info';
 import { ModelsConfig } from '@/lib/model-info';
 import { saveUserModel } from '@/app/actions/models/user-model';
+import { env } from '@/lib/env';
 
 interface ModelSelectorProps {
   selectedModel: string;
@@ -20,34 +21,37 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   const [savingModel, setSavingModel] = useState<boolean>(false);
 
   // 모델 선택 처리 함수
-  const handleModelChange = useCallback(async (modelId: string) => {
-    // 상위 컴포넌트에 변경 알림
-    onChange(modelId);
+  const handleModelChange = useCallback(
+    async (modelId: string) => {
+      // 상위 컴포넌트에 변경 알림
+      onChange(modelId);
 
-    // 선택한 모델 자동 저장
-    try {
-      setSavingModel(true);
+      // 선택한 모델 자동 저장
+      try {
+        setSavingModel(true);
 
-      const result = await saveUserModel(modelId);
-      
-      if (result.success) {
-        console.log('모델 자동 저장 성공:', modelId);
-      } else {
-        console.error('모델 자동 저장 실패');
+        const result = await saveUserModel(modelId);
+
+        if (result.success) {
+          console.log('모델 자동 저장 성공:', modelId);
+        } else {
+          console.error('모델 자동 저장 실패');
+        }
+      } catch (error) {
+        console.error('모델 자동 저장 오류:', error);
+      } finally {
+        setSavingModel(false);
       }
-    } catch (error) {
-      console.error('모델 자동 저장 오류:', error);
-    } finally {
-      setSavingModel(false);
-    }
-  }, [onChange]);
+    },
+    [onChange],
+  );
 
   useEffect(() => {
     const fetchModels = async () => {
       try {
         setLoading(true);
 
-        const config = availableModels('us-east-1'); // 기본 리전
+        const config = availableModels(env.AWS_REGION);
 
         setModelsConfig(config);
         setError(null);

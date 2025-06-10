@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Save,
   RefreshCw,
@@ -31,7 +31,7 @@ const SystemPromptEditor: React.FC<SystemPromptEditorProps> = ({
   const configName = agentName ?? DEFAULT_AGENT_NAME;
 
   // 프롬프트 가져오기
-  const fetchPrompt = async () => {
+  const fetchPrompt = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     setIsSaved(false);
@@ -39,12 +39,12 @@ const SystemPromptEditor: React.FC<SystemPromptEditorProps> = ({
     const prompt = await loadSystemPrompt(configName);
     setPrompt(prompt);
     setIsLoading(false);
-  };
+  }, [configName]);
 
   // 초기 로딩
   useEffect(() => {
     fetchPrompt().catch(console.error);
-  }, []);
+  }, [fetchPrompt]);
 
   // 프롬프트 저장
   const handleSavePrompt = async (restartAfterSave: boolean = false) => {

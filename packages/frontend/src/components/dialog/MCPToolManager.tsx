@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Plug, FileJson, Server, RefreshCw, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MCPToolManagerProps, MCPServer } from '@/types/mcp';
@@ -21,7 +21,7 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
   const isFetchingRef = useRef(false);
 
   // 도구 목록 불러오기
-  const fetchTools = async () => {
+  const fetchTools = useCallback(async () => {
     if (isFetchingRef.current) {
       console.log('이미 API 호출 중입니다. 중복 호출 방지');
       return;
@@ -43,10 +43,10 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
       setIsLoading(false);
       isFetchingRef.current = false;
     }
-  };
+  }, []);
 
-  const updateAndFetchTools = () =>
-    updateMCPConfig(configName).then(fetchTools);
+  const updateAndFetchTools = useCallback(() =>
+    updateMCPConfig(configName).then(fetchTools), [configName, fetchTools]);
 
   // 초기 로드 및 주기적 갱신
   useEffect(() => {

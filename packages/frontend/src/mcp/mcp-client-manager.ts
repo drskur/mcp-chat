@@ -27,6 +27,14 @@ export class MCPClientManager {
   async updateConfig(configName: string = DEFAULT_AGENT_NAME): Promise<boolean> {
     const newConfig = await loadMcpConfig(configName);
 
+    // MCP 서버가 없으면 클라이언트를 null로 설정
+    if (!newConfig.mcpServers || Object.keys(newConfig.mcpServers).length === 0) {
+      this.mcpClient = null;
+      this.currentConfigName = configName;
+      this.configCache = newConfig;
+      return false;
+    }
+
     // 클라이언트가 없거나 설정이 변경되었는지 확인
     const needsUpdate =
       this.currentConfigName !== configName ||

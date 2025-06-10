@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, Check, FileJson, Copy } from 'lucide-react';
-import { MCPServer, ServerConfig } from '@/types/mcp';
+import { Button } from '@/components/ui/button';
+import { ServerConfig } from '@/types/mcp';
 import { autoFixJsonString } from '../utils';
 import { JsonHelpMessage } from '@/components/mcp';
+import { getMCPConfig } from '@/app/actions/mcp/server';
 
 interface JsonModeViewProps {
-  servers: MCPServer[];
   isLoading: boolean;
   error: string | null;
   onSave: (configObj: Record<string, ServerConfig>) => Promise<void>;
@@ -14,24 +15,20 @@ interface JsonModeViewProps {
 }
 
 export const JsonModeView: React.FC<JsonModeViewProps> = ({
-  servers,
   isLoading,
   onSave,
   onCopyJSON,
-  setError
+  setError,
 }) => {
-  const allServersConfig = servers.reduce((acc, server) => {
-    acc[server.name] = server.config;
-    return acc;
-  }, {} as Record<string, ServerConfig>);
+  const [jsonText, setJsonText] = useState('{}');
 
-  const [jsonText, setJsonText] = useState(JSON.stringify(allServersConfig, null, 2));
-  const jsonTextareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // 서버 목록이 변경되면 JSON 텍스트 업데이트
   useEffect(() => {
-    setJsonText(JSON.stringify(allServersConfig, null, 2));
-  }, [allServersConfig]);
+    getMCPConfig().then((conf) => {
+      setJsonText(JSON.stringify(conf, null, 2));
+    });
+  }, []);
+
+  const jsonTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     // 현재 커서 위치 저장
@@ -93,26 +90,34 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
     <div className="space-y-4">
       {/* 버튼 영역 */}
       <div className="flex justify-end space-x-2">
-        <button
-          className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white text-sm flex items-center gap-1"
+        <Button
           onClick={handleSaveJSON}
           disabled={isLoading}
+          className="px-3 py-2 h-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm"
         >
-          {isLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+          {isLoading ? (
+            <RefreshCw className="h-4 w-4 animate-spin mr-1" />
+          ) : (
+            <Check className="h-4 w-4 mr-1" />
+          )}
           저장
-        </button>
-        <button
-          className="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-200 text-sm flex items-center gap-1"
+        </Button>
+        <Button
           onClick={formatJSON}
+          variant="ghost"
+          className="px-3 py-2 h-auto bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm"
         >
-          <FileJson className="h-4 w-4" /> 포맷
-        </button>
-        <button
-          className="px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300 text-sm flex items-center gap-1"
+          <FileJson className="h-4 w-4 mr-1" />
+          포맷
+        </Button>
+        <Button
           onClick={() => onCopyJSON(jsonText)}
+          variant="ghost"
+          className="px-3 py-2 h-auto bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm"
         >
-          <Copy className="h-4 w-4" /> 복사
-        </button>
+          <Copy className="h-4 w-4 mr-1" />
+          복사
+        </Button>
       </div>
 
       {/* JSON 텍스트 에디터 */}
@@ -133,10 +138,7 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
         ></textarea>
       </div>
 
-      <JsonHelpMessage
-        jsonString={jsonText}
-        onFix={setJsonText}
-      />
+      <JsonHelpMessage jsonString={jsonText} onFix={setJsonText} />
     </div>
   );
 };

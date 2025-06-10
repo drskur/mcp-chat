@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plug, FileJson, Server, RefreshCw, ShieldAlert } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { MCPToolManagerProps, MCPServer, ServerConfig } from '@/types/mcp';
 import { JsonModeView, ServerCard, EmptyServerState } from '@/components/mcp';
-import { getMCPServers } from '@/app/actions/mcp/tools';
+import { getMCPServers } from '@/app/actions/mcp/server';
 
 const MCPToolManager: React.FC<MCPToolManagerProps> = ({
   onSettingsChanged,
@@ -150,21 +151,25 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
       </h2>
 
       {!jsonMode && (
-        <button
+        <Button
           onClick={() => setJsonMode(true)}
-          className="absolute top-6 right-6 text-xs px-2 py-1 rounded bg-gray-800 text-gray-300 flex items-center gap-1 hover:bg-gray-700"
+          variant="ghost"
+          className="absolute top-6 right-6 text-xs px-2 py-1 h-auto bg-gray-800 text-gray-300 hover:bg-gray-700"
         >
-          <FileJson className="h-3 w-3" /> JSON 모드
-        </button>
+          <FileJson className="h-3 w-3 mr-1" />
+          JSON 모드
+        </Button>
       )}
 
       {jsonMode && (
-        <button
+        <Button
           onClick={() => setJsonMode(false)}
-          className="absolute top-6 right-6 text-xs px-2 py-1 rounded bg-gray-800 text-gray-300 flex items-center gap-1 hover:bg-gray-700"
+          variant="ghost"
+          className="absolute top-6 right-6 text-xs px-2 py-1 h-auto bg-gray-800 text-gray-300 hover:bg-gray-700"
         >
-          <Server className="h-3 w-3" /> 서버 모드
-        </button>
+          <Server className="h-3 w-3 mr-1" />
+          서버 모드
+        </Button>
       )}
 
       {error && (
@@ -182,7 +187,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
           </div>
         ) : jsonMode ? (
           <JsonModeView
-            servers={servers}
             isLoading={isLoading}
             error={error}
             onSave={handleJsonSave}

@@ -2,6 +2,11 @@
 
 import { MCPServer, MCPTool } from '@/types/mcp';
 import { MCPClientManager } from '@/mcp/mcp-client-manager';
+import { loadMcpConfig } from '@/mcp/config';
+
+export async function getMCPConfig(name: string = 'default') {
+  return loadMcpConfig(name);
+}
 
 export async function getMCPServers(): Promise<{ servers: MCPServer[] }> {
   const manager = MCPClientManager.getInstance();

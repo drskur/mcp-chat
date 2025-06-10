@@ -5,16 +5,13 @@ import {
   Server,
   RefreshCw,
   ShieldAlert,
-  AlertTriangle,
 } from 'lucide-react';
 import {
   MCPToolManagerProps,
   MCPServer,
   ServerConfig,
-  RestartResult,
 } from '@/types/mcp';
 import {
-  ResultNotification,
   JsonModeView,
   ServerCard,
   EmptyServerState,
@@ -32,10 +29,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
   const isFetchingRef = useRef(false);
 
 
-  // 재시작 결과 알림 상태
-  const [restartResult, setRestartResult] = useState<RestartResult | null>(
-    null,
-  );
 
   // 도구 목록 불러오기
   const fetchTools = async () => {
@@ -110,34 +103,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
   };
 
 
-  // MCP 서비스 재시작
-  const handleRestartService = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/mcp-tools/restart', {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('MCP 서비스 재시작에 실패했습니다.');
-      }
-
-      const data = await response.json();
-      setRestartResult({
-        success: data.success,
-        message: data.message,
-      });
-
-      await fetchTools();
-    } catch (err) {
-      console.error('MCP 서비스 재시작 오류:', err);
-      setError(`MCP 서비스 재시작에 실패했습니다: ${(err as Error).message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // JSON 모드 저장 핸들러
   const handleJsonSave = async (configObj: Record<string, ServerConfig>) => {
@@ -215,11 +180,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
   return (
     <div className="p-6 bg-gray-950 rounded-xl border border-gray-800 relative">
 
-      {/* 재시작 결과 알림 */}
-      <ResultNotification
-        result={restartResult}
-        onClose={() => setRestartResult(null)}
-      />
 
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
         <Plug className="h-5 w-5 text-indigo-400" /> MCP 도구 관리
@@ -250,17 +210,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
         </div>
       )}
 
-      {/* 재시작 필요 안내 메시지 */}
-      <div className="my-4 p-3 bg-amber-950/30 border border-amber-800 rounded-lg flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
-        <div className="text-amber-200 text-sm">
-          <p className="font-medium mb-1">중요 안내</p>
-          <p>
-            MCP 도구 설정을 변경(추가/수정/삭제)한 후에는 변경사항을 적용하기
-            위해 반드시 <strong>서비스 재시작</strong> 버튼을 눌러주세요.
-          </p>
-        </div>
-      </div>
 
       <div className="mt-6">
         {isLoading ? (
@@ -292,20 +241,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
                   />
                 ))}
 
-                <div className="flex justify-between">
-                  <button
-                    className="px-3 py-2 relative bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg text-white text-sm flex items-center gap-1 shadow-lg shadow-purple-900/30 group"
-                    onClick={handleRestartService}
-                    disabled={isLoading}
-                  >
-                    <span className="absolute inset-0 bg-white/20 rounded-lg animate-pulse group-hover:bg-transparent"></span>
-                    <RefreshCw
-                      className={`h-4 w-4 ${isLoading ? 'animate-spin' : 'group-hover:animate-spin'}`}
-                    />
-                    <span className="font-medium">서비스 재시작</span>
-                  </button>
-
-                </div>
               </div>
             )}
           </div>

@@ -125,17 +125,19 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
         <div className="px-3 py-2 bg-gray-800/50 border-b border-gray-700">
           <span className="text-sm text-gray-300">MCP 서버 설정 (JSON)</span>
         </div>
-        <textarea
-          ref={jsonTextareaRef}
-          rows={24}
-          className="w-full p-3 text-sm bg-gray-900/30 focus:ring-indigo-500 focus:border-indigo-500 text-gray-300 font-mono border-0 resize-none block"
-          value={jsonText}
-          onChange={handleTextChange}
-          spellCheck="false"
-          autoComplete="off"
-          autoCorrect="off"
-          wrap="off"
-        ></textarea>
+        <div className="p-1">
+          <textarea
+            ref={jsonTextareaRef}
+            rows={24}
+            className="w-full p-3 text-sm bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-transparent text-gray-300 font-mono border border-gray-700 rounded resize-none block"
+            value={jsonText}
+            onChange={handleTextChange}
+            spellCheck="false"
+            autoComplete="off"
+            autoCorrect="off"
+            wrap="off"
+          ></textarea>
+        </div>
       </div>
 
       <JsonHelpMessage jsonString={jsonText} onFix={setJsonText} />

@@ -59,6 +59,7 @@ function HomeContent() {
     removeAttachment,
     clearAttachments,
     handleAttachButtonClick,
+    prepareFilesForChat,
   } = useFileAttachment();
 
 
@@ -126,7 +127,7 @@ function HomeContent() {
     // 함수 실행
     loadUserSettings();
     loadUserInfo();
-    fetchUserModel();
+    fetchUserModel().catch(console.error);
 
     // 설정 변경 이벤트 리스너 추가
     const handleStorageChange = (e: StorageEvent) => {
@@ -269,141 +270,8 @@ function HomeContent() {
       currentModelId = modelId;
     }
 
-    // 에이전트 초기화 API 호출
-    try {
-      console.log('에이전트 초기화 요청 시작...');
-      const reinitResponse = await fetch('/api/chat/reinit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ model_id: currentModelId }),
-      });
-
-      if (reinitResponse.ok) {
-        const reinitData = await reinitResponse.json();
-        if (reinitData.success) {
-          console.log(
-            '에이전트 초기화 성공:',
-            reinitData.model_id,
-            `(Max Tokens: ${reinitData.max_tokens})`,
-          );
-        } else {
-          console.error('에이전트 초기화 실패:', reinitData.message);
-        }
-      } else {
-        console.error('에이전트 초기화 요청 실패:', reinitResponse.status);
-      }
-    } catch (error) {
-      console.error('에이전트 초기화 오류:', error);
-    }
-
-    // 첨부 파일 처리
-    const initialChatAttachments: FileAttachment[] = [];
-
-    // 파일 데이터 처리를 위한 Promise 배열
-    const fileProcessPromises: Promise<void>[] = [];
-
-    if (files.length > 0) {
-      console.log('첨부 파일로 대화 시작:', files.length, '개 파일');
-
-      // 각 파일 처리
-      for (const attachment of files) {
-        // 이미지 파일 처리
-        if (attachment.type.startsWith('image/')) {
-          // previewUrl이 없거나 blob URL인 경우 data URL로 변환
-          if (
-            !attachment.previewUrl ||
-            attachment.previewUrl.startsWith('blob:')
-          ) {
-            const promise = new Promise<void>((resolve) => {
-              // previewUrl이 blob URL인 경우 URL을 통해 파일 객체 다시 가져오기
-              if (
-                attachment.previewUrl &&
-                attachment.previewUrl.startsWith('blob:')
-              ) {
-                console.log(
-                  'blob URL을 data URL로 변환 중:',
-                  attachment.file.name,
-                );
-              }
-
-              const reader = new FileReader();
-              reader.onload = () => {
-                const result = reader.result as string;
-                initialChatAttachments.push({
-                  id: attachment.id,
-                  file: attachment.file,
-                  type: attachment.type,
-                  previewUrl: result, // data URL로 저장
-                });
-                resolve();
-              };
-              reader.onerror = () => {
-                console.error('파일 읽기 오류:', attachment.file.name);
-                // 오류가 있어도 기본 정보는 추가
-                initialChatAttachments.push({
-                  id: attachment.id,
-                  file: attachment.file,
-                  type: attachment.type,
-                });
-                resolve();
-              };
-              reader.readAsDataURL(attachment.file);
-            });
-            fileProcessPromises.push(promise);
-          } else if (attachment.previewUrl.startsWith('data:')) {
-            // 이미 data URL인 경우 그대로 사용
-            initialChatAttachments.push({
-              id: attachment.id,
-              file: attachment.file,
-              type: attachment.type,
-              previewUrl: attachment.previewUrl,
-            });
-          } else {
-            // 알 수 없는 형식의 URL - 무시하고 새로 생성
-            const promise = new Promise<void>((resolve) => {
-              console.log(
-                '알 수 없는 형식의 URL, data URL로 변환 중:',
-                attachment.file.name,
-              );
-              const reader = new FileReader();
-              reader.onload = () => {
-                const result = reader.result as string;
-                initialChatAttachments.push({
-                  id: attachment.id,
-                  file: attachment.file,
-                  type: attachment.type,
-                  previewUrl: result,
-                });
-                resolve();
-              };
-              reader.onerror = () => {
-                initialChatAttachments.push({
-                  id: attachment.id,
-                  file: attachment.file,
-                  type: attachment.type,
-                });
-                resolve();
-              };
-              reader.readAsDataURL(attachment.file);
-            });
-            fileProcessPromises.push(promise);
-          }
-        } else {
-          // 이미지가 아닌 파일은 그대로 추가
-          initialChatAttachments.push({
-            id: attachment.id,
-            file: attachment.file,
-            type: attachment.type,
-            previewUrl: attachment.previewUrl,
-          });
-        }
-      }
-    }
-
-    // 모든 파일 처리 완료 후 채팅 시작
-    await Promise.all(fileProcessPromises);
+    // 첨부 파일 처리 - useFileAttachment 훅의 prepareFilesForChat 사용
+    const initialChatAttachments = await prepareFilesForChat(files);
 
     // 약간의 지연 후에 다시 채팅 인터페이스 마운트 (리셋 효과)
     setTimeout(() => {

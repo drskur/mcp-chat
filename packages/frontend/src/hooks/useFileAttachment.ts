@@ -248,6 +248,105 @@ export const useFileAttachment = () => {
     setAttachments([]);
   };
 
+  // 파일 배열을 data URL로 변환하여 채팅용으로 준비
+  const prepareFilesForChat = async (files: FileAttachment[]): Promise<FileAttachment[]> => {
+    const initialChatAttachments: FileAttachment[] = [];
+    const fileProcessPromises: Promise<void>[] = [];
+
+    if (files.length > 0) {
+      console.log('첨부 파일로 대화 시작:', files.length, '개 파일');
+
+      for (const attachment of files) {
+        if (attachment.type.startsWith('image/')) {
+          if (
+            !attachment.previewUrl ||
+            attachment.previewUrl.startsWith('blob:')
+          ) {
+            const promise = new Promise<void>((resolve) => {
+              if (
+                attachment.previewUrl &&
+                attachment.previewUrl.startsWith('blob:')
+              ) {
+                console.log(
+                  'blob URL을 data URL로 변환 중:',
+                  attachment.file.name,
+                );
+              }
+
+              const reader = new FileReader();
+              reader.onload = () => {
+                const result = reader.result as string;
+                initialChatAttachments.push({
+                  id: attachment.id,
+                  file: attachment.file,
+                  type: attachment.type,
+                  previewUrl: result,
+                });
+                resolve();
+              };
+              reader.onerror = () => {
+                console.error('파일 읽기 오류:', attachment.file.name);
+                initialChatAttachments.push({
+                  id: attachment.id,
+                  file: attachment.file,
+                  type: attachment.type,
+                });
+                resolve();
+              };
+              reader.readAsDataURL(attachment.file);
+            });
+            fileProcessPromises.push(promise);
+          } else if (attachment.previewUrl.startsWith('data:')) {
+            initialChatAttachments.push({
+              id: attachment.id,
+              file: attachment.file,
+              type: attachment.type,
+              previewUrl: attachment.previewUrl,
+            });
+          } else {
+            const promise = new Promise<void>((resolve) => {
+              console.log(
+                '알 수 없는 형식의 URL, data URL로 변환 중:',
+                attachment.file.name,
+              );
+              const reader = new FileReader();
+              reader.onload = () => {
+                const result = reader.result as string;
+                initialChatAttachments.push({
+                  id: attachment.id,
+                  file: attachment.file,
+                  type: attachment.type,
+                  previewUrl: result,
+                });
+                resolve();
+              };
+              reader.onerror = () => {
+                initialChatAttachments.push({
+                  id: attachment.id,
+                  file: attachment.file,
+                  type: attachment.type,
+                });
+                resolve();
+              };
+              reader.readAsDataURL(attachment.file);
+            });
+            fileProcessPromises.push(promise);
+          }
+        } else {
+          initialChatAttachments.push({
+            id: attachment.id,
+            file: attachment.file,
+            type: attachment.type,
+            previewUrl: attachment.previewUrl,
+          });
+        }
+      }
+    }
+
+    await Promise.all(fileProcessPromises);
+    return initialChatAttachments;
+  };
+
   return {
     attachments,
     setAttachments,
@@ -259,6 +358,7 @@ export const useFileAttachment = () => {
     handleFileUpload,
     removeAttachment,
     handleAttachButtonClick,
-    clearAttachments
+    clearAttachments,
+    prepareFilesForChat
   };
 };

@@ -18,7 +18,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   const [modelsConfig, setModelsConfig] = useState<ModelsConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [savingModel, setSavingModel] = useState<boolean>(false);
 
   // 모델 선택 처리 함수
   const handleModelChange = useCallback(
@@ -28,8 +27,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
 
       // 선택한 모델 자동 저장
       try {
-        setSavingModel(true);
-
         const result = await saveUserModel(modelId);
 
         if (result.success) {
@@ -39,8 +36,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
         }
       } catch (error) {
         console.error('모델 자동 저장 오류:', error);
-      } finally {
-        setSavingModel(false);
       }
     },
     [onChange],
@@ -221,20 +216,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
           </div>
         </div>
       ))}
-      <div className="p-4 border border-gray-700 bg-gradient-to-r from-gray-800/70 to-gray-900/70 rounded-xl flex items-center gap-3 shadow-inner animate-fade-in">
-        <span className="rounded-full bg-indigo-600 p-1 flex items-center justify-center shadow-md">
-          <LucideImage className="w-5 h-5 text-white flex-shrink-0 animate-pulse" />
-        </span>
-        <p className="text-sm text-indigo-200">
-          모델을 변경하면 새로운 대화가 시작됩니다. AWS Bedrock API를 통해
-          호출됩니다.
-          {savingModel && (
-            <span className="ml-1 text-xs text-indigo-400 animate-pulse">
-              (저장 중...)
-            </span>
-          )}
-        </p>
-      </div>
     </div>
   );
 };

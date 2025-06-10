@@ -5,26 +5,22 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
-  DialogFooter
+  DialogTitle
 } from "@/components/ui/dialog";
 import MCPToolManager from '@/components/dialog/MCPToolManager';
 import SystemPromptEditor from '@/components/dialog/SystemPromptEditor';
 import ModelSelector from '@/components/dialog/ModelSelector';
 import UserSettings from '@/components/dialog/UserSettings';
-import { Button } from '@/components/ui/button';
 
 type SettingsType = 'tools' | 'prompt' | 'model' | 'user';
 
 interface SettingsDialogProps {
   activeSettings: SettingsType | null;
   onOpenChange: (open: boolean) => void;
-  needReinit: boolean;
   selectedModel: string;
   tempSelectedModel: string;
   onModelChange: (modelId: string) => void;
   onSettingsChanged: () => void;
-  onApplySettings: () => void;
   onUserSettingsChanged: () => void;
 }
 
@@ -61,12 +57,10 @@ const getDialogConfig = (activeSettings: SettingsType | null) => {
 export const SettingsDialog = ({
   activeSettings,
   onOpenChange,
-  needReinit,
   selectedModel,
   tempSelectedModel,
   onModelChange,
   onSettingsChanged,
-  onApplySettings,
   onUserSettingsChanged
 }: SettingsDialogProps) => {
   const dialogConfig = getDialogConfig(activeSettings);
@@ -110,13 +104,6 @@ export const SettingsDialog = ({
           )}
         </div>
         
-        {needReinit && activeSettings !== 'user' && activeSettings !== 'prompt' && activeSettings !== 'tools' && (
-          <DialogFooter>
-            <Button onClick={onApplySettings} className="w-full gradient-button">
-              설정 적용 & 에이전트 재시작
-            </Button>
-          </DialogFooter>
-        )}
       </DialogContent>
     </Dialog>
   );

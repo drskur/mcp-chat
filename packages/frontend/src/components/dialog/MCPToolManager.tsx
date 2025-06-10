@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Plug,
   FileJson,
@@ -27,7 +27,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
   // 상태 관리
   const [servers, setServers] = useState<MCPServer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [jsonMode, setJsonMode] = useState(false);
   const isFetchingRef = useRef(false);
@@ -64,20 +63,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
     }
   };
 
-  // 서버 상태 확인
-  const refreshServerStatus = useCallback(async () => {
-    if (isFetchingRef.current) return;
-
-    setIsCheckingStatus(true);
-
-    try {
-      await fetchTools();
-    } catch (error) {
-      console.error('서버 상태 확인 중 오류:', error);
-    } finally {
-      setIsCheckingStatus(false);
-    }
-  }, []);
 
   // 초기 로드 및 주기적 갱신
   useEffect(() => {
@@ -89,14 +74,14 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
 
     const intervalId = setInterval(() => {
       console.log('30초 주기 갱신 시작');
-      refreshServerStatus();
+      fetchTools();
     }, 30000);
 
     return () => {
       console.log('컴포넌트 언마운트: 인터벌 정리');
       clearInterval(intervalId);
     };
-  }, [refreshServerStatus]);
+  }, []);
 
 
   // 서버 확장/축소 토글
@@ -320,22 +305,6 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({
                     <span className="font-medium">서비스 재시작</span>
                   </button>
 
-                  <button
-                    className="px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300 text-sm flex items-center gap-1"
-                    onClick={refreshServerStatus}
-                    disabled={isLoading || isCheckingStatus}
-                  >
-                    {isCheckingStatus ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 animate-spin" /> 확인
-                        중...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="h-4 w-4" /> 상태 확인
-                      </>
-                    )}
-                  </button>
                 </div>
               </div>
             )}

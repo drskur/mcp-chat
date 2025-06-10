@@ -5,19 +5,23 @@ import { availableModels } from '@/lib/model-info';
 import { ModelsConfig } from '@/lib/model-info';
 import { saveUserModel } from '@/app/actions/models/user-model';
 import { env } from '@/lib/env';
+import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
 
 interface ModelSelectorProps {
   selectedModel: string;
   onChange: (modelId: string) => void;
+  agentName?: string;
 }
 
 const ModelSelector: React.FC<ModelSelectorProps> = ({
   selectedModel,
   onChange,
+  agentName,
 }) => {
   const [modelsConfig, setModelsConfig] = useState<ModelsConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const configName = agentName ?? DEFAULT_AGENT_NAME;
 
   // 모델 선택 처리 함수
   const handleModelChange = useCallback(
@@ -27,7 +31,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
 
       // 선택한 모델 자동 저장
       try {
-        const result = await saveUserModel(modelId);
+        const result = await saveUserModel(configName, modelId);
 
         if (result.success) {
           console.log('모델 자동 저장 성공:', modelId);
@@ -38,7 +42,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
         console.error('모델 자동 저장 오류:', error);
       }
     },
-    [onChange],
+    [onChange, configName],
   );
 
   useEffect(() => {

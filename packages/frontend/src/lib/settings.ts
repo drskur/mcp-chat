@@ -7,9 +7,9 @@ import { Settings } from '@/types/settings.types';
 const settingFilePath = path.join(clientSettingDir, 'settings.json');
 
 const initialSettings: Settings = {
-  modelId: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
   mcp: {},
   prompt: {},
+  model: {},
 };
 
 /**

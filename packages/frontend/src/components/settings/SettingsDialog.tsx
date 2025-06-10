@@ -22,6 +22,7 @@ interface SettingsDialogProps {
   onModelChange: (modelId: string) => void;
   onSettingsChanged: () => void;
   onUserSettingsChanged: () => void;
+  agentName?: string;
 }
 
 const getDialogConfig = (activeSettings: SettingsType | null) => {
@@ -61,7 +62,8 @@ export const SettingsDialog = ({
   tempSelectedModel,
   onModelChange,
   onSettingsChanged,
-  onUserSettingsChanged
+  onUserSettingsChanged,
+  agentName
 }: SettingsDialogProps) => {
   const dialogConfig = getDialogConfig(activeSettings);
 
@@ -88,15 +90,16 @@ export const SettingsDialog = ({
         
         <div className="py-4">
           {activeSettings === 'tools' && (
-            <MCPToolManager onSettingsChanged={onSettingsChanged} />
+            <MCPToolManager onSettingsChanged={onSettingsChanged} agentName={agentName} />
           )}
           {activeSettings === 'prompt' && (
-            <SystemPromptEditor onSettingsChanged={onSettingsChanged} />
+            <SystemPromptEditor onSettingsChanged={onSettingsChanged} agentName={agentName} />
           )}
           {activeSettings === 'model' && (
             <ModelSelector
               selectedModel={tempSelectedModel || selectedModel}
               onChange={onModelChange}
+              agentName={agentName}
             />
           )}
           {activeSettings === 'user' && (

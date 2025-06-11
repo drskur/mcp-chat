@@ -29,13 +29,14 @@ export async function sendChatStream(message: string, conversationId?: string, m
   return new ReadableStream<Message>({
     async start(controller) {
       try {
-        let currentUUID = randomUUID();
+        const currentUUID = randomUUID();
         let aiMessageChunk: AIMessageChunk | null = null;
         const aiMessageId = messageId ?? randomUUID();
 
         for await (const chunk of response) {
           // streamMode: 'messages'를 사용하면 [message, metadata] 형태로 반환됨
-          const [streamedMessage] = chunk;
+          // chunk가 배열인지 확인하고 적절히 처리
+          const streamedMessage = Array.isArray(chunk) ? chunk[0] : chunk;
 
           if (streamedMessage instanceof AIMessageChunk) {
             if (aiMessageChunk && aiMessageChunk?.id === streamedMessage.id) {

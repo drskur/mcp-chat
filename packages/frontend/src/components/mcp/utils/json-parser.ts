@@ -7,7 +7,7 @@ export const autoFixJsonString = (jsonStr: string): string => {
     // 이미 유효한 JSON인지 확인
     JSON.parse(jsonStr);
     return jsonStr; // 이미 유효하면 그대로 반환
-  } catch (e) {
+  } catch (_e) {
     // 처리할 문자열 준비
     let processedStr = jsonStr.trim();
 
@@ -20,7 +20,7 @@ export const autoFixJsonString = (jsonStr: string): string => {
         // 유효성 검사
         JSON.parse(processedStr);
         return processedStr;
-      } catch (innerError) {
+      } catch (_innerError) {
         // 계속 진행
       }
     }
@@ -38,7 +38,7 @@ export const autoFixJsonString = (jsonStr: string): string => {
       // 최종 유효성 검사
       JSON.parse(processedStr);
       return processedStr;
-    } catch (finalError) {
+    } catch (_finalError) {
       // 실패한 경우 원본 반환
       return jsonStr;
     }

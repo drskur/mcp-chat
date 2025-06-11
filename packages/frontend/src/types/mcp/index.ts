@@ -9,8 +9,5 @@ export * from './tool.types';
 export * from './server.types';
 export * from './action.types';
 
-// UI Component Props (if needed by components)
-export interface MCPToolManagerProps {
-  onSettingsChanged?: () => void;
-  agentName?: string;
-}
+// UI Component types
+export * from './ui.types';

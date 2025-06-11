@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileJson } from 'lucide-react';
-import { autoFixJsonString } from '../utils';
+import { autoFixJsonString } from '@/mcp/utils';
 
 interface JsonHelpMessageProps {
   jsonString: string;

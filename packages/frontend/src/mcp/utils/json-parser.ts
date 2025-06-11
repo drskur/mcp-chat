@@ -1,5 +1,11 @@
 import { ServerConfig } from '@/types/mcp';
 
+/**
+ * MCP JSON Utilities
+ * 
+ * Utilities for parsing and fixing MCP server configuration JSON
+ */
+
 export const autoFixJsonString = (jsonStr: string): string => {
   if (!jsonStr.trim()) return '';
 
@@ -63,4 +69,38 @@ export const tryParseConfig = (
     setError(`유효하지 않은 JSON 형식입니다: ${errorMessage}`);
     return null;
   }
+};
+
+/**
+ * Validate MCP server configuration object
+ */
+export const validateMCPConfig = (config: unknown): config is { mcpServers: Record<string, ServerConfig> } => {
+  if (!config || typeof config !== 'object') {
+    return false;
+  }
+
+  const obj = config as Record<string, unknown>;
+  
+  if (!obj.mcpServers || typeof obj.mcpServers !== 'object') {
+    return false;
+  }
+
+  // Additional validation can be added here
+  return true;
+};
+
+/**
+ * Format MCP configuration for display
+ */
+export const formatMCPConfigForDisplay = (config: { mcpServers: Record<string, ServerConfig> }): string => {
+  return JSON.stringify(config.mcpServers, null, 2);
+};
+
+/**
+ * Create default MCP configuration
+ */
+export const createDefaultMCPConfig = (): { mcpServers: Record<string, ServerConfig> } => {
+  return {
+    mcpServers: {}
+  };
 };

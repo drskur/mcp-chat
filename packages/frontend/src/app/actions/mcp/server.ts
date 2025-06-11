@@ -1,6 +1,6 @@
 'use server';
 
-import { MCPServer, MCPTool } from '@/types/mcp';
+import { MCPServer } from '@/types/mcp';
 import { MCPClientManager } from '@/mcp/mcp-client-manager';
 import { loadMcpConfig, saveMcpConfig } from '@/mcp/config';
 import { ClientConfig } from '@langchain/mcp-adapters';
@@ -38,18 +38,17 @@ export async function getMCPServers(): Promise<{ servers: MCPServer[] }> {
       expanded: false,
       tools: [],
     };
+    
     try {
       const client = await mcpClient.getClient(name);
       if (client) {
         const { tools } = await client.listTools();
-        server.tools = tools.map((t) => {
-          const tool: MCPTool = {
-            name: t.name,
-            description: t.description,
-            status: 'ready',
-          };
-          return tool;
-        });
+        // Convert LangChain objects to plain objects
+        server.tools = tools.map((t) => ({
+          name: t.name,
+          description: t.description || '',
+          status: 'ready' as const,
+        }));
       }
 
       server.status = 'online';
@@ -60,6 +59,6 @@ export async function getMCPServers(): Promise<{ servers: MCPServer[] }> {
   });
 
   const servers = await Promise.all(tasks);
-
   return { servers };
 }
+

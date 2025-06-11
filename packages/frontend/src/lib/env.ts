@@ -3,6 +3,8 @@
 import path from 'path';
 import os from 'os';
 
+export const DEFAULT_AWS_REGION = 'us-east-1';
+
 export const env = {
   // 서버 사이드 환경변수
   API_URL: process.env.API_URL || 'http://localhost:8000',
@@ -12,7 +14,7 @@ export const env = {
   // 클라이언트 사이드 환경변수 (NEXT_PUBLIC_ 접두사 필요)
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
 
-  AWS_REGION: process.env.AWS_REGION || 'us-east-1',
+  AWS_REGION: process.env.AWS_REGION || DEFAULT_AWS_REGION,
 } as const;
 
 // 환경변수 검증 함수

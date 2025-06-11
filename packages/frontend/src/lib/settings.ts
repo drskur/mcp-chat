@@ -51,7 +51,7 @@ const DEFAULT_SYSTEM_PROMPT = `
     - Prioritize new, relevant information in each response
 `.trim();
 
-const DEFAULT_MODEL_ID = 'us.anthropic.claude-3-5-haiku-20241022-v1:0';
+export const DEFAULT_MODEL_ID = 'us.anthropic.claude-3-5-haiku-20241022-v1:0';
 
 const initialSettings: Settings = {
   agents: {

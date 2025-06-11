@@ -75,7 +75,6 @@ export function useChatState(agentName: string) {
       setSavedAttachments([]);
     }
 
-    const { modelId } = await getUserModel(agentName);
     const initialChatAttachments = await prepareFilesForChat(files);
 
     setTimeout(() => {

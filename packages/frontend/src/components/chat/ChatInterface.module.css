@@ -1,3 +1,5 @@
+@reference "tailwindcss";
+
 /* 페이드인 애니메이션 */
 @keyframes fadeIn {
   from { 

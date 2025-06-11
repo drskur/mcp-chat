@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
 import { getUserModel } from '@/app/actions/models/user-model';
+import {
+  initializeBedrockClient,
+  updateBedrockModel,
+} from '@/app/actions/chat/bedrock-manager';
+import { initializePromptManager } from '@/app/actions/chat/prompt-manager';
 
 export function useModelManager(agentName: string) {
   const [selectedModel, setSelectedModel] = useState(
-    'us.anthropic.claude-3-5-sonnet-20241022-v2:0'
+    'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
   );
   const [tempSelectedModel, setTempSelectedModel] = useState('');
   const [needReinit, setNeedReinit] = useState(false);
@@ -15,6 +20,8 @@ export function useModelManager(agentName: string) {
     };
 
     fetchUserModel().catch(console.error);
+    initializeBedrockClient(agentName).catch(console.error);
+    initializePromptManager(agentName).catch(console.error);
   }, [agentName]);
 
   const handleModelChange = async (modelId: string) => {
@@ -28,6 +35,12 @@ export function useModelManager(agentName: string) {
       if (result.success) {
         console.log('모델 자동 저장 성공:', modelId);
         setSelectedModel(modelId);
+
+        // BedrockClient 업데이트
+        const updateResult = await updateBedrockModel(modelId);
+        if (!updateResult.success) {
+          console.error('BedrockClient 업데이트 실패:', updateResult.error);
+        }
       } else {
         console.error('모델 자동 저장 실패');
       }
@@ -41,32 +54,7 @@ export function useModelManager(agentName: string) {
       setSelectedModel(tempSelectedModel);
       setTempSelectedModel('');
 
-      try {
-        const response = await fetch('/api/chat/reinit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ model_id: tempSelectedModel }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            console.log(
-              '에이전트 재초기화 성공:',
-              data.model_id,
-              `(Max Tokens: ${data.max_tokens})`
-            );
-          } else {
-            console.error('에이전트 재초기화 실패:', data.message);
-          }
-        } else {
-          console.error('에이전트 재초기화 요청 실패');
-        }
-      } catch (error) {
-        console.error('에이전트 재초기화 요청 오류:', error);
-      }
+      // TODO: Reinit
     }
 
     setNeedReinit(false);

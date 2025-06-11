@@ -8,7 +8,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { FileAttachment } from '@/types/file-attachment';
 
 interface AlertDialogManagerProps {
   isOpen: boolean;

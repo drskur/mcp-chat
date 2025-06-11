@@ -5,7 +5,7 @@ import { PlaceholdersAndVanishInput } from '@/components/ui/placeholders-and-van
 import { FileAttachment } from '@/types/file-attachment';
 import React from 'react';
 import Image from 'next/image';
-import { FileAttachmentPreview } from '@/components/features/file/FileAttachmentPreview';
+import { FileAttachmentPreview } from '@/components/features/chat/components/FileAttachmentPreview';
 
 interface UserSettings {
   title: string;

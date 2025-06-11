@@ -237,7 +237,7 @@ export const useStreamingService = ({
       eventSourceRef.current.close();
     }
 
-    const messageStream = await sendChatStream(query, conversationId);
+    const messageStream = await sendChatStream(query, conversationId, streamingMessageId);
     const messageStreamReader = messageStream.getReader();
 
     (async () => {
@@ -248,6 +248,7 @@ export const useStreamingService = ({
         }
         setMessages((prev) => {
           const i = prev.findIndex((m) => m.id === message.value.id);
+          console.log(prev);
           if (i === -1) {
             return [...prev, message.value];
           } else {

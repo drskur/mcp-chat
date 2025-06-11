@@ -9,7 +9,7 @@ import {
 import type { Message } from '@/types/chat.types';
 import { randomUUID } from 'node:crypto';
 
-export async function sendChatStream(message: string, conversationId?: string) {
+export async function sendChatStream(message: string, conversationId?: string, messageId?: string) {
   const humanMessage = new HumanMessage({
     content: message,
   });
@@ -32,6 +32,7 @@ export async function sendChatStream(message: string, conversationId?: string) {
       try {
         let currentUUID = randomUUID();
         let aiMessageChunk: AIMessageChunk | null = null;
+        const aiMessageId = messageId ?? randomUUID();
 
         for await (const chunk of response) {
           // streamMode: 'messages'를 사용하면 [message, metadata] 형태로 반환됨
@@ -45,7 +46,7 @@ export async function sendChatStream(message: string, conversationId?: string) {
             }
 
             const message: Message = {
-              id: aiMessageChunk.id ?? randomUUID(),
+              id: aiMessageId,
               sender: 'ai',
               contentItems: [
                 {

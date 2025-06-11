@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Plug, FileJson, Server, RefreshCw, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MCPToolManagerProps, MCPServer } from '@/types/mcp';
-import { JsonModeView, ServerCard, EmptyServerState } from '@/components/mcp';
 import {
   getMCPServers,
   setMCPConfig,
@@ -10,6 +9,7 @@ import {
 } from '@/app/actions/mcp/server';
 import { ClientConfig } from '@langchain/mcp-adapters';
 import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
+import { EmptyServerState, JsonModeView, ServerCard } from '@/components/features/mcp/components';
 
 const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
   const configName = agentName ?? DEFAULT_AGENT_NAME;

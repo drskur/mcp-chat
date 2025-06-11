@@ -3,7 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { ChatBubble, ChatBubbleMessage } from "@/components/ui/chat-bubble";
 import { MessageLoading } from "@/components/ui/message-loading";
 import { ContentRenderer } from './ContentRenderer';
-import type { Message, ImageContentItem, DocumentContentItem, ZoomedImageState } from '../../../types/chat.types';
+import type { Message, ImageContentItem, DocumentContentItem, ZoomedImageState } from '@/types/chat.types';
 import { FileIconWithColor, formatFileSize, getFileExtension } from '../utils/fileUtils';
 
 interface MessageBubbleProps {

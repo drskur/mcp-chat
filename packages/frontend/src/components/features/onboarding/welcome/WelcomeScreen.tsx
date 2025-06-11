@@ -2,10 +2,10 @@
 
 import { Brain, Server, Sparkles, Paperclip } from 'lucide-react';
 import { PlaceholdersAndVanishInput } from '@/components/ui/placeholders-and-vanish-input';
-import { FileAttachmentPreview } from '@/components/file/FileAttachmentPreview';
 import { FileAttachment } from '@/types/file-attachment';
 import React from 'react';
 import Image from 'next/image';
+import { FileAttachmentPreview } from '@/components/features/file/FileAttachmentPreview';
 
 interface UserSettings {
   title: string;

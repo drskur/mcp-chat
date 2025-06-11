@@ -1,8 +1,8 @@
 import React from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { MCPServer } from '@/types/mcp';
-import { ServerStatusIcon } from '@/components/mcp';
 import { ToolsList } from './ToolsList';
+import { ServerStatusIcon } from '@/components/features/mcp';
 
 interface ServerCardProps {
   server: MCPServer;

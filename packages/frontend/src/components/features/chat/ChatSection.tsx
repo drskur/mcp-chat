@@ -2,8 +2,8 @@
 
 import { MessageSquare, PlusIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ChatInterface } from '@/components/chat/ChatInterface';
 import { FileAttachment } from '@/types/file-attachment';
+import { ChatInterface } from '@/components/features/chat/ChatInterface';
 
 interface ChatSectionProps {
   selectedModel: string;

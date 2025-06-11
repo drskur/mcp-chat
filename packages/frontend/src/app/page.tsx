@@ -3,15 +3,15 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { FloatingSidebarTrigger } from '@/components/sidebar/FloatingSidebarTrigger';
-import { MainSidebar } from '@/components/sidebar/MainSidebar';
-import { WelcomeScreen } from '@/components/welcome/WelcomeScreen';
-import { ChatSection } from '@/components/chat/ChatSection';
-import { SettingsDialog } from '@/components/settings/SettingsDialog';
-import { StatusBar } from '@/components/layout/StatusBar';
-import { AlertDialogManager } from '@/components/dialog/AlertDialogManager';
 import { useUserSettings, useModelManager, useChatState } from '@/hooks';
 import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
+import { MainSidebar } from '@/components/common/layout/sidebar/MainSidebar';
+import { FloatingSidebarTrigger } from '@/components/common/layout/sidebar/FloatingSidebarTrigger';
+import { WelcomeScreen } from '@/components/features/onboarding/welcome/WelcomeScreen';
+import { ChatSection } from '@/components/features/chat/ChatSection';
+import { StatusBar } from '@/components/common/layout/StatusBar';
+import { SettingsDialog } from '@/components/features/settings/SettingsDialog';
+import { AlertDialogManager } from '@/components/common/dialog/AlertDialogManager';
 
 function HomeContent() {
   const searchParams = useSearchParams();

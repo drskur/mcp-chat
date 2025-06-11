@@ -10,9 +10,7 @@ import { ChatSection } from '@/components/chat/ChatSection';
 import { SettingsDialog } from '@/components/settings/SettingsDialog';
 import { StatusBar } from '@/components/layout/StatusBar';
 import { AlertDialogManager } from '@/components/dialog/AlertDialogManager';
-import { useUserSettings } from '@/hooks/useUserSettings';
-import { useModelManager } from '@/hooks/useModelManager';
-import { useChatState } from '@/hooks/useChatState';
+import { useUserSettings, useModelManager, useChatState } from '@/hooks';
 import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
 
 function HomeContent() {
@@ -37,10 +35,10 @@ function HomeContent() {
     setNeedReinit,
   } = useModelManager(agentName);
   const {
+    currentSession,
     showChat,
     setShowChat,
     inputValue,
-    chatSessionId,
     savedInitialMessage,
     savedAttachments,
     alertDialogOpen,
@@ -48,13 +46,13 @@ function HomeContent() {
     attachments,
     fileInputRef,
     handleInputChange,
-    handleInputSubmit,
+    handleFormSubmit,
     handleFileUpload,
     removeAttachment,
     handleAttachButtonClick,
     showNewChatConfirm,
     handleAlertConfirm,
-  } = useChatState(agentName);
+  } = useChatState({ agentName });
 
   // URL에서 설정 상태 초기화
   useEffect(() => {
@@ -97,7 +95,7 @@ function HomeContent() {
                 attachments={attachments}
                 inputValue={inputValue}
                 onInputChange={handleInputChange}
-                onInputSubmit={handleInputSubmit}
+                onInputSubmit={handleFormSubmit}
                 onAttachButtonClick={handleAttachButtonClick}
                 onRemoveAttachment={removeAttachment}
                 fileInputRef={fileInputRef}
@@ -106,7 +104,7 @@ function HomeContent() {
             ) : (
               <ChatSection
                 selectedModel={selectedModel}
-                chatSessionId={chatSessionId}
+                chatSessionId={currentSession.id}
                 savedInitialMessage={savedInitialMessage}
                 savedAttachments={savedAttachments}
                 onClose={() => setShowChat(false)}

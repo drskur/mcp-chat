@@ -1,12 +1,18 @@
 import { useState } from 'react';
 import { FileAttachment } from '@/types/file-attachment';
+import { useChatSession } from './useChatSession';
+import { useChatInput } from './useChatInput';
 import { useFileManager } from '@/hooks/core/useFileManager';
 
-export function useChatState(_agentName: string) {
-  const [showChat, setShowChat] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-  const [chatSessionId, setChatSessionId] = useState(Date.now().toString());
+interface UseChatStateOptions {
+  agentName: string;
+  autoStart?: boolean;
+}
 
+export function useChatState(options: UseChatStateOptions) {
+  const { autoStart = false } = options;
+
+  // Dialog state for new chat confirmation
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [pendingInitialMessage, setPendingInitialMessage] = useState<
     string | undefined
@@ -15,11 +21,23 @@ export function useChatState(_agentName: string) {
     FileAttachment[]
   >([]);
 
+  // Saved initial data for chat
   const [savedInitialMessage, setSavedInitialMessage] = useState<string>('');
   const [savedAttachments, setSavedAttachments] = useState<FileAttachment[]>(
-    []
+    [],
   );
 
+  // Session management
+  const {
+    currentSession,
+    showChat,
+    setShowChat,
+    createNewSession,
+    activateSession,
+    resetSession,
+  } = useChatSession();
+
+  // File management
   const {
     attachments,
     fileInputRef,
@@ -30,26 +48,20 @@ export function useChatState(_agentName: string) {
     prepareFilesForChat,
   } = useFileManager();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  };
-
-  const handleInputSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!inputValue.trim() && attachments.length === 0) return;
-
-    const message = inputValue;
-    setInputValue('');
-
-    showNewChatConfirm(message, [...attachments]);
-    clearAttachments();
-  };
+  // Input handling
+  const { inputValue, handleInputChange, handleFormSubmit, clearInput } =
+    useChatInput({
+      onSubmit: (message, attachments) => {
+        showNewChatConfirm(message, attachments);
+        clearAttachments();
+      },
+    });
 
   const showNewChatConfirm = (
     initialMessage?: string,
-    files: FileAttachment[] = []
+    files: FileAttachment[] = [],
   ) => {
-    if (showChat) {
+    if (showChat && currentSession.isActive) {
       setPendingInitialMessage(initialMessage);
       setPendingAttachments([...files]);
       setAlertDialogOpen(true);
@@ -60,27 +72,29 @@ export function useChatState(_agentName: string) {
 
   const initializeNewChat = async (
     initialMessage?: string,
-    files: FileAttachment[] = []
+    files: FileAttachment[] = [],
   ) => {
-    localStorage.removeItem('mcp_initial_message');
-    localStorage.removeItem('mcp_initial_attachments');
-    localStorage.setItem('mcp_reset_conversation', 'true');
+    // Reset session
+    const newSession = resetSession();
 
-    window.dispatchEvent(new Event('mcp_reset_conversation'));
-    setChatSessionId(Date.now().toString());
+    // Clear input
+    clearInput();
 
+    // If no initial data, clear saved data
     if (!initialMessage && files.length === 0) {
       setSavedInitialMessage('');
       setSavedAttachments([]);
+      return;
     }
 
+    // Prepare files for chat
     const initialChatAttachments = await prepareFilesForChat(files);
 
+    // Small delay to ensure chat interface is ready
     setTimeout(() => {
-      setShowChat(true);
-
       if (initialMessage || files.length > 0) {
-        console.log('채팅 인터페이스로 전달: ', {
+        console.log('Initializing chat with data:', {
+          sessionId: newSession.id,
           message: initialMessage || '',
           attachments: initialChatAttachments.length,
           hasImageUrls: initialChatAttachments.some((a) => a.previewUrl),
@@ -91,7 +105,7 @@ export function useChatState(_agentName: string) {
       } else {
         setSavedInitialMessage('');
         setSavedAttachments([]);
-        console.log('완전히 새로운 대화 시작 (초기 메시지/첨부 파일 없음)');
+        console.log('Starting completely new conversation');
       }
     }, 100);
   };
@@ -102,30 +116,61 @@ export function useChatState(_agentName: string) {
 
     initializeNewChat(
       hasInitialData ? pendingInitialMessage : undefined,
-      hasInitialData ? pendingAttachments : []
+      hasInitialData ? pendingAttachments : [],
     );
 
     setPendingInitialMessage(undefined);
     setPendingAttachments([]);
+    setAlertDialogOpen(false);
   };
 
+  const handleAlertCancel = () => {
+    setPendingInitialMessage(undefined);
+    setPendingAttachments([]);
+    setAlertDialogOpen(false);
+  };
+
+  // Auto-start chat if requested
+  if (autoStart && !showChat && !currentSession.isActive) {
+    activateSession();
+  }
+
   return {
+    // Session state
+    currentSession,
     showChat,
     setShowChat,
+
+    // Input state
     inputValue,
-    chatSessionId,
+
+    // Saved initial data
     savedInitialMessage,
     savedAttachments,
+
+    // Dialog state
     alertDialogOpen,
     setAlertDialogOpen,
+
+    // File attachments
     attachments,
     fileInputRef,
+
+    // Handlers
     handleInputChange,
-    handleInputSubmit,
+    handleFormSubmit: (e: React.FormEvent<HTMLFormElement>) =>
+      handleFormSubmit(e, attachments),
     handleFileUpload,
     removeAttachment,
     handleAttachButtonClick,
+
+    // Actions
     showNewChatConfirm,
+    initializeNewChat,
     handleAlertConfirm,
+    handleAlertCancel,
+    createNewSession,
+    activateSession,
+    resetSession,
   };
 }

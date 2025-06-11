@@ -16,7 +16,7 @@ import { ChatInput } from './components/ChatInput';
 import { ImageZoom } from './components/ImageZoom';
 
 import type { ChatInterfaceProps, ZoomedImageState } from '@/types/chat.types';
-import { useFileAttachment } from '@/hooks/useFileAttachment';
+import { useFileManager } from '@/hooks';
 import styles from './ChatInterface.module.css';
 
 export function ChatInterface({
@@ -35,7 +35,7 @@ export function ChatInterface({
   const FADE_DURATION = 800;
 
   // Custom hooks 사용
-  const fileAttachment = useFileAttachment();
+  const fileAttachment = useFileManager();
   const scrollManager = useScrollManager();
 
   const messageManager = useMessageManager({

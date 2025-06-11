@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { initDirs } from "@/lib/init-dir";
-import { validateEnv } from '@/lib/env';
+import { validateEnv } from '@/lib/config/env';
+import { initDirs } from '@/lib/config/init-dir';
 
 // 서버 시작 시 업로드 디렉토리 초기화
 // 서버 사이드에서만 실행됨

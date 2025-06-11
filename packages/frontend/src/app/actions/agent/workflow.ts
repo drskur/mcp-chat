@@ -1,10 +1,10 @@
 'use server';
 
 import { MemorySaver, START, StateGraph } from '@langchain/langgraph';
-import { StateAnnotation } from '@/lib/agent-state';
 import { callModelNode } from '@/app/actions/agent/call-model';
 import { ToolNode, toolsCondition } from '@langchain/langgraph/prebuilt';
 import { MCPClientManager } from '@/mcp/mcp-client-manager';
+import { StateAnnotation } from '@/app/actions/agent/agent-state';
 
 export async function createGraph() {
   const mcpClinet = await MCPClientManager.getInstance().getClient();

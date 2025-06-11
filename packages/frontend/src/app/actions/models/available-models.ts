@@ -1,5 +1,5 @@
-import { availableModels, ProviderInfo } from '@/lib/model-info';
-import { env } from '@/lib/env';
+import { availableModels, ProviderInfo } from '@/lib/models/model-info';
+import { env } from '@/lib/config/env';
 
 export function getAvailableModels(): ProviderInfo[] {
   const { providers } = availableModels(env.AWS_REGION);

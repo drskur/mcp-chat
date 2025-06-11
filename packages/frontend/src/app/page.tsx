@@ -7,11 +7,11 @@ import { useUserSettings, useModelManager, useChatState } from '@/hooks';
 import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
 import { MainSidebar } from '@/components/common/layout/sidebar/MainSidebar';
 import { FloatingSidebarTrigger } from '@/components/common/layout/sidebar/FloatingSidebarTrigger';
-import { WelcomeScreen } from '@/components/features/onboarding/welcome/WelcomeScreen';
 import { ChatSection } from '@/components/features/chat/ChatSection';
 import { StatusBar } from '@/components/common/layout/StatusBar';
 import { SettingsDialog } from '@/components/features/settings/SettingsDialog';
 import { AlertDialogManager } from '@/components/common/dialog/AlertDialogManager';
+import { WelcomeScreen } from '@/components/features/onboarding/WelcomeScreen';
 
 function HomeContent() {
   const searchParams = useSearchParams();

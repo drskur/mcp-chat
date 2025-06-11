@@ -1,9 +1,9 @@
 'use server';
 
 import { ChatBedrockConverse } from '@langchain/aws';
-import { DEFAULT_AWS_REGION } from '@/lib/env';
-import { loadSettings } from '@/lib/settings';
-import { env } from '@/lib/env';
+import { DEFAULT_AWS_REGION } from '@/lib/config/env';
+import { loadSettings } from '@/lib/config/settings';
+import { env } from '@/lib/config/env';
 
 export interface BedrockConfig {
   model: string;

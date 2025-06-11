@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { Image as LucideImage } from 'lucide-react';
-import { availableModels } from '@/lib/model-info';
-import { ModelsConfig } from '@/lib/model-info';
-import { env } from '@/lib/env';
+import { availableModels, ModelsConfig } from '@/lib/models/model-info';
+import { env } from '@/lib/config/env';
 
 interface ModelSelectorProps {
   selectedModel: string;

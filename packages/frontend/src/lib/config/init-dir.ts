@@ -1,7 +1,7 @@
 import { mkdir } from 'fs/promises';
 import path from 'path';
-import { clientSettingDir } from '@/lib/env';
-import { initSettingsFile } from '@/lib/settings';
+import { clientSettingDir } from '@/lib/config/env';
+import { initSettingsFile } from '@/lib/config/settings';
 
 /**
  * 애플리케이션 업로드 디렉토리를 초기화합니다.

@@ -1,6 +1,6 @@
 'use server'
 
-import { loadSettings, saveSettingByPath } from '@/lib/settings';
+import { loadSettings, saveSettingByPath } from '@/lib/config/settings';
 
 const DEFAULT_SYSTEM_PROMPT = `
   You are PACE MCP Client AI, an advanced intelligence assistant designed to provide exceptional support.

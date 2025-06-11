@@ -1,4 +1,4 @@
-import { loadSettings, saveSettingByPath } from '@/lib/settings';
+import { loadSettings, saveSettingByPath } from '@/lib/config/settings';
 import { ClientConfig } from '@langchain/mcp-adapters';
 import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
 

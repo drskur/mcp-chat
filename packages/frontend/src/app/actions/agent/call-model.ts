@@ -1,6 +1,5 @@
 'use server';
 
-import { StateAnnotation } from '@/lib/agent-state';
 import { BedrockClientManager } from '@/app/actions/agent/bedrock-client';
 import {
   AIMessage,
@@ -9,6 +8,7 @@ import {
 } from '@langchain/core/messages';
 import { PromptManager } from '@/app/actions/agent/prompt';
 import { MCPClientManager } from '@/mcp/mcp-client-manager';
+import { StateAnnotation } from '@/app/actions/agent/agent-state';
 
 export async function callModelNode(
   state: typeof StateAnnotation.State,

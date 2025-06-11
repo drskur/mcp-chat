@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, Wrench, Cog, ExternalLink } from "lucide-react";
-import type { ContentItem, ToolUseContentItem, ToolResultContentItem, ImageContentItem, DocumentContentItem, ZoomedImageState } from '../types/chat.types';
+import type { ContentItem, ToolUseContentItem, ToolResultContentItem, ImageContentItem, DocumentContentItem, ZoomedImageState } from '../../../types/chat.types';
 import styles from '../ChatInterface.module.css';
 import { FileIconWithColor, formatFileSize, getFileExtension } from '../utils/fileUtils';
 

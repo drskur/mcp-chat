@@ -5,16 +5,14 @@ import type {
   StreamData,
   FileAttachment,
   ToolUseContentItem,
-} from '../types/chat.types';
-import { sendChat } from '@/app/actions/chat/chat';
+} from '@/types/chat.types';
+import { sendChatStream } from '@/app/actions/chat/chat';
 
 interface UseStreamingServiceProps {
-  modelId: string;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
 export const useStreamingService = ({
-  modelId,
   setMessages,
 }: UseStreamingServiceProps) => {
   const [isStreaming, setIsStreaming] = useState(false);
@@ -22,7 +20,7 @@ export const useStreamingService = ({
   const eventSourceRef = useRef<EventSource | null>(null);
 
   // 파일 형식 및 크기 검증
-  const validateFiles = (files: FileAttachment[]) => {
+  const _validateFiles = (files: FileAttachment[]) => {
     const allowedDocFormats = [
       'pdf',
       'csv',
@@ -72,7 +70,7 @@ export const useStreamingService = ({
   };
 
   // 스트림 청크 처리
-  const processStreamChunk = (data: string) => {
+  const _processStreamChunk = (data: string) => {
     if (!data.trim()) return;
 
     try {
@@ -131,7 +129,6 @@ export const useStreamingService = ({
           if (item.type === 'text') {
             const newText = item.text || '';
             if (newText.trim()) {
-              currentMessage.content += newText;
 
               contentItems.push({
                 id: uuidv4(),
@@ -184,7 +181,6 @@ export const useStreamingService = ({
               timestamp,
             });
 
-            currentMessage.content += '\n[이미지 생성됨]';
           }
         }
 
@@ -231,207 +227,35 @@ export const useStreamingService = ({
     });
   };
 
-  const startStreaming = async (query: string, conversationId?: string) => {
-    await sendChat(query, conversationId);
-  };
+  const startStreaming = async (
+    query: string,
+    streamingMessageId: string,
+    conversationId: string,
+  ) => {
+    setIsStreaming(true);
+    streamingMessageIdRef.current = streamingMessageId;
 
-  // 스트리밍 시작
-  // const startStreaming = (query: string, files: FileAttachment[] = [], streamingMessageId: string) => {
-  //   setIsStreaming(true);
-  //   streamingMessageIdRef.current = streamingMessageId;
-  //
-  //   if (eventSourceRef.current) {
-  //     eventSourceRef.current.close();
-  //   }
-  //
-  //   if (files.length > 0) {
-  //     const validation = validateFiles(files);
-  //     if (!validation.valid) {
-  //       setMessages(prev => {
-  //         const newMessages = [...prev];
-  //         const currentMessageIndex = newMessages.findIndex(msg => msg.id === streamingMessageIdRef.current);
-  //
-  //         if (currentMessageIndex === -1) return prev;
-  //
-  //         const currentMessage = {...newMessages[currentMessageIndex]};
-  //         currentMessage.content = "첨부 파일 오류:\n" + validation.errors.join('\n');
-  //         currentMessage.contentItems = [{
-  //           id: uuidv4(),
-  //           type: "text",
-  //           content: "첨부 파일 오류:\n" + validation.errors.join('\n'),
-  //           timestamp: Date.now()
-  //         }];
-  //         currentMessage.isStreaming = false;
-  //
-  //         newMessages[currentMessageIndex] = currentMessage;
-  //         return newMessages;
-  //       });
-  //
-  //       setIsStreaming(false);
-  //       return;
-  //     }
-  //
-  //     const fetchWithFiles = async () => {
-  //       try {
-  //         const formData = new FormData();
-  //         formData.append('message', query);
-  //         formData.append('stream', 'true');
-  //         formData.append('model_id', modelId);
-  //
-  //         files.forEach(attachment => {
-  //           formData.append('files', attachment.file);
-  //         });
-  //
-  //
-  //         const response = await fetch('/api/chat', {
-  //           method: 'POST',
-  //           body: formData,
-  //         });
-  //
-  //         if (!response.ok) {
-  //                       throw new Error(`API 요청 오류: ${response.status} ${response.statusText}`);
-  //         }
-  //
-  //         const reader = response.body?.getReader();
-  //         if (!reader) {
-  //           throw new Error('응답 본문을 읽을 수 없습니다.');
-  //         }
-  //
-  //         const decoder = new TextDecoder();
-  //         let buffer = '';
-  //
-  //         while (true) {
-  //           const { done, value } = await reader.read();
-  //           if (done) break;
-  //
-  //           const chunk = decoder.decode(value, { stream: true });
-  //           buffer += chunk;
-  //
-  //           const lines = buffer.split('\n\n');
-  //           buffer = lines.pop() || '';
-  //
-  //           for (const line of lines) {
-  //             if (line.trim() === '') continue;
-  //
-  //             if (line.startsWith('data: ')) {
-  //               const data = line.substring(6);
-  //               if (data === '[DONE]') {
-  //                 completeStreaming();
-  //               } else {
-  //                 processStreamChunk(data);
-  //               }
-  //             }
-  //           }
-  //         }
-  //       } catch (error) {
-  //
-  //         setMessages(prev => {
-  //           const newMessages = [...prev];
-  //           const currentMessageIndex = newMessages.findIndex(msg => msg.id === streamingMessageIdRef.current);
-  //
-  //           if (currentMessageIndex === -1) return prev;
-  //
-  //           const currentMessage = {...newMessages[currentMessageIndex]};
-  //           currentMessage.content = `오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`;
-  //           currentMessage.contentItems = [{
-  //             id: uuidv4(),
-  //             type: "text",
-  //             content: `오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
-  //             timestamp: Date.now()
-  //           }];
-  //           currentMessage.isStreaming = false;
-  //
-  //           newMessages[currentMessageIndex] = currentMessage;
-  //           return newMessages;
-  //         });
-  //
-  //         completeStreaming();
-  //       }
-  //     };
-  //
-  //     fetchWithFiles();
-  //   } else {
-  //     const requestData = {
-  //       message: query,
-  //       stream: true,
-  //       model_id: modelId
-  //     };
-  //
-  //     const fetchSSE = async () => {
-  //       try {
-  //
-  //         const response = await fetch('/api/chat', {
-  //           method: 'POST',
-  //           headers: {
-  //             'Content-Type': 'application/json'
-  //           },
-  //           body: JSON.stringify(requestData)
-  //         });
-  //
-  //         if (!response.ok) {
-  //                       throw new Error(`API 요청 오류: ${response.status} ${response.statusText}`);
-  //         }
-  //
-  //         const reader = response.body?.getReader();
-  //         if (!reader) {
-  //           throw new Error('응답 본문을 읽을 수 없습니다.');
-  //         }
-  //
-  //         const decoder = new TextDecoder();
-  //         let buffer = '';
-  //
-  //         while (true) {
-  //           const { done, value } = await reader.read();
-  //           if (done) break;
-  //
-  //           const chunk = decoder.decode(value, { stream: true });
-  //           buffer += chunk;
-  //
-  //           const lines = buffer.split('\n\n');
-  //           buffer = lines.pop() || '';
-  //
-  //           for (const line of lines) {
-  //             if (line.trim() === '') continue;
-  //
-  //             if (line.startsWith('data: ')) {
-  //               const data = line.substring(6);
-  //               if (data === '[DONE]') {
-  //                 completeStreaming();
-  //               } else {
-  //                 processStreamChunk(data);
-  //               }
-  //             }
-  //           }
-  //         }
-  //       } catch (error) {
-  //
-  //         setMessages(prev => {
-  //           const newMessages = [...prev];
-  //           const currentMessageIndex = newMessages.findIndex(msg => msg.id === streamingMessageIdRef.current);
-  //
-  //           if (currentMessageIndex === -1) return prev;
-  //
-  //           const currentMessage = {...newMessages[currentMessageIndex]};
-  //           currentMessage.content = `오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`;
-  //           currentMessage.contentItems = [{
-  //             id: uuidv4(),
-  //             type: "text",
-  //             content: `오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
-  //             timestamp: Date.now()
-  //           }];
-  //           currentMessage.isStreaming = false;
-  //
-  //           newMessages[currentMessageIndex] = currentMessage;
-  //           return newMessages;
-  //         });
-  //
-  //         completeStreaming();
-  //       }
-  //     };
-  //
-  //     fetchSSE();
-  //   }
-  // };
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
+    const messageStream = await sendChatStream(query, conversationId);
+    const messageStreamReader = messageStream.getReader();
+
+    (async () => {
+      while (true) {
+        const message = await messageStreamReader.read();
+        if (message.done) {
+          break;
+        }
+        console.log(message.value);
+
+        setMessages((prev) => [...prev, message.value]);
+      }
+    })().catch(console.error);
+
+    completeStreaming();
+  };
 
   return {
     isStreaming,

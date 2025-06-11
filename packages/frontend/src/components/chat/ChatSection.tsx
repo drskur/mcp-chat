@@ -31,7 +31,7 @@ export const ChatSection = ({
             새 대화
           </h2>
           {selectedModel && (
-            <div 
+            <div
               className="flex items-center gap-1 px-2 py-1 rounded-full bg-indigo-900/50 text-xs text-indigo-200 cursor-pointer hover:bg-indigo-900/80 transition-colors"
               onClick={onModelSelect}
             >
@@ -40,9 +40,9 @@ export const ChatSection = ({
             </div>
           )}
         </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onClose}
           className="hover:bg-gray-800"
         >
@@ -50,11 +50,10 @@ export const ChatSection = ({
           <PlusIcon className="rotate-45 h-4 w-4" />
         </Button>
       </div>
-      
+
       <div className="flex-1 overflow-hidden">
-        <ChatInterface 
+        <ChatInterface
           key={chatSessionId}
-          modelId={selectedModel}
           initialMessage={savedInitialMessage}
           initialAttachments={savedAttachments.length > 0 ? savedAttachments : undefined}
         />

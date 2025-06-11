@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Download } from "lucide-react";
-import type { ZoomedImageState } from '../types/chat.types';
+import type { ZoomedImageState } from '../../../types/chat.types';
 
 interface ImageZoomProps {
   zoomedImage: ZoomedImageState;
@@ -13,15 +13,15 @@ export const ImageZoom: React.FC<ImageZoomProps> = ({ zoomedImage, onClose }) =>
 
   const handleDownload = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const fileExtension = zoomedImage.mimeType.split('/')[1] || 'png';
     const fileName = `ai-generated-image-${timestamp}.${fileExtension}`;
-    
+
     const link = document.createElement('a');
     link.href = `data:${zoomedImage.mimeType};base64,${zoomedImage.imageData}`;
     link.download = fileName;
-    
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -33,20 +33,20 @@ export const ImageZoom: React.FC<ImageZoomProps> = ({ zoomedImage, onClose }) =>
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 backdrop-blur-sm"
       onClick={onClose}
     >
       <div className="relative max-w-[90vw] max-h-[90vh] overflow-auto p-4">
         <div className="absolute top-4 right-4 flex gap-2 z-10">
-          <button 
+          <button
             className="bg-gray-800/80 p-2 rounded-full text-white hover:bg-gray-700 transition-colors shadow-lg backdrop-blur-sm"
             onClick={handleDownload}
             title="이미지 다운로드"
           >
             <Download className="h-5 w-5" />
           </button>
-          <button 
+          <button
             className="bg-gray-800/80 p-2 rounded-full text-white hover:bg-red-800 transition-colors shadow-lg backdrop-blur-sm"
             onClick={handleClose}
           >
@@ -58,7 +58,7 @@ export const ImageZoom: React.FC<ImageZoomProps> = ({ zoomedImage, onClose }) =>
           </button>
         </div>
         <div className="relative max-w-full max-h-[80vh] mx-auto">
-          <Image 
+          <Image
             src={`data:${zoomedImage.mimeType};base64,${zoomedImage.imageData}`}
             alt="확대된 이미지"
             width={800}

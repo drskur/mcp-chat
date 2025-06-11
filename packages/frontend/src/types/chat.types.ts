@@ -85,13 +85,11 @@ export interface ZoomedImageState {
 export interface Message {
   id: string;
   sender: "user" | "ai";
-  content: string;
   contentItems: ContentItem[];
   isStreaming?: boolean;
 }
 
 export interface ChatInterfaceProps {
-  modelId?: string;
   initialMessage?: string;
   initialAttachments?: FileAttachment[];
 }

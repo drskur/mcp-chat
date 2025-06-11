@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowDown } from 'lucide-react';
 import { ChatMessageList } from '@/components/ui/chat-message-list';
+import { v4 as uuidv4 } from 'uuid';
 
 // 새로운 hooks과 components import
 import { useScrollManager } from './hooks/useScrollManager';
@@ -14,16 +15,16 @@ import { FilePreview } from './components/FilePreview';
 import { ChatInput } from './components/ChatInput';
 import { ImageZoom } from './components/ImageZoom';
 
-import type { ChatInterfaceProps, ZoomedImageState } from './types/chat.types';
+import type { ChatInterfaceProps, ZoomedImageState } from '@/types/chat.types';
 import { useFileAttachment } from '@/hooks/useFileAttachment';
 import styles from './ChatInterface.module.css';
 
 export function ChatInterface({
-  modelId = 'claude-3-sonnet',
   initialMessage,
   initialAttachments,
 }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
+  const [conversationId] = useState(() => uuidv4());
   const [zoomedImage, setZoomedImage] = useState<ZoomedImageState>({
     isOpen: false,
     imageData: '',
@@ -45,7 +46,6 @@ export function ChatInterface({
   });
 
   const streamingService = useStreamingService({
-    modelId,
     setMessages: messageManager.setMessages,
   });
 
@@ -59,8 +59,6 @@ export function ChatInterface({
     e.preventDefault();
     e.stopPropagation(); // 이벤트 버블링 방지
 
-    console.log('이건 언제 실행?');
-
     if (
       (!input.trim() && fileAttachment.attachments.length === 0) ||
       streamingService.isStreaming
@@ -72,16 +70,12 @@ export function ChatInterface({
     await messageManager.addUserMessage(input, fileAttachment.attachments);
     setInput('');
 
-    // 보낼 첨부 파일 복사본 저장
-    const attachmentsCopy = [...fileAttachment.attachments];
-
     // 첨부 파일 목록 초기화 (UI에서 먼저 비우기)
     fileAttachment.clearAttachments();
 
     // AI 메시지 추가 및 스트리밍 시작
     const aiMessageId = messageManager.addAiMessage();
-    // streamingService.startStreaming(input, attachmentsCopy, aiMessageId);
-    streamingService.startStreaming(input, aiMessageId);
+    await streamingService.startStreaming(input, aiMessageId, conversationId);
 
     // 하단으로 스크롤
     setTimeout(() => scrollManager.scrollToBottom(), 100);
@@ -126,17 +120,20 @@ export function ChatInterface({
 
   // 초기 메시지가 있을 때 AI 응답 자동 요청
   useEffect(() => {
-    if (
-      initialMessage &&
-      messageManager.messages.length === 1 &&
-      !streamingService.isStreaming
-    ) {
-      // AI 메시지 추가 및 스트리밍 시작
-      const aiMessageId = messageManager.addAiMessage();
-      // streamingService.startStreaming(initialMessage, initialAttachments || [], aiMessageId);
-      console.log('aiMessageId', aiMessageId);
-      streamingService.startStreaming(initialMessage, aiMessageId);
-    }
+    const handleInitialMessage = async () => {
+      if (
+        initialMessage &&
+        messageManager.messages.length === 1 &&
+        !streamingService.isStreaming
+      ) {
+        // AI 메시지 추가 및 스트리밍 시작
+        const aiMessageId = messageManager.addAiMessage();
+        console.log('aiMessageId', aiMessageId);
+        await streamingService.startStreaming(initialMessage, aiMessageId, conversationId);
+      }
+    };
+
+    handleInitialMessage();
   }, [
     initialMessage,
     messageManager.messages.length,
@@ -144,6 +141,7 @@ export function ChatInterface({
     streamingService,
     messageManager,
     initialAttachments,
+    conversationId,
   ]);
 
   return (

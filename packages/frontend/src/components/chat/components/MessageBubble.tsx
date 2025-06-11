@@ -3,7 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { ChatBubble, ChatBubbleMessage } from "@/components/ui/chat-bubble";
 import { MessageLoading } from "@/components/ui/message-loading";
 import { ContentRenderer } from './ContentRenderer';
-import type { Message, ImageContentItem, DocumentContentItem, ZoomedImageState } from '../types/chat.types';
+import type { Message, ImageContentItem, DocumentContentItem, ZoomedImageState } from '../../../types/chat.types';
 import { FileIconWithColor, formatFileSize, getFileExtension } from '../utils/fileUtils';
 
 interface MessageBubbleProps {
@@ -31,10 +31,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             {message.contentItems.map((item) => {
               if (item.type === "text") {
                 return <div key={item.id}>{item.content}</div>;
-              } 
+              }
               else if (item.type === "image") {
                 const imageItem = item as ImageContentItem;
-                
+
                 if (!imageItem.imageData) {
                   return (
                     <div key={imageItem.id} className="p-2 bg-red-900/30 rounded-md">
@@ -42,12 +42,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     </div>
                   );
                 }
-                
+
                 const imgSrc = `data:${imageItem.mimeType};base64,${imageItem.imageData}`;
-                
+
                 return (
                   <div key={imageItem.id} className="mt-2 mb-2 max-w-full">
-                    <div 
+                    <div
                       className="relative rounded-md border border-indigo-500/30 cursor-pointer hover:opacity-90 transition-opacity inline-block"
                       style={{ maxHeight: "200px" }}
                       onClick={() => onSetZoomedImage({
@@ -57,7 +57,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                       })}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img 
+                      <img
                         src={imgSrc}
                         alt="첨부 이미지"
                         className="rounded-md max-h-[200px] w-auto object-contain"
@@ -71,7 +71,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 const documentItem = item as DocumentContentItem;
                 const fileSize = formatFileSize(documentItem.fileSize);
                 const fileExtension = getFileExtension(documentItem.filename);
-                
+
                 return (
                   <div key={documentItem.id} className="mt-2 mb-2">
                     <div className="flex border border-gray-700 bg-gray-800/50 rounded-md p-3 max-w-[350px]">
@@ -89,7 +89,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           <p className="text-xs text-gray-400">
                             {fileSize}
                           </p>
-                          <button 
+                          <button
                             className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center"
                             onClick={() => {
                               if (documentItem.fileId) {
@@ -129,7 +129,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 <MessageLoading />
               </div>
             )}
-            {message.contentItems.map((item, index) => 
+            {message.contentItems.map((item, index) =>
               <ContentRenderer
                 key={item.id}
                 item={item}

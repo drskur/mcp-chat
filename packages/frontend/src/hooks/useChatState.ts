@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { FileAttachment } from '@/types/file-attachment';
 import { useFileAttachment } from '@/hooks/useFileAttachment';
-import { getUserModel } from '@/app/actions/models/user-model';
 
-export function useChatState(agentName: string) {
+export function useChatState(_agentName: string) {
   const [showChat, setShowChat] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [chatSessionId, setChatSessionId] = useState(Date.now().toString());

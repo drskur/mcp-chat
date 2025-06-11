@@ -47,4 +47,7 @@ packages/backend/.env
 # Backend
 __pycache__
 
+# TypeScript build info
+*.tsbuildinfo
+
 .idea

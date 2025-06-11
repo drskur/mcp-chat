@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import type { Message, ContentItem, FileAttachment } from '../types/chat.types';
+import type { Message, ContentItem, FileAttachment } from '../../../types/chat.types';
 
 interface UseMessageManagerProps {
   initialMessage?: string;
@@ -9,11 +9,11 @@ interface UseMessageManagerProps {
   saveFileToIndexedDB: (file: File, fileId: string) => Promise<boolean>;
 }
 
-export const useMessageManager = ({ 
-  initialMessage, 
-  initialAttachments, 
-  dbReady, 
-  saveFileToIndexedDB 
+export const useMessageManager = ({
+  initialMessage,
+  initialAttachments,
+  dbReady,
+  saveFileToIndexedDB
 }: UseMessageManagerProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const initialMessageProcessedRef = useRef<boolean>(false);
@@ -28,22 +28,22 @@ export const useMessageManager = ({
         initialMessageProcessedRef.current = false;
       }
     };
-    
+
     checkResetFlag();
-    
+
     const handleResetEvent = () => {
       checkResetFlag();
     };
-    
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'mcp_reset_conversation' && e.newValue === 'true') {
         checkResetFlag();
       }
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('mcp_reset_conversation', handleResetEvent);
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('mcp_reset_conversation', handleResetEvent);
@@ -64,14 +64,14 @@ export const useMessageManager = ({
       'md': 'text/markdown',
       'html': 'text/html'
     };
-    
+
     return mimeTypes[ext] || 'application/octet-stream';
   };
 
   // 파일 URL 생성 함수
   const generateFileUrl = (filename: string): string => {
     const fileExt = filename.split('.').pop()?.toLowerCase() || '';
-    
+
     if (fileExt === 'pdf') {
       return 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
     } else if (fileExt === 'doc' || fileExt === 'docx') {
@@ -86,20 +86,20 @@ export const useMessageManager = ({
   // 첨부 파일을 콘텐츠 아이템으로 변환
   const processAttachments = useCallback(async (attachments: FileAttachment[]): Promise<ContentItem[]> => {
     const contentItems: ContentItem[] = [];
-    
+
     for (const attachment of attachments) {
       const fileId = uuidv4();
-      
+
       try {
         await saveFileToIndexedDB(attachment.file, fileId);
       } catch {
         // 파일 저장 실패 시 무시
       }
-      
+
       if (attachment.type.startsWith('image/') && attachment.previewUrl) {
         if (attachment.previewUrl.startsWith('data:image/')) {
           const base64Data = attachment.previewUrl.split(',')[1];
-          
+
           if (base64Data) {
             const imageId = uuidv4();
             contentItems.push({
@@ -138,14 +138,14 @@ export const useMessageManager = ({
         });
       }
     }
-    
+
     return contentItems;
   }, [saveFileToIndexedDB]);
 
   // 사용자 메시지 추가
   const addUserMessage = useCallback(async (input: string, attachments: FileAttachment[] = []) => {
     const contentItems: ContentItem[] = [];
-    
+
     if (input.trim()) {
       contentItems.push({
         id: uuidv4(),
@@ -154,10 +154,10 @@ export const useMessageManager = ({
         timestamp: Date.now()
       });
     }
-    
+
     const attachmentItems = await processAttachments(attachments);
     contentItems.push(...attachmentItems);
-    
+
     let messageContent = input;
     if (attachments.length > 0) {
       const fileNames = attachments.map(a => a.file.name).join(', ');
@@ -167,14 +167,13 @@ export const useMessageManager = ({
         messageContent = `[첨부 파일: ${fileNames}]`;
       }
     }
-    
+
     const userMessage: Message = {
       id: uuidv4(),
-      content: messageContent,
       sender: "user",
       contentItems: contentItems
     };
-    
+
     setMessages(prev => [...prev, userMessage]);
     return userMessage.id;
   }, [processAttachments]);
@@ -182,7 +181,7 @@ export const useMessageManager = ({
   // AI 메시지 추가 (스트리밍용)
   const addAiMessage = () => {
     const newAiMessageId = uuidv4();
-    
+
     setMessages(prev => [
       ...prev,
       {
@@ -193,7 +192,7 @@ export const useMessageManager = ({
         isStreaming: true
       }
     ]);
-    
+
     return newAiMessageId;
   };
 
@@ -202,9 +201,9 @@ export const useMessageManager = ({
     setMessages(prev => {
       const newMessages = [...prev];
       const messageIndex = newMessages.findIndex(msg => msg.id === messageId);
-      
+
       if (messageIndex === -1) return prev;
-      
+
       const message = {...newMessages[messageIndex]};
       const contentItems = [...message.contentItems].map(item => {
         if (item.id === itemId && (item.type === "tool_use" || item.type === "tool_result")) {
@@ -215,7 +214,7 @@ export const useMessageManager = ({
         }
         return item;
       });
-      
+
       message.contentItems = contentItems;
       newMessages[messageIndex] = message;
       return newMessages;
@@ -224,17 +223,17 @@ export const useMessageManager = ({
 
   // 초기 메시지 처리
   useEffect(() => {
-    if ((initialMessage || (initialAttachments && initialAttachments.length > 0)) && 
-        !initialMessageProcessedRef.current && 
-        messages.length === 0 && 
+    if ((initialMessage || (initialAttachments && initialAttachments.length > 0)) &&
+        !initialMessageProcessedRef.current &&
+        messages.length === 0 &&
         dbReady) {
-      
+
       initialMessageProcessedRef.current = true;
-      
-      
+
+
       localStorage.removeItem('mcp_initial_message');
       localStorage.removeItem('mcp_initial_attachments');
-      
+
       setTimeout(async () => {
         try {
           await addUserMessage(initialMessage || "", initialAttachments || []);

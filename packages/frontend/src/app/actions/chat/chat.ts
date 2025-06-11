@@ -1,6 +1,6 @@
 'use server';
 
-import { graph } from '@/agent/workflow';
+import { getGraph } from '@/app/actions/agent/workflow';
 import {
   AIMessageChunk,
   HumanMessage,
@@ -17,6 +17,7 @@ export async function sendChatStream(message: string, conversationId?: string, m
     thread_id: conversationId ?? 'default_conversation',
   };
 
+  const graph = await getGraph();
   const response = await graph.stream(
     {
       messages: [humanMessage],

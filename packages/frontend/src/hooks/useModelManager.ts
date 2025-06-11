@@ -3,8 +3,8 @@ import { getUserModel } from '@/app/actions/models/user-model';
 import {
   initializeBedrockClient,
   updateBedrockModel,
-} from '@/app/actions/chat/bedrock-manager';
-import { initializePromptManager } from '@/app/actions/chat/prompt-manager';
+} from '@/app/actions/agent/bedrock-client';
+import { initializePromptManager } from '@/app/actions/agent/prompt';
 
 export function useModelManager(agentName: string) {
   const [selectedModel, setSelectedModel] = useState(

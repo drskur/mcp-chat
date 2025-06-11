@@ -1,11 +1,13 @@
-import { StateAnnotation } from '@/agent/state';
-import { BedrockClientManager } from '@/agent/bedrock-client';
+'use server';
+
+import { StateAnnotation } from '@/lib/agent-state';
+import { BedrockClientManager } from '@/app/actions/agent/bedrock-client';
 import {
   AIMessage,
   AIMessageChunk,
   SystemMessage,
 } from '@langchain/core/messages';
-import { PromptManager } from '@/agent/prompt';
+import { PromptManager } from '@/app/actions/agent/prompt';
 import { MCPClientManager } from '@/mcp/mcp-client-manager';
 
 export async function callModelNode(

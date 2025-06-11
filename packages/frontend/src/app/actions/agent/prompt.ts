@@ -1,6 +1,48 @@
 'use server';
 
-import { PromptManager } from '@/agent/prompt';
+import { loadSystemPrompt } from '@/app/actions/prompt';
+
+class PromptManager {
+  private static instance: PromptManager;
+  private agentName: string | null = null;
+  private prompt: string | null = null;
+
+  static getInstance(): PromptManager {
+    if (!PromptManager.instance) {
+      PromptManager.instance = new PromptManager();
+    }
+    return PromptManager.instance;
+  }
+
+  async updateAgent(agentName: string): Promise<void> {
+    this.agentName = agentName;
+    this.prompt = await loadSystemPrompt(agentName);
+  }
+
+  getPrompt(): string {
+    if (!this.isInitialized()) {
+      throw new Error('agent is not initialized. Call updateAgent first.');
+    }
+
+    return this.prompt!;
+  }
+
+  isInitialized(): boolean {
+    return this.agentName !== null && this.prompt !== null;
+  }
+}
+
+export async function updateAgentPrompt(agentName: string): Promise<void> {
+  await PromptManager.getInstance().updateAgent(agentName);
+}
+
+export async function getAgentPrompt(): Promise<string> {
+  return PromptManager.getInstance().getPrompt();
+}
+
+export async function isPromptInitialized(): Promise<boolean> {
+  return PromptManager.getInstance().isInitialized();
+}
 
 export async function initializePromptManager(agentName: string) {
   try {
@@ -13,7 +55,7 @@ export async function initializePromptManager(agentName: string) {
       success: true,
       agent: agentName,
       initialized: manager.isInitialized(),
-      prompt: prompt ? prompt.slice(0, 100) + '...' : null, // 처음 100자만 반환
+      prompt: prompt ? prompt.slice(0, 100) + '...' : null,
     };
   } catch (error) {
     console.error('Failed to initialize PromptManager:', error);
@@ -59,3 +101,5 @@ export async function updatePromptAgent(agentName: string) {
     };
   }
 }
+
+export { PromptManager };

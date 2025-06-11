@@ -1,6 +1,8 @@
 import React from 'react';
-import { ChevronDown, ChevronRight, Wrench, Cog, FileIcon, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronRight, Wrench, Cog, ExternalLink } from "lucide-react";
 import type { ContentItem, ToolUseContentItem, ToolResultContentItem, ImageContentItem, DocumentContentItem, ZoomedImageState } from '../types/chat.types';
+import styles from '../ChatInterface.module.css';
+import { FileIconWithColor, formatFileSize, getFileExtension } from '../utils/fileUtils';
 
 interface ContentRendererProps {
   item: ContentItem;
@@ -27,19 +29,6 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
   const age = now - item.timestamp;
   const shouldAnimate = isStreaming && age < fadeDuration;
 
-  // 파일 아이콘 선택 함수
-  const getFileIcon = (fileType: string) => {
-    if (fileType.includes('pdf')) return 'pdf';
-    if (fileType.includes('word') || fileType.includes('doc')) return 'doc';
-    if (fileType.includes('excel') || fileType.includes('sheet') || fileType.includes('xls') || fileType.includes('csv')) return 'sheet';
-    if (fileType.includes('text') || fileType.includes('markdown') || fileType.includes('txt') || fileType.includes('md')) return 'text';
-    if (fileType.includes('image') || fileType.includes('png') || fileType.includes('jpg') || fileType.includes('jpeg') || fileType.includes('gif')) return 'image';
-    if (fileType.includes('html') || fileType.includes('htm')) return 'html';
-    if (fileType.includes('json') || fileType.includes('xml')) return 'code';
-    if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('tar') || fileType.includes('gz')) return 'archive';
-    if (fileType.includes('ppt') || fileType.includes('presentation')) return 'presentation';
-    return 'generic';
-  };
 
 
   // 텍스트 아이템 렌더링
@@ -47,7 +36,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
     return (
       <span
         key={item.id}
-        className={shouldAnimate ? "fade-in" : ""}
+        className={shouldAnimate ? styles.fadeIn : ""}
       >
         {item.content}
       </span>
@@ -62,7 +51,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
     return (
       <div
         key={item.id}
-        className={`mt-4 mb-4 ${shouldAnimate ? "fade-in" : ""}`}
+        className={`mt-4 mb-4 ${shouldAnimate ? styles.fadeIn : ""}`}
       >
         <div className="bg-gray-800/70 rounded-md p-3 text-xs border border-gray-700">
           <div className="font-medium text-gray-300 mb-1 flex justify-between items-center cursor-pointer"
@@ -131,7 +120,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
     return (
       <div
         key={item.id}
-        className={`mt-4 mb-4 ${shouldAnimate ? "fade-in" : ""}`}
+        className={`mt-4 mb-4 ${shouldAnimate ? styles.fadeIn : ""}`}
       >
         <div className="bg-gray-800/70 rounded-md p-3 text-xs border border-gray-700">
           <div className="font-medium text-gray-300 mb-1 flex justify-between items-center cursor-pointer"
@@ -196,27 +185,14 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
   // 문서 아이템 렌더링
   if (item.type === "document") {
     const documentItem = item as DocumentContentItem;
-    const fileIcon = getFileIcon(documentItem.fileType);
-    const fileSize = documentItem.fileSize < 1024 * 1024
-      ? `${Math.round(documentItem.fileSize / 1024)} KB`
-      : `${(documentItem.fileSize / (1024 * 1024)).toFixed(1)} MB`;
-
-    const fileExtension = documentItem.filename.split('.').pop()?.toUpperCase() || '';
+    const fileSize = formatFileSize(documentItem.fileSize);
+    const fileExtension = getFileExtension(documentItem.filename);
 
     return (
-      <div key={documentItem.id} className={`mt-2 mb-2 ${shouldAnimate ? "fade-in" : ""}`}>
+      <div key={documentItem.id} className={`mt-2 mb-2 ${shouldAnimate ? styles.fadeIn : ""}`}>
         <div className="flex border border-gray-700 bg-gray-800/50 rounded-md p-3 max-w-[350px]">
           <div className="mr-3 h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-md bg-indigo-900/40">
-            {fileIcon === 'pdf' && <FileIcon className="h-5 w-5 text-red-400" />}
-            {fileIcon === 'doc' && <FileIcon className="h-5 w-5 text-blue-400" />}
-            {fileIcon === 'sheet' && <FileIcon className="h-5 w-5 text-green-400" />}
-            {fileIcon === 'text' && <FileIcon className="h-5 w-5 text-gray-400" />}
-            {fileIcon === 'image' && <FileIcon className="h-5 w-5 text-purple-400" />}
-            {fileIcon === 'html' && <FileIcon className="h-5 w-5 text-orange-400" />}
-            {fileIcon === 'code' && <FileIcon className="h-5 w-5 text-cyan-400" />}
-            {fileIcon === 'archive' && <FileIcon className="h-5 w-5 text-yellow-400" />}
-            {fileIcon === 'presentation' && <FileIcon className="h-5 w-5 text-pink-400" />}
-            {fileIcon === 'generic' && <FileIcon className="h-5 w-5 text-gray-400" />}
+            <FileIconWithColor fileType={documentItem.fileType} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">

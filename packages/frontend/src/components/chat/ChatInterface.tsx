@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ArrowDown } from "lucide-react";
 import { ChatMessageList } from "@/components/ui/chat-message-list";
 
@@ -16,6 +16,7 @@ import { ImageZoom } from './components/ImageZoom';
 
 import type { ChatInterfaceProps, ZoomedImageState } from './types/chat.types';
 import { useFileAttachment } from '@/hooks/useFileAttachment';
+import styles from './ChatInterface.module.css';
 
 export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, initialAttachments }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
@@ -44,23 +45,6 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
     setMessages: messageManager.setMessages
   });
 
-  // 애니메이션 키프레임 생성
-  const getAnimationStyles = () => `
-    @keyframes fadeIn {
-      from { 
-        opacity: 0;
-        transform: translateY(2px);
-      }
-      to { 
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .fade-in {
-      animation: fadeIn ${FADE_DURATION/1000}s ease-out forwards;
-    }
-  `;
 
   // 입력 상태 변경 핸들러
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,6 +55,8 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation(); // 이벤트 버블링 방지
+
+    console.log("이건 언제 실행?");
 
     if ((!input.trim() && fileAttachment.attachments.length === 0) || streamingService.isStreaming) {
       return;
@@ -88,7 +74,7 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
 
     // AI 메시지 추가 및 스트리밍 시작
     const aiMessageId = messageManager.addAiMessage();
-    streamingService.startStreaming(input, attachmentsCopy, aiMessageId);
+    // streamingService.startStreaming(input, attachmentsCopy, aiMessageId);
 
     // 하단으로 스크롤
     setTimeout(() => scrollManager.scrollToBottom(), 100);
@@ -133,31 +119,22 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
     if (initialMessage && messageManager.messages.length === 1 && !streamingService.isStreaming) {
       // AI 메시지 추가 및 스트리밍 시작
       const aiMessageId = messageManager.addAiMessage();
-      streamingService.startStreaming(initialMessage, initialAttachments || [], aiMessageId);
+      // streamingService.startStreaming(initialMessage, initialAttachments || [], aiMessageId);
+      console.log("aiMessageId", aiMessageId);
+      streamingService.startStreaming(initialMessage);
     }
   }, [initialMessage, messageManager.messages.length, streamingService.isStreaming, streamingService, messageManager, initialAttachments]);
 
   return (
     <>
       <div className="flex h-full w-full overflow-hidden">
-        {/* 페이드 인 애니메이션을 위한 스타일 */}
-        <style dangerouslySetInnerHTML={{ __html: getAnimationStyles() + `
-          .hide-scrollbar {
-            -ms-overflow-style: none; /* IE and Edge */
-            scrollbar-width: none; /* Firefox */
-          }
-          .hide-scrollbar::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, Opera */
-          }
-        `}} />
-
         <div className="flex flex-col w-full h-full">
           {/* 메시지 영역 */}
           <div
             ref={scrollManager.scrollContainerRef}
-            className="flex-1 overflow-y-auto hide-scrollbar relative"
+            className={styles.messageContainer + " " + styles.hideScrollbar}
           >
-            <div className="max-w-3xl mx-auto w-full p-4">
+            <div className={styles.messageListWrapper}>
               <ChatMessageList>
                 {messageManager.messages.map((message) => (
                   <MessageBubble
@@ -178,7 +155,7 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
             {scrollManager.showScrollButton && (
               <button
                 onClick={() => scrollManager.scrollToBottom()}
-                className="fixed bottom-24 right-8 bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-full shadow-xl transition-all duration-200 z-10 flex items-center justify-center transform hover:scale-110"
+                className={styles.scrollButton}
                 aria-label="하단으로 스크롤"
               >
                 <ArrowDown className="h-5 w-5" />
@@ -187,8 +164,8 @@ export function ChatInterface({ modelId = "claude-3-sonnet", initialMessage, ini
           </div>
 
           {/* 입력창 영역 */}
-          <div className="p-4 border-t border-gray-800">
-            <div className="max-w-3xl mx-auto w-full">
+          <div className={styles.inputArea}>
+            <div className={styles.inputWrapper}>
               {/* 첨부 파일 미리보기 영역 */}
               <FilePreview
                 attachments={fileAttachment.attachments}

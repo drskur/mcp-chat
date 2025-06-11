@@ -61,7 +61,19 @@ python tests/test.py
 - **React 19** with TypeScript
 - **Tailwind CSS** and **shadcn/ui** for styling
 - Chat interface with streaming support
-- Currently marked as prototype stage and needs refactoring
+- **Component Structure**: Organized into logical feature-based architecture
+  ```
+  src/components/
+  ├── common/           # Shared components across features
+  │   ├── dialog/       # AlertDialogManager
+  │   └── layout/       # StatusBar, sidebar components
+  ├── features/         # Feature-specific components
+  │   ├── chat/         # Chat interface, messaging, file attachments
+  │   ├── mcp/          # MCP tool management
+  │   ├── settings/     # Model selection, system prompts, user settings
+  │   └── onboarding/   # Welcome screen
+  └── ui/               # shadcn/ui base components
+  ```
 
 ### Key API Endpoints
 - `/api/chat` - AI agent chat interface
@@ -95,6 +107,12 @@ python tests/test.py
 - **Server Actions Introduction**: Started implementing Next.js server actions to replace backend API calls
   - Added `/app/actions/models/user-model.ts` for model management via server actions
   - Utilizing settings.ts library for persistent configuration storage
+- **Component Architecture Overhaul**: Complete reorganization of components folder structure for better maintainability
+  - Moved components into `features/` (chat, mcp, settings, onboarding) and `common/` (dialog, layout) directories
+  - Relocated dialog components to appropriate feature folders (settings, mcp)
+  - Consolidated layout components under `common/layout/`
+  - Simplified nested folder structures (removed unnecessary `welcome/` and `file/` folders)
+  - Updated all import paths to reflect new logical grouping
 - **Component Modularization**: Split large page.tsx into smaller, maintainable components
 - **Utility Migration**: Moved init-upload-dir utility from API to utils directory for better organization
 

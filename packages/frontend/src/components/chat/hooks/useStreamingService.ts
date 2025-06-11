@@ -70,129 +70,129 @@ export const useStreamingService = ({
   };
 
   // 스트림 청크 처리
-  const _processStreamChunk = (data: string) => {
-    if (!data.trim()) return;
-
-    try {
-      if (data === '[DONE]') {
-        setMessages((prev) => {
-          const newMessages = [...prev];
-          const currentMessageIndex = newMessages.findIndex(
-            (msg) => msg.id === streamingMessageIdRef.current,
-          );
-
-          if (currentMessageIndex === -1) return prev;
-
-          const currentMessage = { ...newMessages[currentMessageIndex] };
-          const contentItems = [...currentMessage.contentItems].map((item) => {
-            if (item.type === 'tool_use' || item.type === 'tool_result') {
-              return {
-                ...item,
-                collapsed: true,
-              };
-            }
-            return item;
-          });
-
-          currentMessage.contentItems = contentItems;
-          newMessages[currentMessageIndex] = currentMessage;
-          return newMessages;
-        });
-
-        completeStreaming();
-        return;
-      }
-
-      const parsedData: StreamData = JSON.parse(
-        data.startsWith('data: ') ? data.substring(6) : data,
-      );
-      const chunk = parsedData.chunk || [];
-
-      if (!chunk || chunk.length === 0) {
-        return;
-      }
-
-      setMessages((prev) => {
-        const newMessages = [...prev];
-        const currentMessageIndex = newMessages.findIndex(
-          (msg) => msg.id === streamingMessageIdRef.current,
-        );
-
-        if (currentMessageIndex === -1) return prev;
-
-        const currentMessage = { ...newMessages[currentMessageIndex] };
-        const contentItems = [...currentMessage.contentItems];
-
-        for (const item of chunk) {
-          const timestamp = Date.now();
-
-          if (item.type === 'text') {
-            const newText = item.text || '';
-            if (newText.trim()) {
-              contentItems.push({
-                id: uuidv4(),
-                type: 'text',
-                content: newText,
-                timestamp,
-              });
-            }
-          } else if (item.type === 'tool_use') {
-            if (item.name) {
-              contentItems.push({
-                id: item.id || uuidv4(),
-                type: 'tool_use',
-                name: item.name,
-                input: item.input || '',
-                timestamp,
-                collapsed: false,
-              });
-            } else if (item.input !== undefined) {
-              const lastToolUseIndex = contentItems
-                .map((item, idx) => ({ item, idx }))
-                .filter(({ item }) => item.type === 'tool_use')
-                .pop()?.idx;
-
-              if (lastToolUseIndex !== undefined) {
-                const lastToolUse = contentItems[
-                  lastToolUseIndex
-                ] as ToolUseContentItem;
-                contentItems[lastToolUseIndex] = {
-                  ...lastToolUse,
-                  input: lastToolUse.input + (item.input || ''),
-                  collapsed: false,
-                };
-              }
-            }
-          } else if (item.type === 'tool_result') {
-            contentItems.push({
-              id: uuidv4(),
-              type: 'tool_result',
-              result: item.text || '',
-              timestamp,
-              collapsed: false,
-            });
-          } else if (item.type === 'image') {
-            contentItems.push({
-              id: uuidv4(),
-              type: 'image',
-              imageData: item.image_data || '',
-              mimeType: item.mime_type || 'image/png',
-              timestamp,
-            });
-          }
-        }
-
-        currentMessage.contentItems = contentItems.sort(
-          (a, b) => a.timestamp - b.timestamp,
-        );
-
-        newMessages[currentMessageIndex] = currentMessage;
-        return newMessages;
-      });
-    } catch {
-      // 스트림 청크 처리 오류 시 무시
-    }
-  };
+  // const _processStreamChunk = (data: string) => {
+  //   if (!data.trim()) return;
+  //
+  //   try {
+  //     if (data === '[DONE]') {
+  //       setMessages((prev) => {
+  //         const newMessages = [...prev];
+  //         const currentMessageIndex = newMessages.findIndex(
+  //           (msg) => msg.id === streamingMessageIdRef.current,
+  //         );
+  //
+  //         if (currentMessageIndex === -1) return prev;
+  //
+  //         const currentMessage = { ...newMessages[currentMessageIndex] };
+  //         const contentItems = [...currentMessage.contentItems].map((item) => {
+  //           if (item.type === 'tool_use' || item.type === 'tool_result') {
+  //             return {
+  //               ...item,
+  //               collapsed: true,
+  //             };
+  //           }
+  //           return item;
+  //         });
+  //
+  //         currentMessage.contentItems = contentItems;
+  //         newMessages[currentMessageIndex] = currentMessage;
+  //         return newMessages;
+  //       });
+  //
+  //       completeStreaming();
+  //       return;
+  //     }
+  //
+  //     const parsedData: StreamData = JSON.parse(
+  //       data.startsWith('data: ') ? data.substring(6) : data,
+  //     );
+  //     const chunk = parsedData.chunk || [];
+  //
+  //     if (!chunk || chunk.length === 0) {
+  //       return;
+  //     }
+  //
+  //     setMessages((prev) => {
+  //       const newMessages = [...prev];
+  //       const currentMessageIndex = newMessages.findIndex(
+  //         (msg) => msg.id === streamingMessageIdRef.current,
+  //       );
+  //
+  //       if (currentMessageIndex === -1) return prev;
+  //
+  //       const currentMessage = { ...newMessages[currentMessageIndex] };
+  //       const contentItems = [...currentMessage.contentItems];
+  //
+  //       for (const item of chunk) {
+  //         const timestamp = Date.now();
+  //
+  //         if (item.type === 'text') {
+  //           const newText = item.text || '';
+  //           if (newText.trim()) {
+  //             contentItems.push({
+  //               id: uuidv4(),
+  //               type: 'text',
+  //               content: newText,
+  //               timestamp,
+  //             });
+  //           }
+  //         } else if (item.type === 'tool_use') {
+  //           if (item.name) {
+  //             contentItems.push({
+  //               id: item.id || uuidv4(),
+  //               type: 'tool_use',
+  //               name: item.name,
+  //               input: item.input || '',
+  //               timestamp,
+  //               collapsed: false,
+  //             });
+  //           } else if (item.input !== undefined) {
+  //             const lastToolUseIndex = contentItems
+  //               .map((item, idx) => ({ item, idx }))
+  //               .filter(({ item }) => item.type === 'tool_use')
+  //               .pop()?.idx;
+  //
+  //             if (lastToolUseIndex !== undefined) {
+  //               const lastToolUse = contentItems[
+  //                 lastToolUseIndex
+  //               ] as ToolUseContentItem;
+  //               contentItems[lastToolUseIndex] = {
+  //                 ...lastToolUse,
+  //                 input: lastToolUse.input + (item.input || ''),
+  //                 collapsed: false,
+  //               };
+  //             }
+  //           }
+  //         } else if (item.type === 'tool_result') {
+  //           contentItems.push({
+  //             id: uuidv4(),
+  //             type: 'tool_result',
+  //             result: item.text || '',
+  //             timestamp,
+  //             collapsed: false,
+  //           });
+  //         } else if (item.type === 'image') {
+  //           contentItems.push({
+  //             id: uuidv4(),
+  //             type: 'image',
+  //             imageData: item.image_data || '',
+  //             mimeType: item.mime_type || 'image/png',
+  //             timestamp,
+  //           });
+  //         }
+  //       }
+  //
+  //       currentMessage.contentItems = contentItems.sort(
+  //         (a, b) => a.timestamp - b.timestamp,
+  //       );
+  //
+  //       newMessages[currentMessageIndex] = currentMessage;
+  //       return newMessages;
+  //     });
+  //   } catch {
+  //     // 스트림 청크 처리 오류 시 무시
+  //   }
+  // };
 
   // 스트리밍 완료
   const completeStreaming = () => {
@@ -248,7 +248,6 @@ export const useStreamingService = ({
         }
         setMessages((prev) => {
           const i = prev.findIndex((m) => m.id === message.value.id);
-          console.log(prev);
           if (i === -1) {
             return [...prev, message.value];
           } else {

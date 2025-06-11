@@ -6,19 +6,22 @@ import {
   SystemMessage,
 } from '@langchain/core/messages';
 import { PromptManager } from '@/agent/prompt';
+import { MCPClientManager } from '@/mcp/mcp-client-manager';
 
 export async function callModelNode(
   state: typeof StateAnnotation.State,
   _config: any,
 ) {
   const llm = BedrockClientManager.getInstance().getClient();
+  const mcpClient = await MCPClientManager.getInstance().getClient();
+  const tools = (await mcpClient?.getTools()) ?? [];
 
   const systemMessage = new SystemMessage({
     content: PromptManager.getInstance().getPrompt(),
   });
   const messages = [systemMessage, ...state.messages];
 
-  const response = await llm.bindTools([]).stream(messages);
+  const response = await llm.bindTools(tools).stream(messages);
 
   const aiMessageChunk = (await Array.fromAsync(response)).reduce(
     (acc, chunk) => acc.concat(chunk),

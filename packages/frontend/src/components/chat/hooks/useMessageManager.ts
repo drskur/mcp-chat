@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import type { Message, ContentItem, FileAttachment } from '../../../types/chat.types';
+import type { Message, ContentItem, FileAttachment } from '@/types/chat.types';
 
 interface UseMessageManagerProps {
   initialMessage?: string;

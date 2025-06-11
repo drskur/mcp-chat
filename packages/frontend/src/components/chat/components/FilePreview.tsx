@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { X, FileIcon } from "lucide-react";
-import type { FileAttachment } from '../../../types/chat.types';
+import type { FileAttachment } from '@/types/chat.types';
 
 interface FilePreviewProps {
   attachments: FileAttachment[];

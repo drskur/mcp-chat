@@ -15,8 +15,7 @@ export const JsonHelpMessage: React.FC<JsonHelpMessageProps> = ({ jsonString, on
     // 유효한 JSON이면 메시지 없음
     return null;
   } catch (e) {
-    console.error(e);
-    // 오류 메시지 생성
+    // JSON 파싱 오류 시 자동 수정 시도
     const fixedJson = autoFixJsonString(jsonString);
     const isFixed = fixedJson !== jsonString;
     

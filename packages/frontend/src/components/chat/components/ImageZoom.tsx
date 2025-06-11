@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Download } from "lucide-react";
-import type { ZoomedImageState } from '../../../types/chat.types';
+import type { ZoomedImageState } from '@/types/chat.types';
 
 interface ImageZoomProps {
   zoomedImage: ZoomedImageState;

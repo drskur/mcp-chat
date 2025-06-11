@@ -129,7 +129,6 @@ export const useStreamingService = ({
           if (item.type === 'text') {
             const newText = item.text || '';
             if (newText.trim()) {
-
               contentItems.push({
                 id: uuidv4(),
                 type: 'text',
@@ -180,7 +179,6 @@ export const useStreamingService = ({
               mimeType: item.mime_type || 'image/png',
               timestamp,
             });
-
           }
         }
 
@@ -248,9 +246,17 @@ export const useStreamingService = ({
         if (message.done) {
           break;
         }
-        console.log(message.value);
-
-        setMessages((prev) => [...prev, message.value]);
+        setMessages((prev) => {
+          const i = prev.findIndex((m) => m.id === message.value.id);
+          if (i === -1) {
+            return [...prev, message.value];
+          } else {
+            // 새 배열을 생성하여 React가 변경을 감지할 수 있도록 함
+            const newMessages = [...prev];
+            newMessages[i] = message.value;
+            return newMessages;
+          }
+        });
       }
     })().catch(console.error);
 

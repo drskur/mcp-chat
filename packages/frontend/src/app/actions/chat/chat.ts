@@ -1,14 +1,13 @@
 'use server';
 
 import { graph } from '@/agent/workflow';
-import { AIMessage, HumanMessage } from '@langchain/core/messages';
-import { StateAnnotation } from '@/agent/state';
+import {
+  AIMessage,
+  AIMessageChunk,
+  HumanMessage,
+} from '@langchain/core/messages';
 import type { Message } from '@/types/chat.types';
 import { randomUUID } from 'node:crypto';
-
-export interface ChatChunk {
-  callModel: typeof StateAnnotation.State;
-}
 
 export async function sendChatStream(message: string, conversationId?: string) {
   const humanMessage = new HumanMessage({
@@ -23,28 +22,40 @@ export async function sendChatStream(message: string, conversationId?: string) {
     {
       messages: [humanMessage],
     },
-    { configurable },
+    {
+      configurable,
+      streamMode: 'messages',
+    },
   );
   return new ReadableStream<Message>({
     async start(controller) {
       try {
-        for await (const chunk of response) {
-          const messages = (chunk as ChatChunk).callModel.messages ?? [];
-          const lastMessage = messages.at(-1);
+        let currentUUID = randomUUID();
+        let aiMessageChunk: AIMessageChunk | null = null;
 
-          if (lastMessage instanceof AIMessage) {
+        for await (const chunk of response) {
+          // streamMode: 'messages'를 사용하면 [message, metadata] 형태로 반환됨
+          const [streamedMessage] = chunk;
+
+          if (streamedMessage instanceof AIMessageChunk) {
+            if (aiMessageChunk && aiMessageChunk?.id === streamedMessage.id) {
+              aiMessageChunk = aiMessageChunk.concat(streamedMessage);
+            } else {
+              aiMessageChunk = streamedMessage;
+            }
+
             const message: Message = {
-              id: lastMessage.id ?? '',
+              id: aiMessageChunk.id ?? randomUUID(),
               sender: 'ai',
               contentItems: [
                 {
-                  id: randomUUID(),
+                  id: currentUUID,
                   type: 'text',
-                  content: (lastMessage.content as string) ?? '',
+                  content: aiMessageChunk.content as string,
                   timestamp: Date.now(),
                 },
               ],
-              isStreaming: false,
+              isStreaming: true,
             };
             controller.enqueue(message);
           }

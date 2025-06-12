@@ -14,7 +14,6 @@ export const useStreamingService = ({
 }: UseStreamingServiceProps) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const streamingMessageIdRef = useRef<string | null>(null);
-  const eventSourceRef = useRef<EventSource | null>(null);
 
   // 파일 형식 및 크기 검증
   const _validateFiles = (files: FileAttachment[]) => {
@@ -193,11 +192,6 @@ export const useStreamingService = ({
 
   // 스트리밍 완료
   const completeStreaming = () => {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
-    }
-
     setIsStreaming(false);
     streamingMessageIdRef.current = null;
 
@@ -229,10 +223,6 @@ export const useStreamingService = ({
   ) => {
     setIsStreaming(true);
     streamingMessageIdRef.current = streamingMessageId;
-
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
 
     const messageStream = await sendChatStream(query, conversationId, streamingMessageId);
     const messageStreamReader = messageStream.getReader();

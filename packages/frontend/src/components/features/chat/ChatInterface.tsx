@@ -6,9 +6,9 @@ import { ChatMessageList } from '@/components/ui/chat-message-list';
 import { v4 as uuidv4 } from 'uuid';
 
 // 새로운 hooks과 components import
-import { useScrollManager } from './hooks/useScrollManager';
 import { useMessageManager } from './hooks/useMessageManager';
-import { useStreamingService } from './hooks/useStreamingService';
+import { useStreamingService } from '@/hooks/chat/useStreamingService';
+import { useScrollControl } from '@/hooks/core/useScrollControl';
 
 import { MessageBubble } from './components/MessageBubble';
 import { FilePreview } from './components/FilePreview';
@@ -36,8 +36,7 @@ export function ChatInterface({
 
   // Custom hooks 사용
   const fileAttachment = useFileManager();
-  const scrollManager = useScrollManager();
-
+  
   const messageManager = useMessageManager({
     initialMessage,
     initialAttachments,
@@ -47,6 +46,17 @@ export function ChatInterface({
 
   const streamingService = useStreamingService({
     setMessages: messageManager.setMessages,
+  });
+  
+  const {
+    scrollRef: scrollContainerRef,
+    messagesEndRef,
+    showScrollButton,
+    userHasScrolled,
+    isAtBottom,
+    scrollToBottom
+  } = useScrollControl({
+    smooth: true
   });
 
   // 입력 상태 변경 핸들러
@@ -78,27 +88,24 @@ export function ChatInterface({
     await streamingService.startStreaming(input, aiMessageId, conversationId);
 
     // 하단으로 스크롤
-    setTimeout(() => scrollManager.scrollToBottom(), 100);
+    setTimeout(() => scrollToBottom(), 100);
   };
 
   // 메시지가 추가되거나 변경될 때마다 조건부 스크롤
   useEffect(() => {
     if (messageManager.messages.length > 0) {
-      if (
-        !scrollManager.userHasScrolled ||
-        scrollManager.isNearBottomRef.current
-      ) {
-        scrollManager.scrollToBottom();
+      if (!userHasScrolled || isAtBottom) {
+        setTimeout(() => scrollToBottom(), 0);
       }
     }
-  }, [messageManager.messages, scrollManager.userHasScrolled, scrollManager]);
+  }, [messageManager.messages.length, userHasScrolled, isAtBottom, scrollToBottom]);
 
   // 스트리밍이 시작될 때 항상 스크롤 다운
   useEffect(() => {
     if (streamingService.isStreaming) {
-      scrollManager.scrollToBottom();
+      scrollToBottom();
     }
-  }, [streamingService.isStreaming, scrollManager]);
+  }, [streamingService.isStreaming, scrollToBottom]);
 
   // 페이드 효과를 위한 주기적 리렌더링
   useEffect(() => {
@@ -150,7 +157,7 @@ export function ChatInterface({
         <div className="flex flex-col w-full h-full">
           {/* 메시지 영역 */}
           <div
-            ref={scrollManager.scrollContainerRef}
+            ref={scrollContainerRef}
             className={styles.messageContainer + ' ' + styles.hideScrollbar}
           >
             <div className={styles.messageListWrapper}>
@@ -167,13 +174,13 @@ export function ChatInterface({
                 ))}
               </ChatMessageList>
               {/* 스크롤 위치 참조를 위한 빈 div */}
-              <div ref={scrollManager.messagesEndRef} />
+              <div ref={messagesEndRef} />
             </div>
 
             {/* 하단으로 스크롤 버튼 */}
-            {scrollManager.showScrollButton && (
+            {showScrollButton && (
               <button
-                onClick={() => scrollManager.scrollToBottom()}
+                onClick={() => scrollToBottom()}
                 className={styles.scrollButton}
                 aria-label="하단으로 스크롤"
               >

@@ -9,7 +9,6 @@ interface ScrollState {
 interface UseScrollControlOptions {
   offset?: number;
   smooth?: boolean;
-  content?: React.ReactNode;
   showButtonThreshold?: number;
 }
 
@@ -17,13 +16,11 @@ export function useScrollControl(options: UseScrollControlOptions = {}) {
   const { 
     offset = 20, 
     smooth = true, 
-    content,
     showButtonThreshold = 150 
   } = options;
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const lastContentHeight = useRef(0);
   const userHasScrolled = useRef(false);
 
   const [scrollState, setScrollState] = useState<ScrollState>({
@@ -75,13 +72,7 @@ export function useScrollControl(options: UseScrollControlOptions = {}) {
         }
       }
 
-      setScrollState(prev => ({
-        ...prev,
-        isAtBottom: true,
-        autoScrollEnabled: true,
-        showScrollButton: false,
-      }));
-      
+      // Don't update state here - let the scroll event handler do it
       userHasScrolled.current = false;
     },
     [smooth]
@@ -139,23 +130,6 @@ export function useScrollControl(options: UseScrollControlOptions = {}) {
     return () => element.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // Auto-scroll on content change
-  useEffect(() => {
-    const scrollElement = scrollRef.current;
-    if (!scrollElement) return;
-
-    const currentHeight = scrollElement.scrollHeight;
-    const hasNewContent = currentHeight !== lastContentHeight.current;
-
-    if (hasNewContent) {
-      if (scrollState.autoScrollEnabled) {
-        requestAnimationFrame(() => {
-          scrollToBottom(lastContentHeight.current === 0);
-        });
-      }
-      lastContentHeight.current = currentHeight;
-    }
-  }, [content, scrollState.autoScrollEnabled, scrollToBottom]);
 
   // Handle resize
   useEffect(() => {
@@ -163,14 +137,16 @@ export function useScrollControl(options: UseScrollControlOptions = {}) {
     if (!element) return;
 
     const resizeObserver = new ResizeObserver(() => {
-      if (scrollState.autoScrollEnabled) {
+      // Only scroll if currently at bottom to avoid interrupting user
+      const atBottom = checkIsAtBottom(element);
+      if (atBottom) {
         scrollToBottom(true);
       }
     });
 
     resizeObserver.observe(element);
     return () => resizeObserver.disconnect();
-  }, [scrollState.autoScrollEnabled, scrollToBottom]);
+  }, [checkIsAtBottom, scrollToBottom]);
 
   return {
     // Refs

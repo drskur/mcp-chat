@@ -52,7 +52,7 @@ class BedrockClientManager {
 
   getClient(): ChatBedrockConverse {
     if (!this.client) {
-      throw new Error('Client is not initialized. Call updateConfig first.');
+      return this.createClient();
     }
     return this.client;
   }
@@ -70,7 +70,9 @@ export async function getBedrockClient(): Promise<ChatBedrockConverse> {
   return BedrockClientManager.getInstance().getClient();
 }
 
-export async function updateBedrockConfig(config: BedrockConfig): Promise<void> {
+export async function updateBedrockConfig(
+  config: BedrockConfig,
+): Promise<void> {
   BedrockClientManager.getInstance().updateConfig(config);
 }
 

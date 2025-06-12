@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getUserModel } from '@/app/actions/models/user-model';
-import {
-  initializeBedrockClient,
-  updateBedrockModel,
-} from '@/app/actions/agent/bedrock-client';
-import { initializePromptManager } from '@/app/actions/agent/prompt';
+import { updateBedrockModel } from '@/app/actions/agent/bedrock-client';
 
 export function useModelManager(agentName: string) {
   const [selectedModel, setSelectedModel] = useState(
@@ -14,14 +10,10 @@ export function useModelManager(agentName: string) {
   const [needReinit, setNeedReinit] = useState(false);
 
   useEffect(() => {
-    const fetchUserModel = async () => {
+    (async () => {
       const { modelId } = await getUserModel(agentName);
       setSelectedModel(modelId);
-    };
-
-    fetchUserModel().catch(console.error);
-    initializeBedrockClient(agentName).catch(console.error);
-    initializePromptManager(agentName).catch(console.error);
+    })().catch(console.error);
   }, [agentName]);
 
   const handleModelChange = async (modelId: string) => {

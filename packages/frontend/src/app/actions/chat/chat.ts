@@ -16,7 +16,9 @@ async function createAttachmentContents(attachments: FileAttachment[]) {
   const task = attachments.map(async (attachment) => {
     const fileName = attachment.file.name;
     const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
-    const imageFormats = getSupportedFileExtensions().image.map(ext => ext.toLowerCase());
+    const imageFormats = getSupportedFileExtensions().image.map((ext) =>
+      ext.toLowerCase(),
+    );
 
     if (imageFormats.includes(fileExt)) {
       // 이미지 파일인 경우 base64로 변환하여 추가
@@ -96,27 +98,29 @@ export async function sendChatStream(
           // chunk가 배열인지 확인하고 적절히 처리
           const streamedMessage = Array.isArray(chunk) ? chunk[0] : chunk;
 
-          if (streamedMessage instanceof AIMessageChunk) {
-            if (aiMessageChunk && aiMessageChunk?.id === streamedMessage.id) {
-              aiMessageChunk = aiMessageChunk.concat(streamedMessage);
-            } else {
-              aiMessageChunk = streamedMessage;
-            }
+          switch (true) {
+            case streamedMessage instanceof AIMessageChunk:
+              if (aiMessageChunk && aiMessageChunk?.id === streamedMessage.id) {
+                aiMessageChunk = aiMessageChunk.concat(streamedMessage);
+              } else {
+                aiMessageChunk = streamedMessage;
+              }
 
-            const message: Message = {
-              id: aiMessageId,
-              sender: 'ai',
-              contentItems: [
-                {
-                  id: currentUUID,
-                  type: 'text',
-                  content: aiMessageChunk.content as string,
-                  timestamp: Date.now(),
-                },
-              ],
-              isStreaming: true,
-            };
-            controller.enqueue(message);
+              const message: Message = {
+                id: aiMessageId,
+                sender: 'ai',
+                contentItems: [
+                  {
+                    id: currentUUID,
+                    type: 'text',
+                    content: aiMessageChunk.content as string,
+                    timestamp: Date.now(),
+                  },
+                ],
+                isStreaming: true,
+              };
+              controller.enqueue(message)
+              break;
           }
         }
         controller.close();

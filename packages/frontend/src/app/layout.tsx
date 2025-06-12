@@ -5,6 +5,7 @@ import { validateEnv } from '@/lib/config/env';
 import { initDirs } from '@/lib/config/init-dir';
 import { getMCPServers, updateMCPConfig } from '@/app/actions/mcp/server';
 import { getUserSettings } from '@/app/actions/settings/user-settings';
+import { initializeBedrockClient, initializePromptManager } from '@/app/actions/agent';
 
 // 서버 시작 시 업로드 디렉토리 초기화 및 MCP 설정 업데이트
 // 서버 사이드에서만 실행됨
@@ -17,6 +18,8 @@ if (typeof window === 'undefined') {
     const settings = await getUserSettings();
     await updateMCPConfig(settings.currentAgent);
     await getMCPServers();
+    await initializeBedrockClient(settings.currentAgent);
+    await initializePromptManager(settings.currentAgent);
   })()
     .then(() => {
       console.log('디렉토리 및 MCP 설정 초기화 성공');

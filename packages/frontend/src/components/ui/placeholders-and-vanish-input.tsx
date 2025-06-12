@@ -88,7 +88,7 @@ export function PlaceholdersAndVanishInput({
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation(); // 이벤트 버블링 방지
-    
+
     if (currentValue.trim()) {
       if (onSubmit) {
         onSubmit(e);
@@ -99,7 +99,7 @@ export function PlaceholdersAndVanishInput({
       }
     }
   };
-  
+
   return (
     <form
       onSubmit={handleFormSubmit}
@@ -136,15 +136,16 @@ export function PlaceholdersAndVanishInput({
         <Button
           type="submit"
           variant="ghost"
+          size="sm"
           className={cn(
-            "absolute right-0 top-1/2 -translate-y-1/2 flex items-center justify-center px-5 py-3 mr-5 transition-all duration-300",
+            "absolute right-2 top-1/2 -translate-y-1/2 mr-2 flex items-center justify-center transition-all duration-300",
             currentValue.trim() && !submitDisabled
-              ? "text-indigo-400 hover:text-indigo-300" 
+              ? "text-indigo-400 hover:text-indigo-300"
               : "text-gray-500"
           )}
           disabled={!currentValue.trim() || disabled || submitDisabled}
         >
-          <Send className="h-10 w-10 transform -rotate-45" />
+          <Send className="transform -rotate-45 !w-5 !h-5 mt-2" />
         </Button>
       </div>
     </form>

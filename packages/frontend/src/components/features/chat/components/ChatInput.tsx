@@ -1,6 +1,8 @@
 import React from 'react';
-import { Paperclip } from "lucide-react";
-import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-vanish-input";
+import { Paperclip } from 'lucide-react';
+import { PlaceholdersAndVanishInput } from '@/components/ui/placeholders-and-vanish-input';
+import { Button } from '@/components/ui/button';
+import { getFileAcceptStringByCapabilities } from '@/lib/utils/fileUtils';
 
 interface ChatInputProps {
   input: string;
@@ -19,7 +21,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onInputChange,
   onSubmit,
   onAttachButtonClick,
-  onFileUpload
+  onFileUpload,
 }) => {
   return (
     <div className="relative" data-component="chat-interface-input">
@@ -30,25 +32,26 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         onSubmit={onSubmit}
         submitDisabled={isStreaming}
         rightElement={
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onAttachButtonClick}
             disabled={isStreaming}
-            className="p-2 text-gray-400 hover:text-indigo-400 transition-colors"
+            className="px-3 py-3 text-gray-400 hover:text-indigo-400 transition-colors"
             title="파일 첨부"
           >
-            <Paperclip className="h-5 w-5" />
-          </button>
+            <Paperclip className="h-6 w-6" />
+          </Button>
         }
       />
-      
+
       <input
         type="file"
         ref={fileInputRef}
         onChange={onFileUpload}
         className="hidden"
         multiple
-        accept="image/*,.pdf,.doc,.docx,.txt,.xls,.xlsx,.csv"
+        accept={getFileAcceptStringByCapabilities(['image', 'text'])}
       />
     </div>
   );

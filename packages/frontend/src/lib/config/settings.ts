@@ -183,3 +183,19 @@ export async function saveSettingByPath(
     throw error;
   }
 }
+
+/**
+ * 현재 활성화된 에이전트의 모델 ID를 가져옵니다.
+ */
+export async function getCurrentModelId(): Promise<string> {
+  try {
+    const settings = await loadSettings();
+    const currentAgent = settings.userSetting.currentAgent;
+    const agentConfig = settings.agents[currentAgent];
+    
+    return agentConfig?.model || DEFAULT_MODEL_ID;
+  } catch (error) {
+    console.error('현재 모델 ID 로드 오류:', error);
+    return DEFAULT_MODEL_ID;
+  }
+}

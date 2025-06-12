@@ -16,7 +16,6 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
       disableAutoScroll,
     } = useScrollControl({
       smooth,
-      content: children,
     });
 
     // ref 병합 - useCallback으로 감싸서 안정적인 참조 유지

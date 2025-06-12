@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { autoFixJsonString } from '@/mcp/utils';
 
 interface UseJsonEditorOptions {
@@ -12,10 +12,13 @@ export function useJsonEditor(options: UseJsonEditorOptions = {}) {
   const [jsonText, setJsonText] = useState(initialValue);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    // 텍스트 업데이트만 수행
-    setJsonText(e.target.value);
-  }, []);
+  const handleTextChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      // 텍스트 업데이트만 수행
+      setJsonText(e.target.value);
+    },
+    [],
+  );
 
   const formatJSON = useCallback(() => {
     try {
@@ -25,7 +28,8 @@ export function useJsonEditor(options: UseJsonEditorOptions = {}) {
       onError?.(null);
       return { success: true, formatted };
     } catch (err) {
-      const errorMessage = 'JSON 포맷 중 오류가 발생했습니다.';
+      const errorMessage =
+        err?.toString() ?? 'JSON 포맷 중 오류가 발생했습니다.';
       onError?.(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -37,7 +41,7 @@ export function useJsonEditor(options: UseJsonEditorOptions = {}) {
       onError?.(null);
       return { valid: true };
     } catch (err) {
-      const errorMessage = 'JSON 형식이 올바르지 않습니다.';
+      const errorMessage = err?.toString() ?? 'JSON 형식이 올바르지 않습니다.';
       onError?.(errorMessage);
       return { valid: false, error: errorMessage };
     }
@@ -48,10 +52,13 @@ export function useJsonEditor(options: UseJsonEditorOptions = {}) {
     onError?.(null);
   }, [onError]);
 
-  const loadContent = useCallback((content: string) => {
-    setJsonText(content);
-    onError?.(null);
-  }, [onError]);
+  const loadContent = useCallback(
+    (content: string) => {
+      setJsonText(content);
+      onError?.(null);
+    },
+    [onError],
+  );
 
   const getParsedJSON = useCallback(() => {
     try {
@@ -61,14 +68,17 @@ export function useJsonEditor(options: UseJsonEditorOptions = {}) {
     }
   }, [jsonText]);
 
-  const setJSONValue = useCallback((value: string | object) => {
-    if (typeof value === 'string') {
-      setJsonText(value);
-    } else {
-      setJsonText(JSON.stringify(value, null, 2));
-    }
-    onError?.(null);
-  }, [onError]);
+  const setJSONValue = useCallback(
+    (value: string | object) => {
+      if (typeof value === 'string') {
+        setJsonText(value);
+      } else {
+        setJsonText(JSON.stringify(value, null, 2));
+      }
+      onError?.(null);
+    },
+    [onError],
+  );
 
   const parseJSON = useCallback(() => {
     try {
@@ -76,7 +86,7 @@ export function useJsonEditor(options: UseJsonEditorOptions = {}) {
       onError?.(null);
       return { success: true, data: parsed };
     } catch (err) {
-      const errorMessage = 'JSON 형식이 올바르지 않습니다.';
+      const errorMessage = err?.toString() ?? 'JSON 형식이 올바르지 않습니다.';
       onError?.(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -86,7 +96,7 @@ export function useJsonEditor(options: UseJsonEditorOptions = {}) {
     // State
     jsonText,
     textareaRef,
-    
+
     // Actions
     handleTextChange,
     formatJSON,
@@ -95,10 +105,10 @@ export function useJsonEditor(options: UseJsonEditorOptions = {}) {
     loadContent,
     setJSONValue,
     parseJSON,
-    
+
     // Utilities
     getParsedJSON,
-    
+
     // Computed
     isEmpty: jsonText.trim() === '' || jsonText.trim() === '{}',
     isValid: (() => {

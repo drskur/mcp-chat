@@ -1,11 +1,12 @@
 'use client';
 
 import { Brain, Server, Sparkles, Paperclip } from 'lucide-react';
-import { PlaceholdersAndVanishInput } from '@/components/ui/placeholders-and-vanish-input';
 import { FileAttachment } from '@/types/file-attachment';
 import React from 'react';
 import Image from 'next/image';
 import { FileAttachmentPreview } from '@/components/features/chat/components/FileAttachmentPreview';
+import { PlaceholdersAndVanishInput } from '@/components/ui/placeholders-and-vanish-input';
+import { getFileAcceptStringByCapabilities } from '@/lib/utils/fileUtils';
 
 interface UserSettings {
   title: string;
@@ -94,7 +95,10 @@ export const WelcomeScreen = ({
             onRemove={onRemoveAttachment}
           />
 
-          <div data-component="welcome-screen-input" className="w-full max-w-4xl">
+          <div
+            data-component="welcome-screen-input"
+            className="w-full max-w-4xl"
+          >
             <PlaceholdersAndVanishInput
               placeholders={placeholders}
               onChange={onInputChange}
@@ -102,16 +106,16 @@ export const WelcomeScreen = ({
               value={inputValue}
               className="mb-8 max-w-full"
               rightElement={
-              <button
-                type="button"
-                onClick={onAttachButtonClick}
-                className="p-2 text-gray-400 hover:text-indigo-400 transition-colors"
-                title="파일 첨부"
-              >
-                <Paperclip className="h-5 w-5" />
-              </button>
-            }
-          />
+                <button
+                  type="button"
+                  onClick={onAttachButtonClick}
+                  className="p-2 text-gray-400 hover:text-indigo-400 transition-colors"
+                  title="파일 첨부"
+                >
+                  <Paperclip className="h-5 w-5" />
+                </button>
+              }
+            />
           </div>
 
           <input
@@ -120,7 +124,7 @@ export const WelcomeScreen = ({
             onChange={onFileUpload}
             className="hidden"
             multiple
-            accept="image/*,.pdf,.doc,.docx,.txt,.xls,.xlsx,.csv"
+            accept={getFileAcceptStringByCapabilities(['image', 'text'])}
           />
 
           <p className="text-gray-400 mb-8 max-w-2xl">

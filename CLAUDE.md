@@ -2,119 +2,86 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
-
-PACE MCP Client is a full-stack application that integrates AWS Bedrock LLM models with MCP (Model Context Protocol) tools through a natural language AI agent interface. It consists of a FastAPI Python backend and a Next.js React frontend.
-
-## Essential Commands
+## Common Development Commands
 
 ### Development
 ```bash
-# Run both backend and frontend together (recommended)
-npm run mcp-dev
-
-# Run backend only
-cd packages/backend
-python main.py
-
-# Run frontend only  
+# Frontend development (with Turbopack)
 cd packages/frontend
 npm run dev
+
+# Run tests
+npm run test
+
+# Run tests with UI
+npm run test:ui
+
+# Run tests with coverage
+npm run test:coverage
+
+# Lint code
+npm run lint
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
 ```
 
-### Build and Deployment
+### Deployment
 ```bash
-# Build and push both API and UI to ECR
-make all
-
-# Build API only
-make api
-
-# Build UI only
-make ui
-
 # Show current version
 make show-version
 
-# Set specific version
-make set-version NEW_VERSION=v0.0.9
+# Set new version
+make set-version NEW_VERSION=v1.0.0
+
+# Build and push UI to ECR
+make ui
+
+# Build and push both API and UI
+make all
 ```
 
-### Testing
-```bash
-# Run backend tests
-cd packages/backend
-python tests/test.py
-```
+## Architecture Overview
 
-## Architecture & Key Patterns
+### Monorepo Structure
+This is an Nx-based monorepo with the main application in `packages/frontend`. The project uses Next.js 15.3 with App Router and Server Actions for full-stack functionality without a separate backend.
 
-### Backend (packages/backend)
-- **FastAPI-based REST API** with async endpoints
-- **LangGraph agents** for AI orchestration (ReAct pattern implemented, Plan-and-Execute in development)
-- **MCP client integration** for tool connectivity
-- **AWS Bedrock** for LLM access (supports Amazon Nova and Anthropic Claude models)
-- Uses **uv** package manager (not pip) for Python dependencies
+### Key Architectural Patterns
 
-### Frontend (packages/frontend)
-- **Next.js 15.3** with App Router
-- **React 19** with TypeScript
-- **Tailwind CSS** and **shadcn/ui** for styling
-- Chat interface with streaming support
-- **Component Structure**: Organized into logical feature-based architecture
-  ```
-  src/components/
-  ├── common/           # Shared components across features
-  │   ├── dialog/       # AlertDialogManager
-  │   └── layout/       # StatusBar, sidebar components
-  ├── features/         # Feature-specific components
-  │   ├── chat/         # Chat interface, messaging, file attachments
-  │   ├── mcp/          # MCP tool management
-  │   ├── settings/     # Model selection, system prompts, user settings
-  │   └── onboarding/   # Welcome screen
-  └── ui/               # shadcn/ui base components
-  ```
+1. **Server Actions Pattern**
+   - All backend logic is implemented as Server Actions in `/app/actions/`
+   - No separate API endpoints needed except for legacy file uploads
+   - Real-time streaming via ReadableStream for AI responses
 
-### Key API Endpoints
-- `/api/chat` - AI agent chat interface
-- `/api/mcp-tools` - MCP tools management  
-- `/api/prompts` - System prompt management
-- `/api/models` - Model selection and management
+2. **MCP Integration**
+   - MCP tools are managed through `MCPClientManager` singleton
+   - Configuration loaded from user-specific settings
+   - Tools are dynamically discovered and exposed to LangGraph
 
-### Important Configuration Files
-- `packages/backend/config/mcp_config.json` - MCP server connections
-- `packages/backend/config/models.yaml` - AWS Bedrock model configurations
-- `packages/backend/.env` - Environment variables (create from .env.example)
+3. **AI Agent Workflow**
+   - Uses LangGraph for agent orchestration (`workflow.ts`)
+   - State management through `StateAnnotation`
+   - AWS Bedrock integration for LLM models
 
-### Deployment
-- Uses Docker containers deployed to Kubernetes
-- ECR repositories for images
-- Makefile automates build and push to AWS ECR using `detective` AWS profile
-- K8s manifests in `k8s/mcp-host/` directory
+4. **State Management**
+   - React Context for UI state
+   - Server-side settings persisted to filesystem
+   - Chat sessions managed through hooks with streaming support
 
-## Development Notes
+5. **File Organization**
+   - `/app/actions/` - Server-side business logic
+   - `/components/features/` - Feature-specific UI components
+   - `/hooks/` - Custom React hooks organized by domain
+   - `/mcp/` - MCP client and configuration management
+   - `/lib/` - Utilities and shared configuration
 
-1. **Package Management**: Backend uses `uv`, frontend uses `npm`
-2. **Python Version**: Requires Python 3.13+
-3. **AWS Credentials**: Must be configured before running
-4. **MCP Tools**: Add new tools in `packages/backend/src/mcp_client/server/basic_server.py`
-5. **Model Updates**: Modify `packages/backend/config/models.yaml` to add new Bedrock models
-6. **Version Updates**: Use `make set-version` to update version across all deployment files
+### Important Technical Details
 
-## Recent Changes (ts branch)
-
-### Frontend Refactoring
-- **Server Actions Introduction**: Started implementing Next.js server actions to replace backend API calls
-  - Added `/app/actions/models/user-model.ts` for model management via server actions
-  - Utilizing settings.ts library for persistent configuration storage
-- **Component Architecture Overhaul**: Complete reorganization of components folder structure for better maintainability
-  - Moved components into `features/` (chat, mcp, settings, onboarding) and `common/` (dialog, layout) directories
-  - Relocated dialog components to appropriate feature folders (settings, mcp)
-  - Consolidated layout components under `common/layout/`
-  - Simplified nested folder structures (removed unnecessary `welcome/` and `file/` folders)
-  - Updated all import paths to reflect new logical grouping
-- **Component Modularization**: Split large page.tsx into smaller, maintainable components
-- **Utility Migration**: Moved init-upload-dir utility from API to utils directory for better organization
-
-### Project Goal
-The current objective is to re-implement all backend APIs (`/api/*` endpoints) as Next.js server actions, eliminating the need for the Python FastAPI backend and creating a pure Next.js application with MCP integration.
+- TypeScript is configured with path alias `@/` pointing to `src/`
+- Tailwind CSS with shadcn/ui for styling
+- File uploads limited to 10MB (configured in next.config.ts)
+- AWS credentials required for Bedrock access
+- MCP servers run as separate processes and communicate via the MCP protocol

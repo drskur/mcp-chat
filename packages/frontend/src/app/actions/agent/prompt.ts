@@ -1,6 +1,7 @@
 'use server';
 
 import { loadSystemPrompt } from '@/app/actions/prompt';
+import { loadSettings } from '@/lib/config/settings';
 
 class PromptManager {
   private static instance: PromptManager;
@@ -19,9 +20,11 @@ class PromptManager {
     this.prompt = await loadSystemPrompt(agentName);
   }
 
-  getPrompt(): string {
+  async getPrompt(): Promise<string> {
     if (!this.isInitialized()) {
-      throw new Error('agent is not initialized. Call updateAgent first.');
+      const settings = await loadSettings();
+      const agentName = settings.userSetting.currentAgent;
+      await this.updateAgent(agentName);
     }
 
     return this.prompt!;
@@ -48,8 +51,8 @@ export async function initializePromptManager(agentName: string) {
   try {
     const manager = PromptManager.getInstance();
     await manager.updateAgent(agentName);
-    
-    const prompt = manager.getPrompt();
+
+    const prompt = await manager.getPrompt();
 
     return {
       success: true,
@@ -69,7 +72,7 @@ export async function initializePromptManager(agentName: string) {
 export async function getSystemPrompt() {
   try {
     const manager = PromptManager.getInstance();
-    const prompt = manager.getPrompt();
+    const prompt = await manager.getPrompt();
 
     return {
       success: true,

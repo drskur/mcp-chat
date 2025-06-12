@@ -15,12 +15,12 @@ export async function callModelNode(
   state: typeof StateAnnotation.State,
   _config: any,
 ) {
-  const llm = BedrockClientManager.getInstance().getClient();
+  const llm = await BedrockClientManager.getInstance().getClient();
   const mcpClient = await MCPClientManager.getInstance().getClient();
   const tools = (await mcpClient?.getTools()) ?? [];
 
   const systemMessage = new SystemMessage({
-    content: PromptManager.getInstance().getPrompt(),
+    content: await PromptManager.getInstance().getPrompt(),
   });
   const messages = [systemMessage, ...state.messages];
 

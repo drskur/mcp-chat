@@ -2,7 +2,7 @@
 
 import { ChatBedrockConverse } from '@langchain/aws';
 import { DEFAULT_AWS_REGION } from '@/lib/config/env';
-import { loadSettings } from '@/lib/config/settings';
+import { getCurrentModelId, loadSettings } from '@/lib/config/settings';
 import { env } from '@/lib/config/env';
 
 export interface BedrockConfig {
@@ -31,14 +31,15 @@ class BedrockClientManager {
     return BedrockClientManager.instance;
   }
 
-  updateConfig(config: BedrockConfig): void {
+  async updateConfig(config: BedrockConfig): Promise<void> {
     this.config = config;
-    this.client = this.createClient();
+    this.client = await this.createClient();
   }
 
-  private createClient(): ChatBedrockConverse {
+  private async createClient(): Promise<ChatBedrockConverse> {
     if (!this.config) {
-      throw new Error('Configuration is not set');
+      const modelId = await getCurrentModelId();
+      this.config = createBedrockConfig(modelId);
     }
 
     return new ChatBedrockConverse({
@@ -50,7 +51,7 @@ class BedrockClientManager {
     });
   }
 
-  getClient(): ChatBedrockConverse {
+  async getClient(): Promise<ChatBedrockConverse> {
     if (!this.client) {
       return this.createClient();
     }
@@ -60,28 +61,6 @@ class BedrockClientManager {
   isInitialized(): boolean {
     return this.client !== null;
   }
-
-  getConfig(): BedrockConfig | null {
-    return this.config;
-  }
-}
-
-export async function getBedrockClient(): Promise<ChatBedrockConverse> {
-  return BedrockClientManager.getInstance().getClient();
-}
-
-export async function updateBedrockConfig(
-  config: BedrockConfig,
-): Promise<void> {
-  BedrockClientManager.getInstance().updateConfig(config);
-}
-
-export async function isBedrockInitialized(): Promise<boolean> {
-  return BedrockClientManager.getInstance().isInitialized();
-}
-
-export async function getBedrockConfig(): Promise<BedrockConfig | null> {
-  return BedrockClientManager.getInstance().getConfig();
 }
 
 export async function initializeBedrockClient(agentName: string) {

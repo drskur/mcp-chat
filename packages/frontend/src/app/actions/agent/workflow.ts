@@ -23,7 +23,7 @@ export async function createGraph() {
   });
 }
 
-let graphInstance: any = null;
+let graphInstance: Awaited<ReturnType<typeof createGraph>> | null = null;
 
 export async function getGraph() {
   if (!graphInstance) {

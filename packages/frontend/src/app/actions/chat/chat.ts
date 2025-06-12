@@ -2,13 +2,20 @@
 
 import { getGraph } from '@/app/actions/agent/workflow';
 import {
+  AIMessage,
   AIMessageChunk,
   HumanMessage,
   MessageContentComplex,
   MessageContentImageUrl,
   MessageContentText,
+  ToolMessage,
 } from '@langchain/core/messages';
-import type { Message, FileAttachment } from '@/types/chat.types';
+import {
+  ContentItem,
+  FileAttachment,
+  TextContentItem,
+  ToolResultContentItem,
+} from '@/types/chat.types';
 import { getSupportedFileExtensions } from '@/lib/utils/fileUtils';
 import { randomUUID } from 'node:crypto';
 
@@ -45,10 +52,70 @@ async function createAttachmentContents(attachments: FileAttachment[]) {
   return Promise.all(task);
 }
 
+function processAIMessageChunk(
+  currentUUID: string,
+  aiMessageChunk: AIMessageChunk | null,
+  streamedMessageChunk: AIMessageChunk,
+  controller: ReadableStreamDefaultController<ContentItem>,
+) {
+  const merged = aiMessageChunk
+    ? aiMessageChunk.concat(streamedMessageChunk)
+    : streamedMessageChunk;
+
+  const item: TextContentItem = {
+    id: currentUUID,
+    type: 'text',
+    content: merged.text,
+    timestamp: Date.now(),
+  };
+
+  controller.enqueue(item);
+  return merged;
+}
+
+function processToolMessage(
+  toolMessage: ToolMessage,
+  controller: ReadableStreamDefaultController<ContentItem>,
+) {
+  const item: ToolResultContentItem = {
+    id: randomUUID(),
+    type: 'tool_result',
+    timestamp: Date.now(),
+    result: toolMessage.content as string,
+  };
+  controller.enqueue(item);
+}
+
+function processAIMessage(
+  currentUUID: string,
+  aiMessage: AIMessage,
+  controller: ReadableStreamDefaultController<ContentItem>,
+) {
+  let item: ContentItem;
+  if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
+    const toolCall = aiMessage.tool_calls.at(-1)!;
+    item = {
+      id: randomUUID(),
+      type: 'tool_use',
+      name: toolCall.name,
+      input: JSON.stringify(toolCall.args, null, 2),
+      timestamp: Date.now(),
+    };
+  } else {
+    item = {
+      id: currentUUID,
+      type: 'text',
+      content: aiMessage.text,
+      timestamp: Date.now(),
+    };
+  }
+
+  controller.enqueue(item);
+}
+
 export async function sendChatStream(
   message: string,
   conversationId?: string,
-  messageId?: string,
   attachments?: FileAttachment[],
 ) {
   // 멀티모달 컨텐츠 배열 생성
@@ -77,7 +144,7 @@ export async function sendChatStream(
   };
 
   const graph = await getGraph();
-  const response = await graph.stream(
+  const streamResponse = await graph.stream(
     {
       messages: [humanMessage],
     },
@@ -86,41 +153,34 @@ export async function sendChatStream(
       streamMode: 'messages',
     },
   );
-  return new ReadableStream<Message>({
+
+  return new ReadableStream<ContentItem>({
     async start(controller) {
       try {
-        const currentUUID = randomUUID();
+        let currentUUID = randomUUID();
         let aiMessageChunk: AIMessageChunk | null = null;
-        const aiMessageId = messageId ?? randomUUID();
 
-        for await (const chunk of response) {
-          // streamMode: 'messages'를 사용하면 [message, metadata] 형태로 반환됨
-          // chunk가 배열인지 확인하고 적절히 처리
+        for await (const chunk of streamResponse) {
           const streamedMessage = Array.isArray(chunk) ? chunk[0] : chunk;
-
           switch (true) {
             case streamedMessage instanceof AIMessageChunk:
-              if (aiMessageChunk && aiMessageChunk?.id === streamedMessage.id) {
-                aiMessageChunk = aiMessageChunk.concat(streamedMessage);
-              } else {
-                aiMessageChunk = streamedMessage;
-              }
-
-              const message: Message = {
-                id: aiMessageId,
-                sender: 'ai',
-                contentItems: [
-                  {
-                    id: currentUUID,
-                    type: 'text',
-                    content: aiMessageChunk.content as string,
-                    timestamp: Date.now(),
-                  },
-                ],
-                isStreaming: true,
-              };
-              controller.enqueue(message)
+              aiMessageChunk = processAIMessageChunk(
+                currentUUID,
+                aiMessageChunk,
+                streamedMessage,
+                controller,
+              );
               break;
+            case streamedMessage instanceof AIMessage:
+              processAIMessage(currentUUID, streamedMessage, controller);
+              currentUUID = randomUUID();
+              aiMessageChunk = null;
+              break;
+            case streamedMessage instanceof ToolMessage:
+              processToolMessage(streamedMessage, controller);
+              break;
+            default:
+              console.log(streamedMessage);
           }
         }
         controller.close();

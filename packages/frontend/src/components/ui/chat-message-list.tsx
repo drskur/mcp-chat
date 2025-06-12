@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAutoScroll } from "@/hooks/use-auto-scroll";
+import { useScrollControl } from "@/hooks";
 
 interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> {
   smooth?: boolean;
@@ -14,9 +14,8 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
       isAtBottom,
       scrollToBottom,
       disableAutoScroll,
-    } = useAutoScroll({
+    } = useScrollControl({
       smooth,
-      content: children,
     });
 
     // ref 병합 - useCallback으로 감싸서 안정적인 참조 유지

@@ -13,7 +13,7 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.config({
-    extends: ["next/typescript"]
+    extends: ["next/core-web-vitals", "next/typescript"]
   }),
   ...compat.plugins("react-hooks"),
   {
@@ -23,6 +23,15 @@ const eslintConfig = [
     ],
     rules: {
       "react-hooks/exhaustive-deps": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
+        }
+      ],
       ...eslintConfigPrettier.rules
     }
   }

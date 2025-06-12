@@ -1,0 +1,118 @@
+'use client';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import MCPToolManager from '@/components/features/mcp/MCPToolManager';
+import SystemPromptEditor from '@/components/features/settings/SystemPromptEditor';
+import ModelSelector from '@/components/features/settings/ModelSelector';
+import UserSettings from '@/components/features/settings/UserSettings';
+
+type SettingsType = 'tools' | 'prompt' | 'model' | 'user';
+
+interface SettingsDialogProps {
+  activeSettings: SettingsType | null;
+  onOpenChange: (open: boolean) => void;
+  selectedModel: string;
+  tempSelectedModel: string;
+  onModelChange: (modelId: string) => void;
+  onSettingsChanged: () => void;
+  onUserSettingsChanged: () => void;
+  needReinit?: boolean;
+  onApplySettings?: () => void;
+  agentName?: string;
+}
+
+const getDialogConfig = (activeSettings: SettingsType | null) => {
+  switch (activeSettings) {
+    case 'tools':
+      return {
+        title: 'MCP 도구 관리',
+        description: 'AI 어시스턴트가 사용할 MCP 도구를 관리합니다.',
+      };
+    case 'prompt':
+      return {
+        title: '시스템 프롬프트 설정',
+        description: 'AI 어시스턴트에게 지시할 시스템 프롬프트를 설정합니다.',
+      };
+    case 'model':
+      return {
+        title: 'AI 모델 선택',
+        description: '사용할 AI 모델을 선택합니다.',
+      };
+    case 'user':
+      return {
+        title: '사용자 인터페이스 설정',
+        description: '시스템 제목과 로고를 사용자 정의합니다.',
+      };
+    default:
+      return {
+        title: '설정',
+        description: '설정을 변경합니다.',
+      };
+  }
+};
+
+export const SettingsDialog = ({
+  activeSettings,
+  onOpenChange,
+  selectedModel,
+  tempSelectedModel,
+  onModelChange,
+  onSettingsChanged,
+  onUserSettingsChanged,
+  agentName,
+}: SettingsDialogProps) => {
+  const dialogConfig = getDialogConfig(activeSettings);
+
+  return (
+    <Dialog open={activeSettings !== null} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto bg-gray-900 border-gray-900 shadow-2xl">
+        <DialogHeader>
+          <div className="flex items-center justify-between mb-2">
+            <div className="space-y-1">
+              <DialogTitle asChild>
+                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-300 to-indigo-400">
+                  {dialogConfig.title}
+                </h2>
+              </DialogTitle>
+              <DialogDescription asChild>
+                <p className="text-sm text-gray-400">
+                  {dialogConfig.description}
+                </p>
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="py-4">
+          {activeSettings === 'tools' && (
+            <MCPToolManager
+              onSettingsChanged={onSettingsChanged}
+              agentName={agentName}
+            />
+          )}
+          {activeSettings === 'prompt' && (
+            <SystemPromptEditor
+              onSettingsChanged={onSettingsChanged}
+              agentName={agentName}
+            />
+          )}
+          {activeSettings === 'model' && (
+            <ModelSelector
+              selectedModel={tempSelectedModel || selectedModel}
+              onChange={onModelChange}
+            />
+          )}
+          {activeSettings === 'user' && (
+            <UserSettings onSettingsChanged={onUserSettingsChanged} />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

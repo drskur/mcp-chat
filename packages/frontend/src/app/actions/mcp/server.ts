@@ -5,6 +5,7 @@ import { MCPClientManager } from '@/mcp/mcp-client-manager';
 import { loadMcpConfig, saveMcpConfig } from '@/mcp/config';
 import { ClientConfig } from '@langchain/mcp-adapters';
 import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
+import { resetGraph, getGraph } from '@/app/actions/agent/workflow';
 
 export async function getMCPConfig(
   name: string = DEFAULT_AGENT_NAME,
@@ -13,7 +14,12 @@ export async function getMCPConfig(
 }
 
 export async function setMCPConfig(name: string, config: ClientConfig) {
-  return saveMcpConfig(name, config);
+  const result = await saveMcpConfig(name, config);
+  // MCP 설정 변경 후 그래프와 클라이언트 매니저 재초기화
+  await resetGraph();
+  // 새로운 그래프를 즉시 생성하여 도구가 준비되도록 함
+  await getGraph();
+  return result;
 }
 
 export async function updateMCPConfig(configName: string) {

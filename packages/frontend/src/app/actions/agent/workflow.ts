@@ -34,3 +34,10 @@ export async function getGraph() {
   }
   return graphInstance;
 }
+
+// MCP 설정 변경 시 그래프를 다시 초기화하는 함수
+export async function resetGraph() {
+  graphInstance = null;
+  // MCPClientManager도 재초기화
+  await MCPClientManager.getInstance().reinitialize();
+}

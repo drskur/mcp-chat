@@ -64,4 +64,11 @@ export class MCPClientManager {
   isInitialized(): boolean {
     return this.mcpClient !== null;
   }
+
+  // MCP 설정 변경 시 완전히 재초기화
+  async reinitialize(): Promise<void> {
+    this.mcpClient = null;
+    this.currentConfigName = null;
+    this.configCache = {};
+  }
 }

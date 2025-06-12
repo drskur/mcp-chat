@@ -134,12 +134,6 @@ export const MainSidebar = ({
             <p className="font-medium truncate">{userName}</p>
             <p className="text-xs text-gray-400 truncate">{userEmail}</p>
           </div>
-          <button
-            className="p-1.5 hover:bg-gray-800 rounded-md transition-colors"
-            onClick={() => handleSettingsClick('user')}
-          >
-            <Settings className="h-4 w-4" />
-          </button>
         </div>
       </SidebarFooter>
     </Sidebar>

@@ -61,6 +61,9 @@ const initialSettings: Settings = {
       mcp: { mcpServers: {} },
     },
   },
+  userSetting: {
+    currentAgent: DEFAULT_AGENT_NAME,
+  },
 };
 
 /**

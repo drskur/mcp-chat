@@ -1,11 +1,11 @@
 import { MultiServerMCPClient } from '@langchain/mcp-adapters';
 import { loadMcpConfig } from '@/mcp/config';
-import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
+import { loadSettings } from '@/lib/config/settings';
 
 export class MCPClientManager {
   private static instance: MCPClientManager;
   private mcpClient: MultiServerMCPClient | null = null;
-  private currentConfigName: string = DEFAULT_AGENT_NAME;
+  private currentConfigName: string | null = null;
   private configCache: any = {};
 
   private constructor() {}
@@ -18,37 +18,47 @@ export class MCPClientManager {
   }
 
   async getClient(): Promise<MultiServerMCPClient | null> {
+    if (!this.currentConfigName) {
+      // 초기화되지 않았으면 현재 에이전트 설정을 가져옴
+      const settings = await loadSettings();
+      this.currentConfigName = settings.userSetting.currentAgent;
+    }
+
     if (!this.isInitialized()) {
       await this.updateConfig(this.currentConfigName);
     }
     return this.mcpClient;
   }
 
-  async updateConfig(configName: string = DEFAULT_AGENT_NAME): Promise<boolean> {
+  async updateConfig(configName: string): Promise<boolean> {
     const newConfig = await loadMcpConfig(configName);
-
-    // MCP 서버가 없으면 클라이언트를 null로 설정
-    if (!newConfig.mcpServers || Object.keys(newConfig.mcpServers).length === 0) {
-      this.mcpClient = null;
-      this.currentConfigName = configName;
-      this.configCache = newConfig;
-      return false;
-    }
 
     // 클라이언트가 없거나 설정이 변경되었는지 확인
     const needsUpdate =
       this.currentConfigName !== configName ||
       JSON.stringify(this.configCache) !== JSON.stringify(newConfig);
 
-    if (needsUpdate) {
-      // 클라이언트 생성 또는 재생성
-      this.mcpClient = new MultiServerMCPClient(newConfig);
-      this.currentConfigName = configName;
-      this.configCache = newConfig;
-      return true; // 생성 또는 업데이트됨
+    // 변경사항이 없으면 바로 반환
+    if (!needsUpdate) {
+      return false;
     }
 
-    return false; // 변경사항 없음
+    // MCP 서버가 없으면 클라이언트를 null로 설정
+    if (
+      !newConfig.mcpServers ||
+      Object.keys(newConfig.mcpServers).length === 0
+    ) {
+      this.mcpClient = null;
+      this.currentConfigName = configName;
+      this.configCache = newConfig;
+      return true; // 빈 설정으로 업데이트됨
+    }
+
+    // 클라이언트 생성 또는 재생성
+    this.mcpClient = new MultiServerMCPClient(newConfig);
+    this.currentConfigName = configName;
+    this.configCache = newConfig;
+    return true; // 생성 또는 업데이트됨
   }
 
   isInitialized(): boolean {

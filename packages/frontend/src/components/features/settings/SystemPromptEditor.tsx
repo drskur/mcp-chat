@@ -8,7 +8,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { loadSystemPrompt, saveSystemPrompt } from '@/app/actions/prompt';
-import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
+import { getUserSettings } from '@/app/actions/settings/user-settings';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -28,7 +28,7 @@ const SystemPromptEditor: React.FC<SystemPromptEditorProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [saveAndRestart, setSaveAndRestart] = useState(false);
-  const configName = agentName ?? DEFAULT_AGENT_NAME;
+  const [configName, setConfigName] = useState<string>('');
 
   // 프롬프트 가져오기
   const fetchPrompt = useCallback(async () => {
@@ -41,10 +41,25 @@ const SystemPromptEditor: React.FC<SystemPromptEditorProps> = ({
     setIsLoading(false);
   }, [configName]);
 
-  // 초기 로딩
+  // 초기 로드 - 현재 에이전트 이름 가져오기
   useEffect(() => {
-    fetchPrompt().catch(console.error);
-  }, [fetchPrompt]);
+    const initializeAgent = async () => {
+      if (!agentName) {
+        const userSettings = await getUserSettings();
+        setConfigName(userSettings.currentAgent);
+      } else {
+        setConfigName(agentName);
+      }
+    };
+    initializeAgent();
+  }, [agentName]);
+
+  // configName이 설정된 후 프롬프트 가져오기
+  useEffect(() => {
+    if (configName) {
+      fetchPrompt().catch(console.error);
+    }
+  }, [fetchPrompt, configName]);
 
   // 프롬프트 저장
   const handleSavePrompt = async (restartAfterSave: boolean = false) => {

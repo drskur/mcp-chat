@@ -8,8 +8,13 @@ export interface AgentSetting {
   mcp: ClientConfig;
 }
 
+export interface UserSetting {
+  currentAgent: string;
+}
+
 export interface Settings {
   agents: AgentSettings;
+  userSetting: UserSetting;
 }
 
 export const DEFAULT_AGENT_NAME = 'default';

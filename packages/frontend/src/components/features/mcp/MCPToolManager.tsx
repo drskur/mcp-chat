@@ -8,11 +8,15 @@ import {
   updateMCPConfig,
 } from '@/app/actions/mcp/server';
 import { ClientConfig } from '@langchain/mcp-adapters';
-import { DEFAULT_AGENT_NAME } from '@/types/settings.types';
-import { EmptyServerState, JsonModeView, ServerCard } from '@/components/features/mcp/components';
+import { getUserSettings } from '@/app/actions/settings/user-settings';
+import {
+  EmptyServerState,
+  JsonModeView,
+  ServerCard,
+} from '@/components/features/mcp/components';
 
 const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
-  const configName = agentName ?? DEFAULT_AGENT_NAME;
+  const [configName, setConfigName] = useState<string>('');
   // 상태 관리
   const [servers, setServers] = useState<MCPServer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,13 +49,32 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
     }
   }, []);
 
-  const updateAndFetchTools = useCallback(() =>
-    updateMCPConfig(configName).then(fetchTools), [configName, fetchTools]);
+  const updateAndFetchTools = useCallback(async () => {
+    if (configName) {
+      await updateMCPConfig(configName);
+      await fetchTools();
+    }
+  }, [configName, fetchTools]);
 
-  // 초기 로드 및 주기적 갱신
+  // 초기 로드 - 현재 에이전트 이름 가져오기
   useEffect(() => {
-    updateAndFetchTools().catch(console.error);
-  }, [updateAndFetchTools]);
+    const initializeAgent = async () => {
+      if (!agentName) {
+        const userSettings = await getUserSettings();
+        setConfigName(userSettings.currentAgent);
+      } else {
+        setConfigName(agentName);
+      }
+    };
+    initializeAgent();
+  }, [agentName]);
+
+  // configName이 설정된 후 도구 목록 갱신
+  useEffect(() => {
+    if (configName) {
+      updateAndFetchTools().catch(console.error);
+    }
+  }, [configName, updateAndFetchTools]);
 
   // 서버 확장/축소 토글
   const toggleServerExpanded = (index: number) => {

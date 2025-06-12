@@ -15,16 +15,29 @@ export async function getMCPConfig(
 
 export async function setMCPConfig(name: string, config: ClientConfig) {
   const result = await saveMcpConfig(name, config);
-  // MCP 설정 변경 후 그래프와 클라이언트 매니저 재초기화
+  
+  // MCP 설정 변경 후 MCPClientManager가 새 설정을 로드하도록 강제
+  const manager = MCPClientManager.getInstance();
+  await manager.updateConfig(name, true); // forceUpdate = true
+  
+  // 그래프 재초기화
   await resetGraph();
+  
   // 새로운 그래프를 즉시 생성하여 도구가 준비되도록 함
   await getGraph();
+  
   return result;
 }
 
 export async function updateMCPConfig(configName: string) {
   const manager = MCPClientManager.getInstance();
-  await manager.updateConfig(configName);
+  const updated = await manager.updateConfig(configName);
+  
+  // 설정이 변경되었으면 그래프도 재생성
+  if (updated) {
+    await resetGraph();
+    await getGraph();
+  }
 }
 
 export async function getMCPServers(): Promise<{ servers: MCPServer[] }> {

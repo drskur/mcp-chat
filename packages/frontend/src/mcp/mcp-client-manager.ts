@@ -30,11 +30,12 @@ export class MCPClientManager {
     return this.mcpClient;
   }
 
-  async updateConfig(configName: string): Promise<boolean> {
+  async updateConfig(configName: string, forceUpdate: boolean = false): Promise<boolean> {
     const newConfig = await loadMcpConfig(configName);
 
     // 클라이언트가 없거나 설정이 변경되었는지 확인
     const needsUpdate =
+      forceUpdate ||
       this.currentConfigName !== configName ||
       JSON.stringify(this.configCache) !== JSON.stringify(newConfig);
 
@@ -43,12 +44,14 @@ export class MCPClientManager {
       return false;
     }
 
+    // 기존 클라이언트 정리
+    this.mcpClient = null;
+
     // MCP 서버가 없으면 클라이언트를 null로 설정
     if (
       !newConfig.mcpServers ||
       Object.keys(newConfig.mcpServers).length === 0
     ) {
-      this.mcpClient = null;
       this.currentConfigName = configName;
       this.configCache = newConfig;
       return true; // 빈 설정으로 업데이트됨
@@ -63,12 +66,5 @@ export class MCPClientManager {
 
   isInitialized(): boolean {
     return this.mcpClient !== null;
-  }
-
-  // MCP 설정 변경 시 완전히 재초기화
-  async reinitialize(): Promise<void> {
-    this.mcpClient = null;
-    this.currentConfigName = null;
-    this.configCache = {};
   }
 }

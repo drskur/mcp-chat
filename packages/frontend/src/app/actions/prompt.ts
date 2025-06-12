@@ -1,6 +1,7 @@
 'use server'
 
 import { loadSettings, saveSettingByPath } from '@/lib/config/settings';
+import { PromptManager } from '@/app/actions/agent/prompt';
 
 const DEFAULT_SYSTEM_PROMPT = `
   You are PACE MCP Client AI, an advanced intelligence assistant designed to provide exceptional support.
@@ -56,5 +57,8 @@ export async function loadSystemPrompt(name: string): Promise<string> {
 }
 
 export async function saveSystemPrompt(name: string, prompt: string): Promise<void> {
-  await saveSettingByPath(`agents.${name}.prompt`, prompt)
+  await saveSettingByPath(`agents.${name}.prompt`, prompt);
+  
+  // 프롬프트 저장 후 PromptManager 업데이트
+  await PromptManager.getInstance().updateAgent(name);
 }

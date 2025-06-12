@@ -4,7 +4,8 @@ import { ChatBubble, ChatBubbleMessage } from "@/components/ui/chat-bubble";
 import { MessageLoading } from "@/components/ui/message-loading";
 import { ContentRenderer } from './ContentRenderer';
 import type { Message, ImageContentItem, DocumentContentItem, ZoomedImageState } from '@/types/chat.types';
-import { FileIconWithColor, formatFileSize, getFileExtension } from '../utils/fileUtils';
+import { FileIconWithColor } from '@/components/ui/file-icon';
+import { formatFileSize, getFileExtension } from '@/lib/utils/fileUtils';
 
 interface MessageBubbleProps {
   message: Message;

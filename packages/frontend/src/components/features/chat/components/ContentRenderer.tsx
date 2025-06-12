@@ -1,9 +1,11 @@
-import React from 'react';
-import { ChevronDown, ChevronRight, Wrench, Cog, ExternalLink } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, Wrench, Cog, ExternalLink, Clock, X, Check } from "lucide-react";
 import type { ContentItem, ToolUseContentItem, ToolResultContentItem, ImageContentItem, DocumentContentItem, ZoomedImageState } from '@/types/chat.types';
+import type { PendingToolCall } from '@/app/actions/agent/agent-state';
 import styles from '../ChatInterface.module.css';
 import { FileIconWithColor } from '@/components/ui/file-icon';
 import { formatFileSize, getFileExtension } from '@/lib/utils/fileUtils';
+import { ToolInterruptDialog } from '@/components/features/agent/ToolInterruptDialog';
 
 interface ContentRendererProps {
   item: ContentItem;
@@ -14,52 +16,77 @@ interface ContentRendererProps {
   onToggleToolCollapse: (messageId: string, itemId: string) => void;
   onSetZoomedImage: (state: ZoomedImageState) => void;
   onOpenFileInNewTab: (fileId: string, fileName: string) => void;
+  onToolApproval?: (toolItem: ToolUseContentItem, approved: boolean) => void;
 }
 
-export const ContentRenderer: React.FC<ContentRendererProps> = ({
-  item,
-  index: _index,
-  isStreaming,
-  messageId,
-  fadeDuration,
-  onToggleToolCollapse,
-  onSetZoomedImage,
-  onOpenFileInNewTab
-}) => {
-  const now = Date.now();
-  const age = now - item.timestamp;
-  const shouldAnimate = isStreaming && age < fadeDuration;
+const ToolUseRenderer: React.FC<{
+  toolUseItem: ToolUseContentItem;
+  messageId: string;
+  shouldAnimate: boolean;
+  onToggleToolCollapse: (messageId: string, itemId: string) => void;
+  onToolApproval?: (toolItem: ToolUseContentItem, approved: boolean) => void;
+}> = ({ toolUseItem, messageId, shouldAnimate, onToggleToolCollapse, onToolApproval }) => {
+  const isCollapsed = toolUseItem.collapsed;
+  const [showInterruptDialog, setShowInterruptDialog] = useState(false);
 
+  // tool이 승인이 필요한 상태인지 확인
+  const requiresApproval = toolUseItem.requiresApproval && !toolUseItem.approved;
+  // tool이 거절된 상태인지 확인
+  const isRejected = !toolUseItem.requiresApproval && toolUseItem.approved === false;
+  // tool이 승인된 상태인지 확인
+  const isApproved = !toolUseItem.requiresApproval && toolUseItem.approved === true;
+  
+  // tool 승인 dialog 표시
+  useEffect(() => {
+    if (requiresApproval && !showInterruptDialog) {
+      setShowInterruptDialog(true);
+    }
+  }, [requiresApproval, showInterruptDialog]);
 
+  const pendingToolCall: PendingToolCall = {
+    id: toolUseItem.id,
+    name: toolUseItem.name,
+    args: toolUseItem.input ? JSON.parse(toolUseItem.input) : {},
+  };
 
-  // 텍스트 아이템 렌더링
-  if (item.type === "text") {
-    return (
-      <span
-        key={item.id}
-        className={shouldAnimate ? styles.fadeIn : ""}
-      >
-        {item.content}
-      </span>
-    );
-  }
+  const handleApproval = (approved: boolean) => {
+    setShowInterruptDialog(false);
+    onToolApproval?.(toolUseItem, approved);
+  };
 
-  // 도구 사용 아이템 렌더링
-  if (item.type === "tool_use") {
-    const toolUseItem = item as ToolUseContentItem;
-    const isCollapsed = toolUseItem.collapsed;
-
-    return (
+  return (
+    <>
       <div
-        key={item.id}
+        key={toolUseItem.id}
         className={`mt-4 mb-4 ${shouldAnimate ? styles.fadeIn : ""}`}
       >
-        <div className="bg-gray-800/70 rounded-md p-3 text-xs border border-gray-700">
+        <div className={`bg-gray-800/70 rounded-md p-3 text-xs border ${
+          requiresApproval 
+            ? 'border-yellow-600 bg-yellow-900/10' 
+            : isRejected 
+            ? 'border-red-600 bg-red-900/10 opacity-60'
+            : isApproved
+            ? 'border-green-600 bg-green-900/10'
+            : 'border-gray-700'
+        }`}>
           <div className="font-medium text-gray-300 mb-1 flex justify-between items-center cursor-pointer"
-              onClick={() => onToggleToolCollapse(messageId, item.id)}>
+              onClick={() => onToggleToolCollapse(messageId, toolUseItem.id)}>
             <div className="flex items-center">
-              <Wrench className="h-4 w-4 mr-1" />
-              <span>도구 사용: {toolUseItem.name}</span>
+              {requiresApproval ? (
+                <Clock className="h-4 w-4 mr-1 text-yellow-400" />
+              ) : isRejected ? (
+                <X className="h-4 w-4 mr-1 text-red-400" />
+              ) : isApproved ? (
+                <Check className="h-4 w-4 mr-1 text-green-400" />
+              ) : (
+                <Wrench className="h-4 w-4 mr-1" />
+              )}
+              <span className={isRejected ? "line-through text-gray-500" : ""}>
+                도구 사용: {toolUseItem.name}
+                {requiresApproval && " (승인 대기 중)"}
+                {isRejected && " (거절됨)"}
+                {isApproved && " (승인됨)"}
+              </span>
             </div>
             {isCollapsed ?
               <ChevronRight className="h-4 w-4 text-gray-400" /> :
@@ -87,8 +114,6 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
                       return `{\n  "width": ${parsedInput.width || 1024},\n  "height": ${parsedInput.height || 1024},\n  "prompt": "${parsedInput.prompt || ''}",\n  "negative_prompt": "${parsedInput.negative_prompt || ''}"\n}`;
                     }
 
-
-
                     const looksLikeJson = /^\s*[{\[]/.test(toolUseItem.input) && /[}\]]\s*$/.test(toolUseItem.input);
 
                     if (looksLikeJson) {
@@ -110,6 +135,60 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
           )}
         </div>
       </div>
+
+      {/* Tool Interrupt Dialog */}
+      <ToolInterruptDialog
+        open={showInterruptDialog}
+        onOpenChange={setShowInterruptDialog}
+        pendingToolCalls={[pendingToolCall]}
+        onApprove={() => handleApproval(true)}
+        onReject={() => handleApproval(false)}
+      />
+    </>
+  );
+};
+
+export const ContentRenderer: React.FC<ContentRendererProps> = ({
+  item,
+  index: _index,
+  isStreaming,
+  messageId,
+  fadeDuration,
+  onToggleToolCollapse,
+  onSetZoomedImage,
+  onOpenFileInNewTab,
+  onToolApproval
+}) => {
+  const now = Date.now();
+  const age = now - item.timestamp;
+  const shouldAnimate = isStreaming && age < fadeDuration;
+
+
+
+  // 텍스트 아이템 렌더링
+  if (item.type === "text") {
+    return (
+      <span
+        key={item.id}
+        className={shouldAnimate ? styles.fadeIn : ""}
+      >
+        {item.content}
+      </span>
+    );
+  }
+
+  // 도구 사용 아이템 렌더링
+  if (item.type === "tool_use") {
+    const toolUseItem = item as ToolUseContentItem;
+    return (
+      <ToolUseRenderer
+        key={item.id}
+        toolUseItem={toolUseItem}
+        messageId={messageId}
+        shouldAnimate={shouldAnimate}
+        onToggleToolCollapse={onToggleToolCollapse}
+        onToolApproval={onToolApproval}
+      />
     );
   }
 

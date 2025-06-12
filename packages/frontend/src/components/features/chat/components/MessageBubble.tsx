@@ -3,7 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { ChatBubble, ChatBubbleMessage } from "@/components/ui/chat-bubble";
 import { MessageLoading } from "@/components/ui/message-loading";
 import { ContentRenderer } from './ContentRenderer';
-import type { Message, ImageContentItem, DocumentContentItem, ZoomedImageState } from '@/types/chat.types';
+import type { Message, ImageContentItem, DocumentContentItem, ZoomedImageState, ToolUseContentItem } from '@/types/chat.types';
 import { FileIconWithColor } from '@/components/ui/file-icon';
 import { formatFileSize, getFileExtension } from '@/lib/utils/fileUtils';
 
@@ -13,6 +13,7 @@ interface MessageBubbleProps {
   onToggleToolCollapse: (messageId: string, itemId: string) => void;
   onSetZoomedImage: (state: ZoomedImageState) => void;
   onOpenFileInNewTab: (fileId: string, fileName: string) => void;
+  onToolApproval?: (toolItem: ToolUseContentItem, approved: boolean) => void;
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -20,7 +21,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   fadeDuration,
   onToggleToolCollapse,
   onSetZoomedImage,
-  onOpenFileInNewTab
+  onOpenFileInNewTab,
+  onToolApproval
 }) => {
 
 
@@ -141,6 +143,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 onToggleToolCollapse={onToggleToolCollapse}
                 onSetZoomedImage={onSetZoomedImage}
                 onOpenFileInNewTab={onOpenFileInNewTab}
+                onToolApproval={onToolApproval}
               />
             )}
           </div>

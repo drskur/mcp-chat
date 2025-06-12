@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import type { Message, ContentItem, FileAttachment } from '@/types/chat.types';
+import type { Message, ContentItem, FileAttachment, ToolUseContentItem } from '@/types/chat.types';
 
 interface UseMessageManagerProps {
   initialMessage?: string;
@@ -221,6 +221,52 @@ export const useMessageManager = ({
     });
   };
 
+  // 도구 승인 상태 업데이트 함수
+  const updateToolApproval = useCallback((toolId: string, approved: boolean) => {
+    setMessages(prev =>
+      prev.map(msg => ({
+        ...msg,
+        contentItems: msg.contentItems.map(item =>
+          item.id === toolId && item.type === 'tool_use'
+            ? { ...item, requiresApproval: false, approved }
+            : item
+        )
+      }))
+    );
+  }, []);
+
+  // 거절 메시지 추가 함수
+  const addRejectionMessage = useCallback((toolName: string) => {
+    const rejectionMessage = `도구 "${toolName}" 실행이 거부되었습니다.`;
+    
+    setMessages(prev => [
+      ...prev,
+      {
+        id: `rejection-${Date.now()}`,
+        sender: 'ai',
+        contentItems: [{
+          id: `rejection-content-${Date.now()}`,
+          type: 'text',
+          content: rejectionMessage,
+          timestamp: Date.now()
+        }],
+        timestamp: Date.now(),
+        isStreaming: false
+      }
+    ]);
+  }, []);
+
+  // 도구 승인/거절 처리 함수 (통합)
+  const handleToolApproval = useCallback((toolItem: ToolUseContentItem, approved: boolean) => {
+    // 승인 상태 업데이트
+    updateToolApproval(toolItem.id, approved);
+    
+    // 거절된 경우 거절 메시지 추가
+    if (!approved) {
+      addRejectionMessage(toolItem.name);
+    }
+  }, [updateToolApproval, addRejectionMessage]);
+
   // 초기 메시지 처리
   useEffect(() => {
     if ((initialMessage || (initialAttachments && initialAttachments.length > 0)) &&
@@ -250,6 +296,9 @@ export const useMessageManager = ({
     addUserMessage,
     addAiMessage,
     toggleToolCollapse,
-    processAttachments
+    processAttachments,
+    handleToolApproval,
+    updateToolApproval,
+    addRejectionMessage
   };
 };

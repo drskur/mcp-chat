@@ -15,7 +15,11 @@ import { FilePreview } from './components/FilePreview';
 import { ChatInput } from './components/ChatInput';
 import { ImageZoom } from './components/ImageZoom';
 
-import type { ChatInterfaceProps, ZoomedImageState } from '@/types/chat.types';
+import type {
+  ChatInterfaceProps,
+  ZoomedImageState,
+  ToolUseContentItem,
+} from '@/types/chat.types';
 import { useFileManager } from '@/hooks';
 import styles from './ChatInterface.module.css';
 
@@ -36,7 +40,7 @@ export function ChatInterface({
 
   // Custom hooks 사용
   const fileAttachment = useFileManager();
-  
+
   const messageManager = useMessageManager({
     initialMessage,
     initialAttachments,
@@ -47,21 +51,66 @@ export function ChatInterface({
   const streamingService = useStreamingService({
     setMessages: messageManager.setMessages,
   });
-  
+
   const {
     scrollRef: scrollContainerRef,
     messagesEndRef,
     showScrollButton,
     userHasScrolled,
     isAtBottom,
-    scrollToBottom
+    scrollToBottom,
   } = useScrollControl({
-    smooth: true
+    smooth: true,
   });
 
   // 입력 상태 변경 핸들러
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
+  };
+
+  // tool 승인 핸들러
+  const handleToolApproval = async (
+    toolItem: ToolUseContentItem,
+    approved: boolean,
+  ) => {
+    // 승인 상태 업데이트 (모달 닫기)
+    messageManager.updateToolApproval(toolItem.id, approved);
+
+    if (approved) {
+      // 승인된 경우: 기존 스트리밍 서비스를 사용하여 도구 실행 재개
+      try {
+        // 현재 AI 메시지를 찾아서 스트리밍 재개
+        const currentAiMessage = messageManager.messages.find(
+          msg => msg.sender === 'ai' && 
+          msg.contentItems.some(item => item.id === toolItem.id)
+        );
+        
+        if (currentAiMessage) {
+          // 기존 메시지의 스트리밍을 재개
+          messageManager.setMessages(prev => 
+            prev.map(msg => 
+              msg.id === currentAiMessage.id 
+                ? { ...msg, isStreaming: true }
+                : msg
+            )
+          );
+
+          // resumeFromInterrupt를 통해 스트리밍 재개
+          await streamingService.resumeStreaming(
+            currentAiMessage.id,
+            conversationId
+          );
+        }
+      } catch (error) {
+        console.error('Tool execution failed:', error);
+        messageManager.addRejectionMessage(`${toolItem.name} (실행 실패)`);
+      }
+    } else {
+      // 거절된 경우: 거절 메시지만 추가
+      messageManager.addRejectionMessage(toolItem.name);
+    }
+
+    console.log(`Tool ${toolItem.name} ${approved ? 'approved' : 'rejected'}`);
   };
 
   // 폼 제출 핸들러
@@ -78,7 +127,7 @@ export function ChatInterface({
 
     // 첨부파일을 미리 저장
     const currentAttachments = [...fileAttachment.attachments];
-    
+
     // 사용자 메시지 추가
     await messageManager.addUserMessage(input, currentAttachments);
     setInput('');
@@ -88,7 +137,12 @@ export function ChatInterface({
 
     // AI 메시지 추가 및 스트리밍 시작
     const aiMessageId = messageManager.addAiMessage();
-    await streamingService.startStreaming(input, aiMessageId, conversationId, currentAttachments);
+    await streamingService.startStreaming(
+      input,
+      aiMessageId,
+      conversationId,
+      currentAttachments,
+    );
 
     // 하단으로 스크롤
     setTimeout(() => scrollToBottom(), 100);
@@ -101,7 +155,12 @@ export function ChatInterface({
         setTimeout(() => scrollToBottom(), 0);
       }
     }
-  }, [messageManager.messages.length, userHasScrolled, isAtBottom, scrollToBottom]);
+  }, [
+    messageManager.messages.length,
+    userHasScrolled,
+    isAtBottom,
+    scrollToBottom,
+  ]);
 
   // 스트리밍이 시작될 때 항상 스크롤 다운
   useEffect(() => {
@@ -139,7 +198,12 @@ export function ChatInterface({
         // AI 메시지 추가 및 스트리밍 시작
         const aiMessageId = messageManager.addAiMessage();
         console.log('aiMessageId', aiMessageId);
-        await streamingService.startStreaming(initialMessage, aiMessageId, conversationId, initialAttachments);
+        await streamingService.startStreaming(
+          initialMessage,
+          aiMessageId,
+          conversationId,
+          initialAttachments,
+        );
       }
     };
 
@@ -173,6 +237,7 @@ export function ChatInterface({
                     onToggleToolCollapse={messageManager.toggleToolCollapse}
                     onSetZoomedImage={setZoomedImage}
                     onOpenFileInNewTab={fileAttachment.openFileInNewTab}
+                    onToolApproval={handleToolApproval}
                   />
                 ))}
               </ChatMessageList>

@@ -37,6 +37,8 @@ export interface ToolUseContentItem {
   input: string;
   timestamp: number;
   collapsed?: boolean;
+  requiresApproval?: boolean;
+  approved?: boolean;
 }
 
 export interface ToolResultContentItem {

@@ -100,6 +100,8 @@ function processAIMessage(
       name: toolCall.name,
       input: JSON.stringify(toolCall.args, null, 2),
       timestamp: Date.now(),
+      requiresApproval: true,
+      approved: false,
     };
     controller.enqueue(item);
   } else {
@@ -202,45 +204,24 @@ export async function sendChatStream(
   });
 }
 
-// Interrupt 상태 확인 함수
-export async function checkInterruptState(conversationId: string) {
-  const graph = await getGraph();
-  const config = { configurable: { thread_id: conversationId } };
-
-  try {
-    const state = await graph.getState(config);
-    return {
-      isInterrupted: state.values.isInterrupted || false,
-      pendingToolCalls: state.values.pendingToolCalls || [],
-      hasNext: state.next && state.next.length > 0,
-    };
-  } catch (error) {
-    console.error('Failed to check interrupt state:', error);
-    return {
-      isInterrupted: false,
-      pendingToolCalls: [],
-      hasNext: false,
-    };
-  }
-}
-
 // Tool call 승인/거부 후 재개 함수
-export async function resumeFromInterrupt(
-  conversationId: string,
-  approve: boolean
-) {
+export async function resumeFromInterrupt(conversationId: string) {
   const graph = await getGraph();
   const config = { configurable: { thread_id: conversationId } };
 
+  // 먼저 승인 상태를 업데이트
+  await graph.updateState(config, {
+    userApproval: true,
+    isInterrupted: false,
+  });
+
+  // 업데이트된 상태에서 스트림 재개
   const streamResponse = await graph.stream(
-    {
-      userApproval: approve,
-      isInterrupted: false,
-    },
+    null, // null을 전달하여 기존 상태에서 계속 진행
     {
       ...config,
       streamMode: 'messages',
-    }
+    },
   );
 
   return new ReadableStream<ContentItem>({
@@ -248,17 +229,6 @@ export async function resumeFromInterrupt(
       try {
         const currentUUID = { value: randomUUID() };
         const aiMessageChunk = { value: null as AIMessageChunk | null };
-
-        if (!approve) {
-          // 도구 실행을 거부한 경우 안내 메시지 전송
-          const rejectionItem: TextContentItem = {
-            id: randomUUID(),
-            type: 'text',
-            content: '도구 실행이 취소되었습니다.',
-            timestamp: Date.now(),
-          };
-          controller.enqueue(rejectionItem);
-        }
 
         for await (const chunk of streamResponse) {
           processStreamChunk(chunk, currentUUID, aiMessageChunk, controller);

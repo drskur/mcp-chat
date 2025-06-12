@@ -6,7 +6,7 @@ import { ChatMessageList } from '@/components/ui/chat-message-list';
 import { v4 as uuidv4 } from 'uuid';
 
 // 새로운 hooks과 components import
-import { useMessageManager } from './hooks/useMessageManager';
+import { useMessageManager } from '@/hooks/chat/useMessageManager';
 import { useStreamingService } from '@/hooks/chat/useStreamingService';
 import { useScrollControl } from '@/hooks/core/useScrollControl';
 

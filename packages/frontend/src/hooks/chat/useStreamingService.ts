@@ -15,55 +15,6 @@ export const useStreamingService = ({
   const [isStreaming, setIsStreaming] = useState(false);
   const streamingMessageIdRef = useRef<string | null>(null);
 
-  // 파일 형식 및 크기 검증
-  const _validateFiles = (files: FileAttachment[]) => {
-    const allowedDocFormats = [
-      'pdf',
-      'csv',
-      'doc',
-      'docx',
-      'xls',
-      'xlsx',
-      'html',
-      'txt',
-      'md',
-    ];
-    const allowedImageFormats = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
-    const maxIndividualSize = 4.5 * 1024 * 1024; // 4.5MB
-    const maxTotalSize = 25 * 1024 * 1024; // 25MB
-
-    let totalSize = 0;
-    const errors: string[] = [];
-
-    for (const attachment of files) {
-      const fileName = attachment.file.name;
-      const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
-      const isValidFormat = [
-        ...allowedDocFormats,
-        ...allowedImageFormats,
-      ].includes(fileExt);
-
-      if (!isValidFormat) {
-        errors.push(
-          `"${fileName}": 지원하지 않는 파일 형식입니다. 지원 형식: 문서(${allowedDocFormats.join(', ')}), 이미지(${allowedImageFormats.join(', ')})`,
-        );
-        continue;
-      }
-
-      if (attachment.file.size > maxIndividualSize) {
-        errors.push(`"${fileName}": 파일 크기가 너무 큽니다 (최대 4.5MB).`);
-        continue;
-      }
-
-      totalSize += attachment.file.size;
-    }
-
-    if (totalSize > maxTotalSize) {
-      errors.push(`전체 첨부 파일 크기가 제한(25MB)을 초과했습니다.`);
-    }
-
-    return { valid: errors.length === 0, errors };
-  };
 
   // 스트림 청크 처리
   // const _processStreamChunk = (data: string) => {
@@ -220,11 +171,12 @@ export const useStreamingService = ({
     query: string,
     streamingMessageId: string,
     conversationId: string,
+    attachments?: FileAttachment[],
   ) => {
     setIsStreaming(true);
     streamingMessageIdRef.current = streamingMessageId;
 
-    const messageStream = await sendChatStream(query, conversationId, streamingMessageId);
+    const messageStream = await sendChatStream(query, conversationId, streamingMessageId, attachments);
     const messageStreamReader = messageStream.getReader();
 
     (async () => {

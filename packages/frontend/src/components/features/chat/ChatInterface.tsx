@@ -76,8 +76,11 @@ export function ChatInterface({
       return;
     }
 
+    // 첨부파일을 미리 저장
+    const currentAttachments = [...fileAttachment.attachments];
+    
     // 사용자 메시지 추가
-    await messageManager.addUserMessage(input, fileAttachment.attachments);
+    await messageManager.addUserMessage(input, currentAttachments);
     setInput('');
 
     // 첨부 파일 목록 초기화 (UI에서 먼저 비우기)
@@ -85,7 +88,7 @@ export function ChatInterface({
 
     // AI 메시지 추가 및 스트리밍 시작
     const aiMessageId = messageManager.addAiMessage();
-    await streamingService.startStreaming(input, aiMessageId, conversationId);
+    await streamingService.startStreaming(input, aiMessageId, conversationId, currentAttachments);
 
     // 하단으로 스크롤
     setTimeout(() => scrollToBottom(), 100);
@@ -136,7 +139,7 @@ export function ChatInterface({
         // AI 메시지 추가 및 스트리밍 시작
         const aiMessageId = messageManager.addAiMessage();
         console.log('aiMessageId', aiMessageId);
-        await streamingService.startStreaming(initialMessage, aiMessageId, conversationId);
+        await streamingService.startStreaming(initialMessage, aiMessageId, conversationId, initialAttachments);
       }
     };
 

@@ -4,13 +4,68 @@ import { getGraph } from '@/app/actions/agent/workflow';
 import {
   AIMessageChunk,
   HumanMessage,
+  MessageContentComplex,
+  MessageContentImageUrl,
+  MessageContentText,
 } from '@langchain/core/messages';
-import type { Message } from '@/types/chat.types';
+import type { Message, FileAttachment } from '@/types/chat.types';
 import { randomUUID } from 'node:crypto';
 
-export async function sendChatStream(message: string, conversationId?: string, messageId?: string) {
+async function createAttachmentContents(attachments: FileAttachment[]) {
+  const task = attachments.map(async (attachment) => {
+    const fileName = attachment.file.name;
+    const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
+    const imageFormats = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
+
+    if (imageFormats.includes(fileExt)) {
+      // 이미지 파일인 경우 base64로 변환하여 추가
+      const arrayBuffer = await attachment.file.arrayBuffer();
+      const base64String = Buffer.from(arrayBuffer).toString('base64');
+      const content: MessageContentImageUrl = {
+        type: 'image_url',
+        image_url: {
+          url: `data:${attachment.file.type};base64,${base64String}`,
+        },
+      };
+      return content;
+    } else {
+      // 문서 파일인 경우 텍스트로 파일 정보 추가
+      const content: MessageContentText = {
+        type: 'text',
+        text: `[첨부파일: ${fileName} (${(attachment.file.size / 1024).toFixed(2)}KB)]`,
+      };
+      return content;
+    }
+  });
+
+  return Promise.all(task);
+}
+
+export async function sendChatStream(
+  message: string,
+  conversationId?: string,
+  messageId?: string,
+  attachments?: FileAttachment[],
+) {
+  // 멀티모달 컨텐츠 배열 생성
+  let content: MessageContentComplex[] = [];
+
+  // 텍스트 메시지 추가
+  if (message.trim()) {
+    content.push({
+      type: 'text',
+      text: message,
+    });
+  }
+
+  // 첨부파일 처리
+  if (attachments && attachments.length > 0) {
+    const attachmentContents = await createAttachmentContents(attachments);
+    content = [...content, ...attachmentContents];
+  }
+
   const humanMessage = new HumanMessage({
-    content: message,
+    content,
   });
 
   const configurable = {

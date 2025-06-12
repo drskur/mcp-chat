@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ClientConfig } from '@langchain/mcp-adapters';
-import { useJsonEditor, useMCPConfig, useCopyNotification } from '../hooks';
+import { useMCPConfig } from '@/hooks/business/useMCPConfig';
+import { useJsonEditor, useCopyNotification } from '@/hooks/ui';
 
 interface JsonModeViewProps {
   isLoading: boolean;

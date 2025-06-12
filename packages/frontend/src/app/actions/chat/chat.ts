@@ -9,13 +9,14 @@ import {
   MessageContentText,
 } from '@langchain/core/messages';
 import type { Message, FileAttachment } from '@/types/chat.types';
+import { getSupportedFileExtensions } from '@/lib/utils/fileUtils';
 import { randomUUID } from 'node:crypto';
 
 async function createAttachmentContents(attachments: FileAttachment[]) {
   const task = attachments.map(async (attachment) => {
     const fileName = attachment.file.name;
     const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
-    const imageFormats = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
+    const imageFormats = getSupportedFileExtensions().image.map(ext => ext.toLowerCase());
 
     if (imageFormats.includes(fileExt)) {
       // 이미지 파일인 경우 base64로 변환하여 추가
@@ -29,10 +30,11 @@ async function createAttachmentContents(attachments: FileAttachment[]) {
       };
       return content;
     } else {
-      // 문서 파일인 경우 텍스트로 파일 정보 추가
+      // 텍스트 파일인 경우 파일 내용을 읽어서 추가
+      const fileContent = await attachment.file.text();
       const content: MessageContentText = {
         type: 'text',
-        text: `[첨부파일: ${fileName} (${(attachment.file.size / 1024).toFixed(2)}KB)]`,
+        text: `[파일: ${fileName}]\n${fileContent}`,
       };
       return content;
     }

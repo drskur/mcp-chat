@@ -6,7 +6,6 @@ import {
   type ModelCapability,
   ModelsConfig,
 } from '@/lib/models/model-info';
-import { BedrockClientManager } from '@/app/actions/agent';
 import { getCurrentModelId } from '@/lib/config/settings';
 
 /**

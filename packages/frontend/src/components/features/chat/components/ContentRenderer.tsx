@@ -60,15 +60,7 @@ const ToolUseRenderer: React.FC<{
         key={toolUseItem.id}
         className={`mt-4 mb-4 ${shouldAnimate ? styles.fadeIn : ""}`}
       >
-        <div className={`bg-gray-800/70 rounded-md p-3 text-xs border ${
-          requiresApproval 
-            ? 'border-yellow-600 bg-yellow-900/10' 
-            : isRejected 
-            ? 'border-red-600 bg-red-900/10 opacity-60'
-            : isApproved
-            ? 'border-green-600 bg-green-900/10'
-            : 'border-gray-700'
-        }`}>
+        <div className="bg-gray-800/70 rounded-md p-3 text-xs border border-gray-700">
           <div className="font-medium text-gray-300 mb-1 flex justify-between items-center cursor-pointer"
               onClick={() => onToggleToolCollapse(messageId, toolUseItem.id)}>
             <div className="flex items-center">
@@ -81,7 +73,7 @@ const ToolUseRenderer: React.FC<{
               ) : (
                 <Wrench className="h-4 w-4 mr-1" />
               )}
-              <span className={isRejected ? "line-through text-gray-500" : ""}>
+              <span>
                 도구 사용: {toolUseItem.name}
                 {requiresApproval && " (승인 대기 중)"}
                 {isRejected && " (거절됨)"}

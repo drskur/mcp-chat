@@ -76,38 +76,34 @@ export function ChatInterface({
     // 승인 상태 업데이트 (모달 닫기)
     messageManager.updateToolApproval(toolItem.id, approved);
 
-    if (approved) {
-      // 승인된 경우: 기존 스트리밍 서비스를 사용하여 도구 실행 재개
-      try {
-        // 현재 AI 메시지를 찾아서 스트리밍 재개
-        const currentAiMessage = messageManager.messages.find(
-          msg => msg.sender === 'ai' && 
-          msg.contentItems.some(item => item.id === toolItem.id)
-        );
-        
-        if (currentAiMessage) {
-          // 기존 메시지의 스트리밍을 재개
-          messageManager.setMessages(prev => 
-            prev.map(msg => 
-              msg.id === currentAiMessage.id 
-                ? { ...msg, isStreaming: true }
-                : msg
-            )
-          );
+    try {
+      // 현재 AI 메시지를 찾아서 스트리밍 재개
+      const currentAiMessage = messageManager.messages.find(
+        (msg) =>
+          msg.sender === 'ai' &&
+          msg.contentItems.some((item) => item.id === toolItem.id),
+      );
 
-          // resumeFromInterrupt를 통해 스트리밍 재개
-          await streamingService.resumeStreaming(
-            currentAiMessage.id,
-            conversationId
-          );
-        }
-      } catch (error) {
-        console.error('Tool execution failed:', error);
-        messageManager.addRejectionMessage(`${toolItem.name} (실행 실패)`);
+      if (currentAiMessage) {
+        // 기존 메시지의 스트리밍을 재개
+        messageManager.setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === currentAiMessage.id
+              ? { ...msg, isStreaming: true }
+              : msg,
+          ),
+        );
+
+        // resumeFromInterrupt를 통해 스트리밍 재개
+        await streamingService.resumeStreaming(
+          currentAiMessage.id,
+          conversationId,
+          approved,
+        );
       }
-    } else {
-      // 거절된 경우: 거절 메시지만 추가
-      messageManager.addRejectionMessage(toolItem.name);
+    } catch (error) {
+      console.error('Tool execution failed:', error);
+      messageManager.addRejectionMessage(`${toolItem.name} (실행 실패)`);
     }
 
     console.log(`Tool ${toolItem.name} ${approved ? 'approved' : 'rejected'}`);

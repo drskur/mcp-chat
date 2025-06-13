@@ -12,16 +12,4 @@ export const StateAnnotation = Annotation.Root({
     reducer: messagesStateReducer,
     default: () => [],
   }),
-  pendingToolCalls: Annotation<PendingToolCall[]>({
-    reducer: (x, y) => y ?? x ?? [],
-    default: () => [],
-  }),
-  userApproval: Annotation<boolean>({
-    reducer: (x, y) => y ?? x ?? false,
-    default: () => false,
-  }),
-  isInterrupted: Annotation<boolean>({
-    reducer: (x, y) => y ?? x ?? false,
-    default: () => false,
-  }),
 });

@@ -135,7 +135,66 @@ npm start
 
 ## 배포
 
+### AWS Credentials 설정
+
+Docker 컨테이너에서 AWS Bedrock을 사용하려면 AWS credentials 설정이 필요합니다:
+
+#### 1. 환경 변수를 통한 설정 (권장)
+```bash
+# Docker 실행 시
+docker run -e AWS_ACCESS_KEY_ID=your-access-key \
+           -e AWS_SECRET_ACCESS_KEY=your-secret-key \
+           -e AWS_REGION=us-east-1 \
+           -p 3000:3000 \
+           pace-mcp-client
+
+# Docker Compose 사용 시
+services:
+  app:
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+```
+
+#### 2. IAM Role 사용 (ECS/EKS)
+```yaml
+# Kubernetes ServiceAccount with IRSA
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pace-mcp-client
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/pace-mcp-bedrock-role
+```
+
+#### 3. AWS Profile 마운트
+```bash
+# 로컬 개발 환경에서 테스트 시
+docker run -v ~/.aws:/root/.aws:ro \
+           -e AWS_PROFILE=your-profile \
+           -p 3000:3000 \
+           pace-mcp-client
+```
+
 ### Docker 빌드 및 ECR 푸시
+
+#### ECR Public Gallery 사용
+```bash
+# AWS ECR Public 로그인
+aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+
+# 이미지 빌드
+docker build -t pace-mcp-client ./packages/frontend
+
+# 태그 지정
+docker tag pace-mcp-client:latest public.ecr.aws/your-alias/pace-mcp-client:latest
+
+# 푸시
+docker push public.ecr.aws/your-alias/pace-mcp-client:latest
+```
+
+#### Private ECR 사용
 ```bash
 # 버전 확인
 make show-version
@@ -151,7 +210,20 @@ make ui
 ```bash
 # K8s 매니페스트 적용
 kubectl apply -f k8s/mcp-host/
+
+# AWS credentials를 Secret으로 관리하는 경우
+kubectl create secret generic aws-credentials \
+  --from-literal=AWS_ACCESS_KEY_ID=your-access-key \
+  --from-literal=AWS_SECRET_ACCESS_KEY=your-secret-key
 ```
+
+### Docker 이미지 특징
+
+`packages/frontend/Dockerfile`의 주요 특징:
+- **Node.js 23-slim** 기반으로 최신 JavaScript 기능 지원
+- **Python 및 uv 설치**: MCP 도구 중 Python 기반 도구 실행 지원
+- **Multi-stage build 미사용**: 개발 도구가 필요한 MCP 서버 실행을 위함
+- **pnpm 사용**: 효율적인 패키지 관리
 
 ---
 

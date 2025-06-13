@@ -1,5 +1,5 @@
 export interface MessageChunk {
-  type: "text" | "tool_use" | "tool_result" | "image" | "document";
+  type: 'text' | 'tool_use' | 'tool_result' | 'image' | 'document';
   text?: string;
   name?: string;
   input?: string;
@@ -20,19 +20,19 @@ export interface StreamData {
     is_image?: boolean;
     image_data?: string;
     mime_type?: string;
-  }
+  };
 }
 
 export interface TextContentItem {
   id: string;
-  type: "text";
+  type: 'text';
   content: string;
   timestamp: number;
 }
 
 export interface ToolUseContentItem {
   id: string;
-  type: "tool_use";
+  type: 'tool_use';
   name: string;
   input: string;
   timestamp: number;
@@ -43,7 +43,7 @@ export interface ToolUseContentItem {
 
 export interface ToolResultContentItem {
   id: string;
-  type: "tool_result";
+  type: 'tool_result';
   result: string;
   timestamp: number;
   collapsed?: boolean;
@@ -51,7 +51,7 @@ export interface ToolResultContentItem {
 
 export interface ImageContentItem {
   id: string;
-  type: "image";
+  type: 'image';
   imageData: string;
   mimeType: string;
   timestamp: number;
@@ -59,7 +59,7 @@ export interface ImageContentItem {
 
 export interface DocumentContentItem {
   id: string;
-  type: "document";
+  type: 'document';
   filename: string;
   fileType: string;
   fileSize: number;
@@ -68,7 +68,12 @@ export interface DocumentContentItem {
   fileId?: string;
 }
 
-export type ContentItem = TextContentItem | ToolUseContentItem | ToolResultContentItem | ImageContentItem | DocumentContentItem;
+export type ContentItem =
+  | TextContentItem
+  | ToolUseContentItem
+  | ToolResultContentItem
+  | ImageContentItem
+  | DocumentContentItem;
 
 export interface FileAttachment {
   id: string;
@@ -86,7 +91,7 @@ export interface ZoomedImageState {
 
 export interface Message {
   id: string;
-  sender: "user" | "ai";
+  sender: 'user' | 'ai';
   contentItems: ContentItem[];
   isStreaming?: boolean;
 }
@@ -94,4 +99,9 @@ export interface Message {
 export interface ChatInterfaceProps {
   initialMessage?: string;
   initialAttachments?: FileAttachment[];
+}
+
+export interface HumanReview {
+  action: 'yes' | 'no';
+  args?: any;
 }

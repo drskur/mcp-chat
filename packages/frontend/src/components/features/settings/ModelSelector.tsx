@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { Image as LucideImage } from 'lucide-react';
 import { availableModels, ModelsConfig } from '@/lib/models/model-info';
-import { env } from '@/lib/config/env';
+import { getAwsRegion } from '@/app/actions/config/get-aws-region';
 
 interface ModelSelectorProps {
   selectedModel: string;
@@ -30,8 +30,8 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     const fetchModels = async () => {
       try {
         setLoading(true);
-
-        const config = availableModels(env.AWS_REGION);
+        const region = await getAwsRegion();
+        const config = availableModels(region);
 
         setModelsConfig(config);
         setError(null);

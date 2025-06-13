@@ -13,11 +13,13 @@ import {
 import {
   ContentItem,
   FileAttachment,
+  HumanReview,
   TextContentItem,
   ToolResultContentItem,
 } from '@/types/chat.types';
 import { getSupportedFileExtensions } from '@/lib/utils/fileUtils';
 import { randomUUID } from 'node:crypto';
+import { Command } from '@langchain/langgraph';
 
 async function createAttachmentContents(attachments: FileAttachment[]) {
   const task = attachments.map(async (attachment) => {
@@ -122,27 +124,35 @@ function processStreamChunk(
   aiMessageChunk: { value: AIMessageChunk | null },
   controller: ReadableStreamDefaultController<ContentItem>,
 ) {
-  const streamedMessage = Array.isArray(chunk) ? chunk[0] : chunk;
-  switch (true) {
-    case streamedMessage instanceof AIMessageChunk:
-      aiMessageChunk.value = processAIMessageChunk(
-        currentUUID.value,
-        aiMessageChunk.value,
-        streamedMessage,
-        controller,
-      );
-      break;
-    case streamedMessage instanceof AIMessage:
-      processAIMessage(currentUUID.value, streamedMessage, controller);
-      currentUUID.value = randomUUID();
-      aiMessageChunk.value = null;
-      break;
-    case streamedMessage instanceof ToolMessage:
-      processToolMessage(streamedMessage, controller);
-      break;
-    default:
-      console.log(streamedMessage);
-      break;
+  const [mode, messageChunk] = chunk;
+
+  const streamedMessage = Array.isArray(messageChunk)
+    ? messageChunk[0]
+    : messageChunk;
+  if (mode === 'messages') {
+    switch (true) {
+      case streamedMessage instanceof AIMessageChunk:
+        aiMessageChunk.value = processAIMessageChunk(
+          currentUUID.value,
+          aiMessageChunk.value,
+          streamedMessage,
+          controller,
+        );
+        break;
+      case streamedMessage instanceof AIMessage:
+        processAIMessage(currentUUID.value, streamedMessage, controller);
+        currentUUID.value = randomUUID();
+        aiMessageChunk.value = null;
+        break;
+      case streamedMessage instanceof ToolMessage:
+        processToolMessage(streamedMessage, controller);
+        break;
+      default:
+        console.log(streamedMessage);
+        break;
+    }
+  } else {
+    console.log(mode, messageChunk);
   }
 }
 
@@ -183,7 +193,7 @@ export async function sendChatStream(
     },
     {
       configurable,
-      streamMode: 'messages',
+      streamMode: ['messages', 'updates'],
     },
   );
 
@@ -205,22 +215,23 @@ export async function sendChatStream(
 }
 
 // Tool call 승인/거부 후 재개 함수
-export async function resumeFromInterrupt(conversationId: string) {
+export async function resumeFromInterrupt(
+  conversationId: string,
+  approval: boolean,
+) {
   const graph = await getGraph();
   const config = { configurable: { thread_id: conversationId } };
 
-  // 먼저 승인 상태를 업데이트
-  await graph.updateState(config, {
-    userApproval: true,
-    isInterrupted: false,
-  });
-
   // 업데이트된 상태에서 스트림 재개
   const streamResponse = await graph.stream(
-    null, // null을 전달하여 기존 상태에서 계속 진행
+    new Command<HumanReview>({
+      resume: {
+        action: approval ? 'yes' : 'no',
+      },
+    }),
     {
       ...config,
-      streamMode: 'messages',
+      streamMode: ['messages', 'updates'],
     },
   );
 

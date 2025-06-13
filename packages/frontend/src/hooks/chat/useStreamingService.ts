@@ -70,11 +70,12 @@ export const useStreamingService = ({
   const resumeStreaming = async (
     streamingMessageId: string,
     conversationId: string,
+    approval: boolean,
   ) => {
     setIsStreaming(true);
     streamingMessageIdRef.current = streamingMessageId;
 
-    const messageStream = await resumeFromInterrupt(conversationId);
+    const messageStream = await resumeFromInterrupt(conversationId, approval);
     const messageStreamReader = messageStream.getReader();
 
     (async () => {

@@ -3,7 +3,6 @@
 import { BedrockClientManager } from '@/app/actions/agent/bedrock-client';
 import {
   AIMessage,
-  AIMessageChunk,
   HumanMessage,
   SystemMessage,
 } from '@langchain/core/messages';
@@ -25,12 +24,8 @@ export async function callModelNode(
   const messages = [systemMessage, ...state.messages];
 
   try {
-    const response = await llm.bindTools(tools).stream(messages);
+    const aiMessageChunk = await llm.bindTools(tools).invoke(messages);
 
-    const aiMessageChunk = (await Array.fromAsync(response)).reduce(
-      (acc, chunk) => acc.concat(chunk),
-      new AIMessageChunk({ content: '' }),
-    );
     const aiMessage = new AIMessage({
       content: aiMessageChunk.content,
       tool_calls: aiMessageChunk.tool_calls,
@@ -63,16 +58,12 @@ export async function callModelNode(
     const errorMessage = new HumanMessage({
       content: errorContent,
     });
-    const response = await llm.stream([errorMessage]);
+    const errorMessageChunk = await llm.invoke([errorMessage]);
 
-    const aiMessageChunk = (await Array.fromAsync(response)).reduce(
-      (acc, chunk) => acc.concat(chunk),
-      new AIMessageChunk({ content: '' }),
-    );
     const aiMessage = new AIMessage({
-      content: aiMessageChunk.content,
-      tool_calls: aiMessageChunk.tool_calls,
-      response_metadata: aiMessageChunk.response_metadata,
+      content: errorMessageChunk.content,
+      tool_calls: errorMessageChunk.tool_calls,
+      response_metadata: errorMessageChunk.response_metadata,
     });
 
     // Return only conversation messages (excluding system message) to maintain clean state

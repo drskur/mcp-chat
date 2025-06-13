@@ -1,5 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { RefreshCw, Check, FileJson, Copy, CheckCircle2, XCircle, X } from 'lucide-react';
+import {
+  RefreshCw,
+  Check,
+  FileJson,
+  Copy,
+  CheckCircle2,
+  XCircle,
+  X,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -23,7 +31,6 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
   onCopyJSON,
   setError,
   initialConfig,
-  configName,
 }) => {
   // MCP Config management - 초기 설정이 제공되면 autoLoad 비활성화
   const mcpConfig = useMCPConfig({
@@ -49,7 +56,11 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
     if (initialConfig && !isInitialLoadedRef.current) {
       jsonEditor.setJSONValue(initialConfig);
       isInitialLoadedRef.current = true;
-    } else if (mcpConfig.config && !isInitialLoadedRef.current && !initialConfig) {
+    } else if (
+      mcpConfig.config &&
+      !isInitialLoadedRef.current &&
+      !initialConfig
+    ) {
       jsonEditor.setJSONValue(mcpConfig.config);
       isInitialLoadedRef.current = true;
     }
@@ -57,7 +68,7 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
 
   const handleSaveJSON = async () => {
     const parseResult = jsonEditor.parseJSON();
-    
+
     if (!parseResult.success) {
       setError(parseResult.error || 'JSON 파싱 오류');
       return;
@@ -119,14 +130,18 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
 
       {/* 복사 알림 */}
       {copyStatus && (
-        <Alert className={`relative border-white ${copyStatus === 'success' ? 'bg-green-950/30' : 'bg-red-950/30'}`}>
+        <Alert
+          className={`relative border-white ${copyStatus === 'success' ? 'bg-green-950/30' : 'bg-red-950/30'}`}
+        >
           {copyStatus === 'success' ? (
             <CheckCircle2 className="h-4 w-4 text-white stroke-white" />
           ) : (
             <XCircle className="h-4 w-4 text-white stroke-white" />
           )}
           <AlertDescription className="text-white">
-            {copyStatus === 'success' ? '클립보드에 복사되었습니다.' : '클립보드에 복사하지 못했습니다.'}
+            {copyStatus === 'success'
+              ? '클립보드에 복사되었습니다.'
+              : '클립보드에 복사하지 못했습니다.'}
           </AlertDescription>
           <Button
             onClick={clearStatus}

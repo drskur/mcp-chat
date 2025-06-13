@@ -13,6 +13,8 @@ interface JsonModeViewProps {
   onSave: (configObj: ClientConfig) => Promise<void>;
   onCopyJSON: (text: string) => void;
   setError: (error: string | null) => void;
+  initialConfig?: ClientConfig | null;
+  configName?: string;
 }
 
 export const JsonModeView: React.FC<JsonModeViewProps> = ({
@@ -20,17 +22,19 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
   onSave,
   onCopyJSON,
   setError,
+  initialConfig,
+  configName,
 }) => {
-  // MCP Config management
+  // MCP Config management - 초기 설정이 제공되면 autoLoad 비활성화
   const mcpConfig = useMCPConfig({
     onError: setError,
-    autoLoad: true,
+    autoLoad: !initialConfig,
   });
 
   // JSON Editor functionality
   const jsonEditor = useJsonEditor({
     // onError: setError, // 실시간 에러 체크 비활성화
-    initialValue: '{}',
+    initialValue: initialConfig ? JSON.stringify(initialConfig, null, 2) : '{}',
   });
 
   // Copy notification
@@ -39,13 +43,17 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
   // Track if initial config is loaded
   const isInitialLoadedRef = useRef(false);
 
-  // Load initial config into editor (only once)
+  // Load initial config into editor
   useEffect(() => {
-    if (mcpConfig.config && !isInitialLoadedRef.current) {
+    // initialConfig가 제공되면 우선 사용
+    if (initialConfig && !isInitialLoadedRef.current) {
+      jsonEditor.setJSONValue(initialConfig);
+      isInitialLoadedRef.current = true;
+    } else if (mcpConfig.config && !isInitialLoadedRef.current && !initialConfig) {
       jsonEditor.setJSONValue(mcpConfig.config);
       isInitialLoadedRef.current = true;
     }
-  }, [mcpConfig.config, jsonEditor]);
+  }, [mcpConfig.config, jsonEditor, initialConfig]);
 
   const handleSaveJSON = async () => {
     const parseResult = jsonEditor.parseJSON();
@@ -58,7 +66,10 @@ export const JsonModeView: React.FC<JsonModeViewProps> = ({
     try {
       console.log('Saving config:', parseResult.data);
       await onSave(parseResult.data);
-      await mcpConfig.saveConfig(parseResult.data);
+      // mcpConfig.saveConfig은 initialConfig가 없을 때만 호출
+      if (!initialConfig) {
+        await mcpConfig.saveConfig(parseResult.data);
+      }
     } catch (err) {
       console.error('JSON 저장 오류:', err);
       setError((err as Error).message);

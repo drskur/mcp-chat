@@ -6,6 +6,7 @@ import {
   getMCPServers,
   setMCPConfig,
   updateMCPConfig,
+  getMCPConfig,
 } from '@/app/actions/mcp/server';
 import { ClientConfig } from '@langchain/mcp-adapters';
 import { getUserSettings } from '@/app/actions/settings/user-settings';
@@ -22,6 +23,7 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [jsonMode, setJsonMode] = useState(false);
+  const [jsonConfig, setJsonConfig] = useState<ClientConfig | null>(null);
   const isFetchingRef = useRef(false);
 
   // 도구 목록 불러오기
@@ -66,13 +68,26 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
         setConfigName(agentName);
       }
     };
-    initializeAgent();
+    initializeAgent().catch(console.error);
   }, [agentName]);
 
-  // configName이 설정된 후 도구 목록 갱신
+  // configName이 설정된 후 도구 목록 갱신 및 JSON 설정 로드
   useEffect(() => {
     if (configName) {
-      updateAndFetchTools().catch(console.error);
+      // JSON 설정 먼저 로드
+      getMCPConfig(configName)
+        .then(config => setJsonConfig(config))
+        .catch(err => {
+          console.error('MCP 설정 로드 오류:', err);
+          setJsonConfig({ mcpServers: {} });
+        });
+      
+      // 다음 이벤트 루프에서 실행하여 UI 렌더링 우선순위 부여
+      const timeoutId = setTimeout(() => {
+        updateAndFetchTools().catch(console.error);
+      }, 0);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [configName, updateAndFetchTools]);
 
@@ -98,10 +113,22 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
   const handleJsonSave = async (configObj: ClientConfig) => {
     setIsLoading(true);
     setError(null);
-    await setMCPConfig(configName, configObj);
-    await updateAndFetchTools();
-    setJsonMode(false);
-    setIsLoading(false);
+
+    try {
+      // 비동기 작업을 순차적으로 실행하되, UI 업데이트 기회 제공
+      await setMCPConfig(configName, configObj);
+
+      // UI가 업데이트될 수 있도록 짧은 지연 추가
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      await updateAndFetchTools();
+      setJsonMode(false);
+    } catch (error) {
+      console.error('JSON 저장 중 오류:', error);
+      setError('설정 저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -110,27 +137,30 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
         <Plug className="h-5 w-5 text-indigo-400" /> MCP 도구 관리
       </h2>
 
-      {!jsonMode && (
+      {/* JSON/서버 모드 전환 버튼 - 항상 최상위 레이어에 렌더링 */}
+      <div className="absolute top-6 right-6 z-10">
         <Button
-          onClick={() => setJsonMode(true)}
+          onClick={() => {
+            // 즉시 상태 변경
+            setJsonMode(!jsonMode);
+          }}
           variant="ghost"
-          className="absolute top-6 right-6 text-xs px-2 py-1 h-auto bg-gray-800 text-gray-300 hover:bg-gray-700"
+          className="text-xs px-2 py-1 h-auto bg-gray-800 text-gray-300 hover:bg-gray-700"
+          type="button"
         >
-          <FileJson className="h-3 w-3 mr-1" />
-          JSON 모드
+          {jsonMode ? (
+            <>
+              <Server className="h-3 w-3 mr-1" />
+              서버 모드
+            </>
+          ) : (
+            <>
+              <FileJson className="h-3 w-3 mr-1" />
+              JSON 모드
+            </>
+          )}
         </Button>
-      )}
-
-      {jsonMode && (
-        <Button
-          onClick={() => setJsonMode(false)}
-          variant="ghost"
-          className="absolute top-6 right-6 text-xs px-2 py-1 h-auto bg-gray-800 text-gray-300 hover:bg-gray-700"
-        >
-          <Server className="h-3 w-3 mr-1" />
-          서버 모드
-        </Button>
-      )}
+      </div>
 
       {error && (
         <div className="my-4 p-3 bg-red-950/30 border border-red-800 rounded-lg flex items-start gap-3">
@@ -140,22 +170,24 @@ const MCPToolManager: React.FC<MCPToolManagerProps> = ({ agentName }) => {
       )}
 
       <div className="mt-6">
-        {isLoading ? (
-          <div className="flex items-center justify-center p-8">
-            <RefreshCw className="h-5 w-5 text-indigo-400 animate-spin" />
-            <span className="ml-2 text-gray-400">도구 목록 로드 중...</span>
-          </div>
-        ) : jsonMode ? (
+        {jsonMode ? (
           <JsonModeView
             isLoading={isLoading}
             error={error}
             onSave={handleJsonSave}
             onCopyJSON={copyJSON}
             setError={setError}
+            initialConfig={jsonConfig}
+            configName={configName}
           />
         ) : (
           <div>
-            {servers.length === 0 ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <RefreshCw className="h-5 w-5 text-indigo-400 animate-spin" />
+                <span className="ml-2 text-gray-400">도구 목록 로드 중...</span>
+              </div>
+            ) : servers.length === 0 ? (
               <EmptyServerState />
             ) : (
               <div className="space-y-6">

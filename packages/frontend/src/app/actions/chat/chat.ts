@@ -148,11 +148,11 @@ function processStreamChunk(
         processToolMessage(streamedMessage, controller);
         break;
       default:
-        console.log(streamedMessage);
+        // console.log(streamedMessage);
         break;
     }
   } else {
-    console.log(mode, messageChunk);
+    // console.log(mode, messageChunk);
   }
 }
 

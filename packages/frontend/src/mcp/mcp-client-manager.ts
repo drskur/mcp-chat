@@ -44,6 +44,12 @@ export class MCPClientManager {
       return false;
     }
 
+    console.log(`Updating MCP client config for agent: ${configName}`, {
+      forceUpdate,
+      configChanged: this.currentConfigName !== configName,
+      configDiff: JSON.stringify(this.configCache) !== JSON.stringify(newConfig)
+    });
+
     // 기존 클라이언트 정리
     this.mcpClient = null;
 

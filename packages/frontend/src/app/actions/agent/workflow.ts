@@ -8,8 +8,8 @@ import { StateAnnotation } from '@/app/actions/agent/agent-state';
 import { humanReviewNode, shouldHumanReview } from '@/app/actions/agent/human-review-node';
 
 export async function createGraph() {
-  const mcpClinet = await MCPClientManager.getInstance().getClient();
-  const tools = await mcpClinet?.getTools() ?? [];
+  const mcpClient = await MCPClientManager.getInstance().getClient();
+  const tools = await mcpClient?.getTools() ?? [];
   const builder = new StateGraph(StateAnnotation)
     .addNode('callModel', callModelNode)
     .addNode('humanReview', humanReviewNode)
@@ -29,6 +29,7 @@ let graphInstance: Awaited<ReturnType<typeof createGraph>> | null = null;
 
 export async function getGraph() {
   if (!graphInstance) {
+    console.log('Creating new graph instance with updated MCP tools');
     graphInstance = await createGraph();
   }
   return graphInstance;
@@ -36,5 +37,6 @@ export async function getGraph() {
 
 // MCP 설정 변경 시 그래프를 다시 초기화하는 함수
 export async function resetGraph() {
+  console.log('Resetting graph instance for MCP tool updates');
   graphInstance = null;
 }

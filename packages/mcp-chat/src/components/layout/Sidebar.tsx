@@ -1,6 +1,7 @@
-import {PanelLeft} from "lucide-solid";
+import {PanelLeft, Plus} from "lucide-solid";
 import {type Component, createSignal, onCleanup, onMount } from "solid-js";
 import {isServer} from "solid-js/web";
+import {A} from "@solidjs/router";
 import {Button} from "@/components/ui/button";
 import {cn} from "@/lib/utils";
 
@@ -77,8 +78,20 @@ const Sidebar: Component = () => {
 
                 {/* Sidebar Content */}
                 <div class="p-4">
-                    {/* Content will be added here later */}
-                    <p class="text-sm text-sidebar-primary">Sidebar content will go here</p>
+                    {/* New Chat Button */}
+                    <A
+                        href="/"
+                        class="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+                    >
+                        <Plus class="h-4 w-4" />
+                        <span class="text-sm font-medium">새 채팅</span>
+                    </A>
+
+                    {/* Chat History will go here */}
+                    <div class="mt-4">
+                        <p class="text-xs text-sidebar-primary/60 px-3 mb-2">최근 채팅</p>
+                        {/* Chat list will be added later */}
+                    </div>
                 </div>
             </aside>
 

@@ -7,9 +7,12 @@
     "start": "vinxi start"
   },
   "dependencies": {
+    "@kobalte/core": "^0.13.10",
     "@solidjs/router": "^0.15.0",
     "@solidjs/start": "^1.1.0",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "lucide-solid": "^0.518.0",
     "solid-js": "^1.9.5",
     "tailwind-merge": "^3.3.1",
     "tw-animate-css": "^1.3.4",

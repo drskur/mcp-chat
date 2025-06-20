@@ -1,15 +1,14 @@
 import {TextField} from "@kobalte/core/text-field";
+import {ArrowUp, Square} from "lucide-solid";
 import type {Component} from "solid-js";
 import {createSignal, Show} from "solid-js";
 import {cn} from "@/lib/utils";
-import {TextArea} from "./textarea";
-import {Button} from "./button";
-import {ArrowUp, Square} from "lucide-solid";
+import {Button} from "../ui/button";
+import {TextArea} from "../ui/textarea";
 
 interface ChatInputProps {
     initialValue?: string;
-    onInput?: (value: string) => void;
-    onSubmit?: () => void;
+    onSubmit?: (message: string) => void;
     onCancel?: () => void;
     isStreaming?: boolean;
     placeholder?: string;
@@ -19,15 +18,16 @@ interface ChatInputProps {
 
 export const ChatInput: Component<ChatInputProps> = (props) => {
     const [inputValue, setInputValue] = createSignal(props.initialValue ?? "");
+    const [isComposing, setIsComposing] = createSignal(false);
 
     const handleInput = (value: string) => {
         setInputValue(value);
-        props.onInput?.(value);
     };
 
     const handleSubmit = () => {
-        if (inputValue().trim() && !props.isStreaming) {
-            props.onSubmit?.();
+        const message = inputValue().trim();
+        if (message && !props.isStreaming) {
+            props.onSubmit?.(message);
             setInputValue("");
         }
     };
@@ -44,24 +44,33 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
         if (e.key === "Escape" && props.isStreaming) {
             e.preventDefault();
             props.onCancel?.();
-        } else if (e.key === "Enter" && !e.shiftKey) {
+        } else if (e.key === "Enter" && !e.shiftKey && !isComposing()) {
             e.preventDefault();
             handleSubmit();
         }
     };
 
+    const handleCompositionStart = () => {
+        setIsComposing(true);
+    };
+
+    const handleCompositionEnd = () => {
+        setIsComposing(false);
+    };
+
     return (
         <div class={cn("w-full max-w-[700px] mx-8 relative", props.class)}>
-            {/* Text Input Area */}
             <TextField
                 class="w-full"
                 value={inputValue()}
                 onChange={handleInput}
-                onKeyDown={handleKeyDown}
             >
                 <TextArea
                     placeholder={props.placeholder ?? "오늘 어떤 도움을 드릴까요?"}
                     disabled={props.disabled}
+                    onKeyDown={handleKeyDown}
+                    onCompositionStart={handleCompositionStart}
+                    onCompositionEnd={handleCompositionEnd}
                     class="resize-none h-[100px] w-full rounded-2xl border border-border bg-background px-4 py-3 pr-14 text-base leading-relaxed shadow-sm focus-visible:border-ring"
                 />
             </TextField>

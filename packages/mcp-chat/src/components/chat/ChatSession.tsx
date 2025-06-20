@@ -25,7 +25,7 @@ export const ChatSession: Component<ChatSessionProps> = (props) => {
             </div>
 
             {/* Chat Input Area */}
-            <div class="border-t border-border p-4 flex justify-center">
+            <div class="p-4 flex justify-center">
                 <ChatInput />
             </div>
         </div>

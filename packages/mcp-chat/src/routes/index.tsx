@@ -1,4 +1,4 @@
-import { useNavigate } from "@solidjs/router";
+import {useNavigate} from "@solidjs/router";
 import {ChatInput} from "@/components/chat/ChatInput";
 
 export default function NewChat() {

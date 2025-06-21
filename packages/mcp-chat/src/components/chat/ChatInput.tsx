@@ -1,5 +1,5 @@
 import {TextField} from "@kobalte/core/text-field";
-import {ArrowUp, Square} from "lucide-solid";
+import {ArrowUp, Pause} from "lucide-solid";
 import type {Component} from "solid-js";
 import {createSignal, Show} from "solid-js";
 import {cn} from "@/lib/utils";
@@ -84,7 +84,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
                 class="absolute bottom-3 right-3 h-8 w-8 z-10 enabled:cursor-pointer"
             >
                 <Show when={props.isStreaming} fallback={<ArrowUp size={16} />}>
-                    <Square size={16} />
+                    <Pause size={16} />
                 </Show>
             </Button>
         </div>

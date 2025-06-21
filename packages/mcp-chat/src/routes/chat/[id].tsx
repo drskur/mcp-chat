@@ -1,5 +1,6 @@
 import {useParams} from "@solidjs/router";
 import {createEffect, createSignal, onMount, Show} from "solid-js";
+// import {streamChatResponse} from "@/actions/chat";
 import {ChatInput} from "@/components/chat/ChatInput";
 import {MessageList} from "@/components/chat/MessageList";
 import Loading from "@/components/layout/Loading";
@@ -15,6 +16,7 @@ export default function ChatPage() {
     const [isStreaming, setIsStreaming] = createSignal(false);
     const [streamingMessageId, setStreamingMessageId] = createSignal<string | null>(null);
     const {setTitle} = useTitleBar();
+    // const sendChat = useAction(streamChatResponse);
 
     onMount(() => {
         // Retrieve message from sessionStorage
@@ -48,7 +50,7 @@ export default function ChatPage() {
     // 초기 메시지 처리
     createEffect(async () => {
         if (initialMessage() && session()) {
-            await handleSubmit(initialMessage() ?? "");
+            // await handleSubmit(initialMessage() ?? "");
         }
     });
 
@@ -81,14 +83,17 @@ export default function ChatPage() {
         setStreamingMessageId(aiMessageId);
 
         try {
-            // TODO: 실제 AI API 호출 로직 구현
-            console.log("메시지 전송:", message);
-            console.log("채팅 ID:", params.id);
-
-            // 임시로 지연 시뮬레이션
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        } catch (error) {
-            console.error("메시지 전송 실패:", error);
+            // const blocks = await sendChat({
+            //     message,
+            //     sessionId: params.id
+            // });
+            //
+            // // 서버에서 받은 블록들을 AI 메시지에 추가
+            // setMessages(prev => prev.map(msg =>
+            //     msg.id === aiMessageId
+            //         ? {...msg, blocks: blocks}
+            //         : msg
+            // ));
         } finally {
             setIsStreaming(false);
             setStreamingMessageId(null);

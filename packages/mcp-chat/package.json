@@ -7,25 +7,28 @@
     "start": "vinxi start"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "~3.750.0",
+    "@aws-sdk/credential-provider-sso": "~3.750.0",
     "@kobalte/core": "^0.13.10",
     "@langchain/aws": "^0.1.11",
     "@langchain/core": "^0.3.61",
     "@langchain/langgraph": "^0.3.4",
-    "@solidjs/router": "^0.15.0",
-    "@solidjs/start": "^1.1.0",
+    "@solidjs/router": "^0.15.3",
+    "@solidjs/start": "^1.1.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-solid": "^0.518.0",
-    "solid-js": "^1.9.5",
+    "solid-js": "^1.9.7",
     "tailwind-merge": "^3.3.1",
     "tw-animate-css": "^1.3.4",
     "vinxi": "^0.5.7"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.0.0",
-    "@tailwindcss/vite": "^4.0.7",
+    "@biomejs/biome": "^2.0.2",
+    "@tailwindcss/vite": "^4.1.10",
     "@types/node": "^24.0.3",
-    "tailwindcss": "^4.0.7"
+    "@tailwindcss/typography": "^0.5.16",
+    "tailwindcss": "^4.1.10"
   },
   "engines": {
     "node": ">=22"

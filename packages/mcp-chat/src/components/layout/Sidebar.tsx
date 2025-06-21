@@ -97,7 +97,7 @@ const Sidebar: Component = () => {
                 {/* Settings button at bottom */}
                 <div class="border-t border-sidebar-border p-4">
                     <A
-                        href="/settings"
+                        href={"/settings"}
                         class="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
                     >
                         <Settings class="h-4 w-4" />

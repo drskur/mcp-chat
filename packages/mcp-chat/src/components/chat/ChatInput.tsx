@@ -1,10 +1,10 @@
-import {TextField} from "@kobalte/core/text-field";
 import {ArrowUp, Pause} from "lucide-solid";
 import type {Component} from "solid-js";
 import {createSignal, Show} from "solid-js";
 import {cn} from "@/lib/utils";
 import {Button} from "../ui/button";
 import {TextArea} from "../ui/textarea";
+import {TextFieldRoot} from "@/components/ui/textfield";
 
 interface ChatInputProps {
     initialValue?: string;
@@ -60,7 +60,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
 
     return (
         <div class={cn("w-full max-w-[700px] mx-8 relative", props.class)}>
-            <TextField
+            <TextFieldRoot
                 class="w-full"
                 value={inputValue()}
                 onChange={handleInput}
@@ -73,7 +73,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
                     onCompositionEnd={handleCompositionEnd}
                     class="resize-none h-[100px] w-full rounded-2xl border border-border bg-background px-4 py-3 pr-14 text-base leading-relaxed shadow-sm focus-visible:border-ring"
                 />
-            </TextField>
+            </TextFieldRoot>
 
             {/* Send/Stop Button */}
             <Button
@@ -83,8 +83,8 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
                 size="icon"
                 class="absolute bottom-3 right-3 h-8 w-8 z-10 enabled:cursor-pointer"
             >
-                <Show when={props.isStreaming} fallback={<ArrowUp size={16} />}>
-                    <Pause size={16} />
+                <Show when={props.isStreaming} fallback={<ArrowUp size={16}/>}>
+                    <Pause size={16}/>
                 </Show>
             </Button>
         </div>

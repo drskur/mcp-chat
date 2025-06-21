@@ -31,7 +31,6 @@ export interface ErrorBlock {
     id: string;
     type: "error";
     content: string;
-    errorType: string;
 }
 
 export type MessageBlock = TextBlock | CodeBlock | ToolUseBlock | ToolResultBlock | ErrorBlock;
@@ -51,3 +50,9 @@ export interface ChatSession {
     createdAt: Date;
 }
 
+export interface ChatMessageInput {
+    sessionId: string;
+    message: string;
+}
+
+export type ChatStreamChunk = string | MessageBlock;

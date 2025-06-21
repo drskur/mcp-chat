@@ -123,6 +123,7 @@ export default function ChatPage() {
             setIsStreaming(false);
             setStreamingMessageId(null);
             setCurrentStreamId(null);
+            setStreamingText("");
         }
     };
 
@@ -138,16 +139,14 @@ export default function ChatPage() {
 
     return (
         <Show when={session()} fallback={<Loading/>}>
-            <div class={cn("flex flex-col h-full w-full")}>
+            <div class={cn("flex flex-col h-full w-full overflow-y-auto")}>
                 {/* Chat Messages Area */}
                 <div class="flex-1">
-                    <div class="h-full overflow-y-auto pb-4">
-                        <MessageList
-                            messages={messages()}
-                            streamingMessageId={streamingMessageId()}
-                            streamingText={streamingText()}
-                        />
-                    </div>
+                    <MessageList
+                        messages={messages()}
+                        streamingMessageId={streamingMessageId()}
+                        streamingText={streamingText()}
+                    />
                 </div>
 
                 {/* Chat Input Area */}

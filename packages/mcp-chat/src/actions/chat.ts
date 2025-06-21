@@ -68,6 +68,7 @@ export const streamChatResponse = action(async (input: ChatMessageInput & {
                 controller.close();
                 activeStreams.delete(input.streamId);
             }
+            accStr = "";
         },
         cancel() {
             // 스트림이 취소되면 정리

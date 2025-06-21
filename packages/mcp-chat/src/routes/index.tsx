@@ -1,8 +1,15 @@
 import {useNavigate} from "@solidjs/router";
+import {onMount} from "solid-js";
 import {ChatInput} from "@/components/chat/ChatInput";
+import {useTitleBar} from "@/components/layout/TitleBar";
 
 export default function NewChat() {
     const navigate = useNavigate();
+    const {setTitle} = useTitleBar();
+
+    onMount(() => {
+        setTitle("");
+    });
 
     const handleSubmit = (message: string) => {
         // Generate UUID v4

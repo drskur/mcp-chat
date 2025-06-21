@@ -3,6 +3,7 @@ import {createEffect, createSignal, onMount, Show} from "solid-js";
 import {ChatInput} from "@/components/chat/ChatInput";
 import {MessageList} from "@/components/chat/MessageList";
 import Loading from "@/components/layout/Loading";
+import {useTitleBar} from "@/components/layout/TitleBar";
 import {cn} from "@/lib/utils";
 import type {ChatMessage, ChatSession} from "@/types/chat";
 
@@ -13,6 +14,7 @@ export default function ChatPage() {
     const [messages, setMessages] = createSignal<ChatMessage[]>([]);
     const [isStreaming, setIsStreaming] = createSignal(false);
     const [streamingMessageId, setStreamingMessageId] = createSignal<string | null>(null);
+    const {setTitle} = useTitleBar();
 
     onMount(() => {
         // Retrieve message from sessionStorage
@@ -34,12 +36,13 @@ export default function ChatPage() {
         // 지금은 새 세션을 생성
         const newSession: ChatSession = {
             id: sessionId,
-            title: "",
+            title: "새 대화",
             messages: [],
             createdAt: new Date()
         };
         setSession(newSession);
         setMessages(newSession.messages);
+        setTitle(newSession.title);
     };
 
     // 초기 메시지 처리

@@ -8,6 +8,9 @@
   },
   "dependencies": {
     "@kobalte/core": "^0.13.10",
+    "@langchain/aws": "^0.1.11",
+    "@langchain/core": "^0.3.61",
+    "@langchain/langgraph": "^0.3.4",
     "@solidjs/router": "^0.15.0",
     "@solidjs/start": "^1.1.0",
     "class-variance-authority": "^0.7.1",

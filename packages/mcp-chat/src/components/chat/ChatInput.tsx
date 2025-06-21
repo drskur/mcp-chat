@@ -67,7 +67,6 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
             >
                 <TextArea
                     placeholder={props.placeholder ?? "오늘 어떤 도움을 드릴까요?"}
-                    disabled={props.disabled}
                     onKeyDown={handleKeyDown}
                     onCompositionStart={handleCompositionStart}
                     onCompositionEnd={handleCompositionEnd}
@@ -78,7 +77,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
             {/* Send/Stop Button */}
             <Button
                 onClick={handleButtonClick}
-                disabled={props.disabled ?? (!props.isStreaming && !inputValue().trim())}
+                disabled={props.isStreaming ? false : !inputValue().trim()}
                 variant="outline"
                 size="icon"
                 class="absolute bottom-3 right-3 h-8 w-8 z-10 enabled:cursor-pointer"

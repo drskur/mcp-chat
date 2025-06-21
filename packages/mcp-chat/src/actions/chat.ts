@@ -3,10 +3,23 @@ import {action} from "@solidjs/router";
 import {graph} from "@/lib/graph/workflow";
 import type {ChatMessageInput, ChatStreamChunk, MessageBlock} from "@/types/chat";
 
-// ReadableStream 기반 스트리밍 응답
-export const streamChatResponse = action(async (input: ChatMessageInput): Promise<ReadableStream<ChatStreamChunk>> => {
-    "use server";
+// 진행 중인 스트림을 관리하기 위한 Map
+const activeStreams = new Map<string, AbortController>();
 
+// ReadableStream 기반 스트리밍 응답
+export const streamChatResponse = action(async (input: ChatMessageInput & { streamId: string }): Promise<ReadableStream<ChatStreamChunk>> => {
+    "use server";
+    
+    // 이전 스트림이 있으면 취소
+    const existingController = activeStreams.get(input.streamId);
+    if (existingController) {
+        existingController.abort();
+    }
+    
+    // 새 AbortController 생성
+    const abortController = new AbortController();
+    activeStreams.set(input.streamId, abortController);
+    
     return new ReadableStream<ChatStreamChunk>({
         async start(controller) {
             try {
@@ -16,7 +29,8 @@ export const streamChatResponse = action(async (input: ChatMessageInput): Promis
                     {messages: [humanMessage]},
                     {
                         configurable: {thread_id: input.sessionId},
-                        streamMode: "messages"
+                        streamMode: "messages",
+                        signal: abortController.signal,
                     }
                 );
 
@@ -38,46 +52,34 @@ export const streamChatResponse = action(async (input: ChatMessageInput): Promis
                         default:
                             break;
                     }
-
-                    // if (chunk?.messages?.length > 0) {
-                    //     const lastMessage = chunk.messages[chunk.messages.length - 1];
-                    //
-                    //     let content = "";
-                    //     if (typeof lastMessage?.content === "string") {
-                    //         content = lastMessage.content;
-                    //     } else if (Array.isArray(lastMessage?.content)) {
-                    //         content = lastMessage.content
-                    //             .filter(item => typeof item === "string" || (typeof item === "object" && item?.type === "text"))
-                    //             .map(item => typeof item === "string" ? item : (item as any).text || "")
-                    //             .join("");
-                    //     }
-                    //
-                    //     if (content && !accumulatedContent.includes(content)) {
-                    //         accumulatedContent = content;
-                    //
-                    //         const textBlock: MessageBlock = {
-                    //             id: blockId,
-                    //             type: "text",
-                    //             content: accumulatedContent
-                    //         };
-                    //
-                    //         // JSON으로 스트리밍
-                    //         const data = JSON.stringify({blocks: [textBlock]});
-                    //         controller.enqueue(encoder.encode(data));
-                    //     }
-                    // }
                 }
 
                 // 스트림 종료
                 controller.close();
+                activeStreams.delete(input.streamId);
 
             } catch (error) {
                 console.error("Error in streamChatResponse:", error);
                 processError(error, controller);
                 controller.close();
+                activeStreams.delete(input.streamId);
             }
         },
+        cancel() {
+            // 스트림이 취소되면 정리
+            activeStreams.delete(input.streamId);
+        }
     });
+});
+
+// 스트림 취소 액션
+export const cancelChatStream = action(async (streamId: string) => {
+    "use server";
+    const controller = activeStreams.get(streamId);
+    if (controller) {
+        controller.abort();
+        activeStreams.delete(streamId);
+    }
 });
 
 function processError(error: unknown, controller: ReadableStreamDefaultController<ChatStreamChunk>) {

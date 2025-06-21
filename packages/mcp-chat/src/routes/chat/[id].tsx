@@ -1,6 +1,6 @@
 import {useAction, useParams} from "@solidjs/router";
 import {createEffect, createSignal, onMount, Show} from "solid-js";
-import {streamChatResponse} from "@/actions/chat";
+import {cancelChatStream, streamChatResponse } from "@/actions/chat";
 import {ChatInput} from "@/components/chat/ChatInput";
 import {MessageList} from "@/components/chat/MessageList";
 import Loading from "@/components/layout/Loading";
@@ -16,8 +16,10 @@ export default function ChatPage() {
     const [isStreaming, setIsStreaming] = createSignal(false);
     const [streamingMessageId, setStreamingMessageId] = createSignal<string | null>(null);
     const [streamingText, setStreamingText] = createSignal("");
+    const [currentStreamId, setCurrentStreamId] = createSignal<string | null>(null);
     const {setTitle} = useTitleBar();
     const sendChat = useAction(streamChatResponse);
+    const cancelStream = useAction(cancelChatStream);
 
     onMount(() => {
         // Retrieve message from sessionStorage
@@ -84,9 +86,13 @@ export default function ChatPage() {
         setStreamingMessageId(aiMessageId);
 
         try {
+            const streamId = crypto.randomUUID();
+            setCurrentStreamId(streamId);
+
             const stream = await sendChat({
                 message,
-                sessionId: params.id
+                sessionId: params.id,
+                streamId
             });
 
             // ReadableStream 처리
@@ -116,12 +122,18 @@ export default function ChatPage() {
         } finally {
             setIsStreaming(false);
             setStreamingMessageId(null);
+            setCurrentStreamId(null);
         }
     };
 
-    const handleCancel = () => {
+    const handleCancel = async () => {
+        const streamId = currentStreamId();
+        if (streamId) {
+            await cancelStream(streamId);
+        }
         setIsStreaming(false);
         setStreamingMessageId(null);
+        setCurrentStreamId(null);
     };
 
     return (
@@ -144,7 +156,6 @@ export default function ChatPage() {
                         onSubmit={handleSubmit}
                         onCancel={handleCancel}
                         isStreaming={isStreaming()}
-                        disabled={isStreaming()}
                     />
                 </div>
             </div>

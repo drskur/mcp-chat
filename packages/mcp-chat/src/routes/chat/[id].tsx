@@ -15,6 +15,7 @@ export default function ChatPage() {
     const [messages, setMessages] = createSignal<ChatMessage[]>([]);
     const [isStreaming, setIsStreaming] = createSignal(false);
     const [streamingMessageId, setStreamingMessageId] = createSignal<string | null>(null);
+    const [streamingText, setStreamingText] = createSignal("");
     const {setTitle} = useTitleBar();
     const sendChat = useAction(streamChatResponse);
 
@@ -50,7 +51,7 @@ export default function ChatPage() {
     // 초기 메시지 처리
     createEffect(async () => {
         if (initialMessage() && session()) {
-            // await handleSubmit(initialMessage() ?? "");
+            await handleSubmit(initialMessage() ?? "");
         }
     });
 
@@ -83,17 +84,35 @@ export default function ChatPage() {
         setStreamingMessageId(aiMessageId);
 
         try {
-            const blocks = await sendChat({
+            const stream = await sendChat({
                 message,
                 sessionId: params.id
             });
 
-            // 서버에서 받은 블록들을 AI 메시지에 추가
-            setMessages(prev => prev.map(msg =>
-                msg.id === aiMessageId
-                    ? {...msg, blocks: blocks}
-                    : msg
-            ));
+            // ReadableStream 처리
+            const reader = stream.getReader();
+
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+
+                switch (true) {
+                    case typeof value === "string":
+                        setStreamingText(prev => prev + value);
+                        break;
+                    default:
+                        setMessages(prev => prev.map(msg => {
+                                if (msg.id === aiMessageId) {
+                                    const {blocks} = msg;
+                                    return {...msg, blocks: [...blocks, value]}
+                                } else {
+                                    return msg;
+                                }
+                            }
+                        ));
+                        break;
+                }
+            }
         } finally {
             setIsStreaming(false);
             setStreamingMessageId(null);
@@ -114,6 +133,7 @@ export default function ChatPage() {
                         <MessageList
                             messages={messages()}
                             streamingMessageId={streamingMessageId()}
+                            streamingText={streamingText()}
                         />
                     </div>
                 </div>

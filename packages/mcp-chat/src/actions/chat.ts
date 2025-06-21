@@ -1,49 +1,90 @@
-import {HumanMessage} from "@langchain/core/messages";
+import {AIMessage, AIMessageChunk, HumanMessage, ToolMessage} from "@langchain/core/messages";
 import {action} from "@solidjs/router";
 import {graph} from "@/lib/graph/workflow";
-import type {ChatMessageInput, ErrorBlock, MessageBlock} from "@/types/chat";
+import type {ChatMessageInput, ChatStreamChunk, MessageBlock} from "@/types/chat";
 
-// 일반적인 비스트리밍 응답을 위한 임시 구현
-export const streamChatResponse = action(async (input: ChatMessageInput) => {
+// ReadableStream 기반 스트리밍 응답
+export const streamChatResponse = action(async (input: ChatMessageInput): Promise<ReadableStream<ChatStreamChunk>> => {
     "use server";
 
-    try {
+    return new ReadableStream<ChatStreamChunk>({
+        async start(controller) {
+            try {
+                const humanMessage = new HumanMessage({content: input.message});
 
-        const humanMessage = new HumanMessage({content: input.message});
+                const graphStream = await graph.stream(
+                    {messages: [humanMessage]},
+                    {
+                        configurable: {thread_id: input.sessionId},
+                        streamMode: "messages"
+                    }
+                );
 
-        const config = {
-            configurable: {thread_id: input.sessionId},
-            streamMode: "values" as const,
-        };
+                for await (const output of graphStream) {
+                    const [chunk, _] = output;
+                    switch (true) {
+                        case chunk instanceof AIMessageChunk:
+                            controller.enqueue(chunk.text);
+                            break;
+                        case chunk instanceof AIMessage:
+                            controller.enqueue({
+                                id: crypto.randomUUID(),
+                                type: "text",
+                                content: chunk.text,
+                            });
+                            break;
+                        case chunk instanceof ToolMessage:
+                            break;
+                        default:
+                            break;
+                    }
 
-        const stream = await graph.stream(
-            {messages: [humanMessage]},
-            config
-        );
+                    // if (chunk?.messages?.length > 0) {
+                    //     const lastMessage = chunk.messages[chunk.messages.length - 1];
+                    //
+                    //     let content = "";
+                    //     if (typeof lastMessage?.content === "string") {
+                    //         content = lastMessage.content;
+                    //     } else if (Array.isArray(lastMessage?.content)) {
+                    //         content = lastMessage.content
+                    //             .filter(item => typeof item === "string" || (typeof item === "object" && item?.type === "text"))
+                    //             .map(item => typeof item === "string" ? item : (item as any).text || "")
+                    //             .join("");
+                    //     }
+                    //
+                    //     if (content && !accumulatedContent.includes(content)) {
+                    //         accumulatedContent = content;
+                    //
+                    //         const textBlock: MessageBlock = {
+                    //             id: blockId,
+                    //             type: "text",
+                    //             content: accumulatedContent
+                    //         };
+                    //
+                    //         // JSON으로 스트리밍
+                    //         const data = JSON.stringify({blocks: [textBlock]});
+                    //         controller.enqueue(encoder.encode(data));
+                    //     }
+                    // }
+                }
 
-        const blocks: MessageBlock[] = [];
+                // 스트림 종료
+                controller.close();
 
-        for await (const chunk of stream) {
-            console.log("Chunk received:", chunk);
-            // TODO: chunk를 MessageBlock으로 변환하는 로직 추가
-        }
-
-        // 임시로 텍스트 응답 반환
-        const textBlock: MessageBlock = {
-            id: crypto.randomUUID(),
-            type: "text",
-            content: "This is a placeholder response. Real AI response will be implemented soon."
-        };
-
-        return [textBlock];
-
-    } catch (error) {
-        console.error("Error in streamChatResponse:", error);
-        const errorBlock: ErrorBlock = {
-            id: crypto.randomUUID(),
-            type: "error",
-            content: error?.toString() ?? "Unknown error",
-        };
-        return [errorBlock];
-    }
+            } catch (error) {
+                console.error("Error in streamChatResponse:", error);
+                processError(error, controller);
+                controller.close();
+            }
+        },
+    });
 });
+
+function processError(error: unknown, controller: ReadableStreamDefaultController<ChatStreamChunk>) {
+    const errorBlock: MessageBlock = {
+        id: crypto.randomUUID(),
+        type: "error",
+        content: error?.toString() ?? "Unknown error",
+    };
+    controller.enqueue(errorBlock);
+}

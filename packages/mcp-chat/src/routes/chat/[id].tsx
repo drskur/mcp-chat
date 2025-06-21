@@ -1,6 +1,6 @@
-import {useParams} from "@solidjs/router";
+import {useAction, useParams} from "@solidjs/router";
 import {createEffect, createSignal, onMount, Show} from "solid-js";
-// import {streamChatResponse} from "@/actions/chat";
+import {streamChatResponse} from "@/actions/chat";
 import {ChatInput} from "@/components/chat/ChatInput";
 import {MessageList} from "@/components/chat/MessageList";
 import Loading from "@/components/layout/Loading";
@@ -16,7 +16,7 @@ export default function ChatPage() {
     const [isStreaming, setIsStreaming] = createSignal(false);
     const [streamingMessageId, setStreamingMessageId] = createSignal<string | null>(null);
     const {setTitle} = useTitleBar();
-    // const sendChat = useAction(streamChatResponse);
+    const sendChat = useAction(streamChatResponse);
 
     onMount(() => {
         // Retrieve message from sessionStorage
@@ -83,17 +83,17 @@ export default function ChatPage() {
         setStreamingMessageId(aiMessageId);
 
         try {
-            // const blocks = await sendChat({
-            //     message,
-            //     sessionId: params.id
-            // });
-            //
-            // // 서버에서 받은 블록들을 AI 메시지에 추가
-            // setMessages(prev => prev.map(msg =>
-            //     msg.id === aiMessageId
-            //         ? {...msg, blocks: blocks}
-            //         : msg
-            // ));
+            const blocks = await sendChat({
+                message,
+                sessionId: params.id
+            });
+
+            // 서버에서 받은 블록들을 AI 메시지에 추가
+            setMessages(prev => prev.map(msg =>
+                msg.id === aiMessageId
+                    ? {...msg, blocks: blocks}
+                    : msg
+            ));
         } finally {
             setIsStreaming(false);
             setStreamingMessageId(null);
@@ -107,26 +107,19 @@ export default function ChatPage() {
 
     return (
         <Show when={session()} fallback={<Loading/>}>
-            <div class={cn("flex flex-col h-screen w-full")}>
+            <div class={cn("flex flex-col h-full w-full")}>
                 {/* Chat Messages Area */}
-                <div class="flex-1 overflow-y-auto">
-                    <Show
-                        when={messages().length > 0}
-                        fallback={
-                            <div class="flex items-center justify-center h-full text-muted-foreground p-4">
-                                새로운 채팅을 시작하세요
-                            </div>
-                        }
-                    >
+                <div class="flex-1">
+                    <div class="h-full overflow-y-auto pb-4">
                         <MessageList
                             messages={messages()}
                             streamingMessageId={streamingMessageId()}
                         />
-                    </Show>
+                    </div>
                 </div>
 
                 {/* Chat Input Area */}
-                <div class="p-4 flex justify-center">
+                <div class="sticky bottom-0 bg-background p-4 flex justify-center">
                     <ChatInput
                         onSubmit={handleSubmit}
                         onCancel={handleCancel}

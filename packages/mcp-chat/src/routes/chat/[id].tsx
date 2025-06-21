@@ -1,9 +1,10 @@
 import {useParams} from "@solidjs/router";
-import {createEffect, createSignal, onMount, Show } from "solid-js";
+import {createEffect, createSignal, onMount, Show} from "solid-js";
 import {ChatInput} from "@/components/chat/ChatInput";
 import {MessageList} from "@/components/chat/MessageList";
+import Loading from "@/components/layout/Loading";
 import {cn} from "@/lib/utils";
-import type {ChatMessage, ChatSession } from "@/types/chat";
+import type {ChatMessage, ChatSession} from "@/types/chat";
 
 export default function ChatPage() {
     const params = useParams();
@@ -97,7 +98,7 @@ export default function ChatPage() {
     };
 
     return (
-        <Show when={session()} fallback={<div>로딩 중...</div>}>
+        <Show when={session()} fallback={<Loading/>}>
             <div class={cn("flex flex-col h-screen w-full")}>
                 {/* Chat Messages Area */}
                 <div class="flex-1 overflow-y-auto">

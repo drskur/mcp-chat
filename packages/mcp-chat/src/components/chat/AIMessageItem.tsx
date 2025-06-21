@@ -13,7 +13,7 @@ export const AIMessageItem: Component<MessageItemProps> = (props) => {
     // AI 메시지 렌더링
     return (
         <div class="flex w-full justify-start">
-            <div class="w-full p-4 text-sm mr-4">
+            <div class="w-full p-4 text-sm">
                 <Show when={props.message.blocks.length > 0}>
                     <For each={props.message.blocks}>
                         {(block) => <BlockContent block={block} />}

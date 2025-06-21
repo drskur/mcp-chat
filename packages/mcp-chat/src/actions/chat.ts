@@ -7,21 +7,24 @@ import type {ChatMessageInput, ChatStreamChunk, MessageBlock} from "@/types/chat
 const activeStreams = new Map<string, AbortController>();
 
 // ReadableStream 기반 스트리밍 응답
-export const streamChatResponse = action(async (input: ChatMessageInput & { streamId: string }): Promise<ReadableStream<ChatStreamChunk>> => {
+export const streamChatResponse = action(async (input: ChatMessageInput & {
+    streamId: string
+}): Promise<ReadableStream<ChatStreamChunk>> => {
     "use server";
-    
+
     // 이전 스트림이 있으면 취소
     const existingController = activeStreams.get(input.streamId);
     if (existingController) {
         existingController.abort();
     }
-    
+
     // 새 AbortController 생성
     const abortController = new AbortController();
     activeStreams.set(input.streamId, abortController);
-    
+
     return new ReadableStream<ChatStreamChunk>({
         async start(controller) {
+            let accStr = "";
             try {
                 const humanMessage = new HumanMessage({content: input.message});
 
@@ -38,6 +41,7 @@ export const streamChatResponse = action(async (input: ChatMessageInput & { stre
                     const [chunk, _] = output;
                     switch (true) {
                         case chunk instanceof AIMessageChunk:
+                            accStr += chunk.text;
                             controller.enqueue(chunk.text);
                             break;
                         case chunk instanceof AIMessage:
@@ -60,7 +64,7 @@ export const streamChatResponse = action(async (input: ChatMessageInput & { stre
 
             } catch (error) {
                 console.error("Error in streamChatResponse:", error);
-                processError(error, controller);
+                processError(error, accStr, controller);
                 controller.close();
                 activeStreams.delete(input.streamId);
             }
@@ -82,11 +86,17 @@ export const cancelChatStream = action(async (streamId: string) => {
     }
 });
 
-function processError(error: unknown, controller: ReadableStreamDefaultController<ChatStreamChunk>) {
-    const errorBlock: MessageBlock = {
+function processError(error: unknown, accStr: string, controller: ReadableStreamDefaultController<ChatStreamChunk>) {
+    if (accStr.length > 0) {
+        controller.enqueue({
+            id: crypto.randomUUID(),
+            type: "text",
+            content: accStr,
+        });
+    }
+    controller.enqueue({
         id: crypto.randomUUID(),
         type: "error",
         content: error?.toString() ?? "Unknown error",
-    };
-    controller.enqueue(errorBlock);
+    });
 }

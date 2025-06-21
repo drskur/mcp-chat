@@ -7,6 +7,7 @@ import { HumanMessageItem } from "./HumanMessageItem";
 interface MessageListProps {
     messages: ChatMessage[];
     streamingMessageId?: string | null;
+    streamingText?: string;
 }
 
 export const MessageList: Component<MessageListProps> = (props) => {
@@ -16,16 +17,13 @@ export const MessageList: Component<MessageListProps> = (props) => {
                 {(message) => (
                     <Switch>
                         <Match when={message.role === "human"}>
-                            <div class="flex w-full justify-start">
-                                <div class="w-full">
-                                    <HumanMessageItem message={message} />
-                                </div>
-                            </div>
+                            <HumanMessageItem message={message} />
                         </Match>
                         <Match when={message.role === "assistant"}>
                             <AIMessageItem
                                 message={message}
                                 isStreaming={message.id === props.streamingMessageId}
+                                streamingText={message.id === props.streamingMessageId ? props.streamingText : undefined}
                             />
                         </Match>
                     </Switch>

@@ -19,13 +19,11 @@ export const MessageList: Component<MessageListProps> = (props) => {
             // 스크롤 가능한 부모 요소 찾기
             const scrollContainer = container.closest('.overflow-y-auto');
             if (scrollContainer) {
-                console.log('scrollHeight:', scrollContainer.scrollHeight, 'clientHeight:', scrollContainer.clientHeight, 'scrollTop:', scrollContainer.scrollTop);
                 requestAnimationFrame(() => {
                     scrollContainer.scrollTo({
                         top: scrollContainer.scrollHeight,
                         behavior: 'smooth'
                     });
-                    console.log('after scroll - scrollTop:', scrollContainer.scrollTop);
                 });
             }
         }
@@ -46,7 +44,7 @@ export const MessageList: Component<MessageListProps> = (props) => {
     return (
         <div
             ref={setContainerRef}
-            class="flex flex-col gap-4 p-4 max-w-3xl mx-auto"
+            class="flex flex-col gap-4 p-4 max-w-[700px] mx-auto"
         >
             <For each={props.messages}>
                 {(message) => (

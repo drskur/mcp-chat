@@ -46,13 +46,38 @@ export const streamChatResponse = action(async (input: ChatMessageInput & {
                             controller.enqueue(chunk.text);
                             break;
                         case chunk instanceof AIMessage:
-                            controller.enqueue({
-                                id: crypto.randomUUID(),
-                                type: "text",
-                                content: chunk.text,
-                            });
+                            // 텍스트 내용이 있으면 TextBlock 추가
+                            if (chunk.text) {
+                                controller.enqueue({
+                                    id: crypto.randomUUID(),
+                                    type: "text",
+                                    content: chunk.text,
+                                });
+                            }
+
+                            // tool_calls가 있으면 ToolUseBlock 추가
+                            if (chunk.tool_calls && chunk.tool_calls.length > 0) {
+                                for (const toolCall of chunk.tool_calls) {
+                                    controller.enqueue({
+                                        id: toolCall.id ?? crypto.randomUUID(),
+                                        type: "tool_use",
+                                        toolName: toolCall.name,
+                                        toolInput: toolCall.args,
+                                        collapse: false,
+                                    });
+                                }
+                            }
                             break;
                         case chunk instanceof ToolMessage:
+                            controller.enqueue({
+                                id: crypto.randomUUID(),
+                                type: "tool_result",
+                                toolName: chunk.name ?? "",
+                                content: typeof chunk.content === 'string'
+                                    ? chunk.content
+                                    : JSON.stringify(chunk.content, null, 2),
+                                collapse: false,
+                            });
                             break;
                         default:
                             break;

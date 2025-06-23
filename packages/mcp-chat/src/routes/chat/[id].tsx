@@ -1,6 +1,6 @@
 import {useAction, useParams} from "@solidjs/router";
 import {createEffect, createSignal, onMount, Show} from "solid-js";
-import {cancelChatStream, streamChatResponse } from "@/actions/chat";
+import {cancelChatStream, streamChatResponse} from "@/actions/chat";
 import {ChatInput} from "@/components/chat/ChatInput";
 import {MessageList} from "@/components/chat/MessageList";
 import Loading from "@/components/layout/Loading";
@@ -37,12 +37,45 @@ export default function ChatPage() {
     });
 
     const loadOrCreateSession = (sessionId: string) => {
+        // TEMP
+        const tempMessage: ChatMessage = {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            blocks: [
+                {
+                    id: crypto.randomUUID(),
+                    type: 'text',
+                    content: "Hello World"
+                },
+                {
+                    id: crypto.randomUUID(),
+                    type: "tool_use",
+                    toolName: "GetTimeOff",
+                    toolInput: {
+                        "a": "Hello",
+                        "b": "World"
+                    },
+                    collapse: true,
+                },
+                {
+                    id: crypto.randomUUID(),
+                    type: "tool_result",
+                    toolName: "GetTimeOff",
+                    content: JSON.stringify({
+                        a: "Hello",
+                        b: "World"
+                    }, null, 2),
+                    collapse: false,
+                }
+            ],
+            timestamp: new Date(),
+        }
         // TODO: 실제로는 로컬 스토리지나 서버에서 세션을 로드
         // 지금은 새 세션을 생성
         const newSession: ChatSession = {
             id: sessionId,
             title: "새 대화",
-            messages: [],
+            messages: [tempMessage],
             createdAt: new Date()
         };
         setSession(newSession);

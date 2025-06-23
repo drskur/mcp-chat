@@ -18,6 +18,7 @@ export interface ToolUseBlock {
     type: "tool_use";
     toolName: string;
     toolInput: unknown;
+    collapse: boolean;
 }
 
 export interface ToolResultBlock {
@@ -25,6 +26,7 @@ export interface ToolResultBlock {
     type: "tool_result";
     toolName: string;
     content: string;
+    collapse: boolean;
 }
 
 export interface ErrorBlock {

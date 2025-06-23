@@ -36,7 +36,7 @@ class WorkflowSingleton {
             .addNode("tools", new ToolNode(tools))
             .addEdge(START, "agent")
             .addConditionalEdges("agent", toolsCondition)
-            .addEdge("agent", END);
+            .addEdge("tools", "agent");
 
         this.graph = workflow.compile({
             checkpointer: this.checkpointer,

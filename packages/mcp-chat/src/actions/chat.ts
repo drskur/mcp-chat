@@ -1,7 +1,7 @@
 import {AIMessage, AIMessageChunk, HumanMessage, ToolMessage} from "@langchain/core/messages";
 import {action} from "@solidjs/router";
-import {graph} from "@/lib/graph/workflow";
-import type {ChatMessageInput, ChatStreamChunk, MessageBlock} from "@/types/chat";
+import {getWorkflowGraph} from "@/lib/graph/workflow";
+import type {ChatMessageInput, ChatStreamChunk} from "@/types/chat";
 
 // 진행 중인 스트림을 관리하기 위한 Map
 const activeStreams = new Map<string, AbortController>();
@@ -28,6 +28,7 @@ export const streamChatResponse = action(async (input: ChatMessageInput & {
             try {
                 const humanMessage = new HumanMessage({content: input.message});
 
+                const graph = await getWorkflowGraph();
                 const graphStream = await graph.stream(
                     {messages: [humanMessage]},
                     {

@@ -1,6 +1,7 @@
-import {createAsync} from "@solidjs/router";
+import {createAsync, useAction} from "@solidjs/router";
 import {type Component, createEffect, createSignal} from "solid-js";
 import {getConfigQuery} from "@/actions";
+import {setModelConfigAction} from "@/actions/config";
 import {
     Select,
     SelectContent,
@@ -8,6 +9,7 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
+import {Slider, SliderFill, SliderThumb, SliderTrack} from "@/components/ui/slider";
 import {TextArea} from "@/components/ui/textarea";
 import {TextFieldLabel, TextFieldRoot} from "@/components/ui/textfield";
 import {AnthropicModel, type BedrockModel} from "@/types/config";
@@ -27,6 +29,7 @@ const ModelSettings: Component = () => {
     const [prompt, setPrompt] = createSignal("");
 
     const config = createAsync(() => getConfigQuery());
+    const setModelConfig = useAction(setModelConfigAction);
 
     createEffect(() => {
         const modelConfig = config()?.model;
@@ -36,7 +39,7 @@ const ModelSettings: Component = () => {
             setMaxTokens(modelConfig.maxTokens);
             setPrompt(modelConfig.systemPrompt);
         }
-    })
+    });
 
     return (
         <div class="space-y-6">
@@ -51,8 +54,12 @@ const ModelSettings: Component = () => {
                         <div class="flex items-center justify-between">
                             <div class="text-sm font-medium">모델</div>
                             <Select
-                                defaultValue={model()}
-                                onChange={(value) => setModel(value ?? AnthropicModel.CLAUDE_3_5_HAIKU)}
+                                value={model()}
+                                onChange={async (value) => {
+                                    const currentModel = value ?? AnthropicModel.CLAUDE_3_5_HAIKU;
+                                    await setModelConfig("model", currentModel);
+                                    setModel(currentModel);
+                                }}
                                 options={anthropicModels}
                                 optionValue="modelId"
                                 optionTextValue="name"
@@ -78,18 +85,25 @@ const ModelSettings: Component = () => {
                     <div class="rounded-lg p-4">
                         <div class="flex items-center justify-between mb-2">
                             <div class="text-sm font-medium">Temperature</div>
-                            <div class="text-sm font-medium">{temperature()}</div>
+                            <div class="text-sm font-medium">{temperature().toFixed(1)}</div>
                         </div>
-                        <input
-                            name="temperature"
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.1"
-                            value={temperature()}
-                            onInput={(e) => setTemperature(parseFloat(e.currentTarget.value))}
-                            class="w-full"
-                        />
+                        <Slider
+                            value={[temperature()]}
+                            onChange={async (values: number[]) => {
+                                const value = values[0];
+                                setTemperature(value);
+                                await setModelConfig("temperature", value);
+                            }}
+                            minValue={0}
+                            maxValue={1}
+                            step={0.1}
+                            class="py-3"
+                        >
+                            <SliderTrack>
+                                <SliderFill/>
+                            </SliderTrack>
+                            <SliderThumb/>
+                        </Slider>
                         <div class="flex justify-between text-xs text-muted-foreground mt-1">
                             <span>정확 (0.0)</span>
                             <span>창의적 (1.0)</span>
@@ -104,15 +118,23 @@ const ModelSettings: Component = () => {
                             <div class="text-sm font-medium">최대 토큰</div>
                             <div class="text-sm font-medium">{maxTokens()}</div>
                         </div>
-                        <input
-                            type="range"
-                            min="512"
-                            max="8192"
-                            step="512"
-                            value={maxTokens()}
-                            onInput={(e) => setMaxTokens(parseInt(e.currentTarget.value))}
-                            class="w-full"
-                        />
+                        <Slider
+                            value={[maxTokens()]}
+                            onChange={async (values: number[]) => {
+                                const value = values[0];
+                                setMaxTokens(value);
+                                await setModelConfig("maxTokens", value);
+                            }}
+                            minValue={512}
+                            maxValue={8192}
+                            step={512}
+                            class="py-3"
+                        >
+                            <SliderTrack>
+                                <SliderFill/>
+                            </SliderTrack>
+                            <SliderThumb/>
+                        </Slider>
                         <div class="flex justify-between text-xs text-muted-foreground mt-1">
                             <span>512</span>
                             <span>8192</span>
@@ -130,14 +152,17 @@ const ModelSettings: Component = () => {
                                 rows={6}
                                 placeholder="AI의 기본 동작을 정의하는 시스템 프롬프트를 입력하세요..."
                                 value={prompt()}
+                                onBlur={async (e: FocusEvent & { target: HTMLTextAreaElement }) => {
+                                    const prompt = e.target.value;
+                                    await setModelConfig("systemPrompt", prompt);
+                                }}
                             />
                         </TextFieldRoot>
                     </div>
                 </div>
             </div>
         </div>
-    )
-        ;
+    );
 };
 
 export default ModelSettings;

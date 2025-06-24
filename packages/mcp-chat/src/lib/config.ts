@@ -1,5 +1,7 @@
+import type {Connection} from "@langchain/mcp-adapters";
 import Conf from "conf";
 import {z} from "zod";
+import {AnthropicModel} from "@/types/config";
 
 const GeneralConfigSchema = z.object({
     language: z.enum(["ko", "en"]).default("ko"),
@@ -11,7 +13,10 @@ const MCPServerConfigSchema = z.object({
 
 const ModelConfigSchema = z.object({
     provider: z.enum(["bedrock", "amazon"]).default("bedrock"),
-    defaultModel: z.string().default("us.anthropic.claude-3-5-haiku-20241022-v1:0"),
+    model: z.object({
+        modelId: z.string(),
+        name: z.string()
+    }),
     temperature: z.number().min(0).max(1).default(0.7),
     maxTokens: z.number().min(1).default(4096),
     region: z.string().default("us-east-1"),
@@ -20,8 +25,8 @@ const ModelConfigSchema = z.object({
 
 const ConfigSchema = z.object({
     general: GeneralConfigSchema,
-    // mcp: MCPServerConfigSchema,
-    // model: ModelConfigSchema,
+    mcp: MCPServerConfigSchema,
+    model: ModelConfigSchema,
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -34,17 +39,17 @@ const defaultConfig: Config = {
     general: {
         language: "ko",
     },
-    // mcp: {
-    //     servers: {},
-    // },
-    // model: {
-    //     provider: "bedrock",
-    //     defaultModel: "us.anthropic.claude-3-5-haiku-20241022-v1:0",
-    //     temperature: 0.7,
-    //     maxTokens: 4096,
-    //     region: "us-east-1",
-    //     systemPrompt: "당신은 도움이 되고 친절한 AI 어시스턴트입니다. 항상 정확하고 유용한 정보를 제공하려고 노력하며, 모르는 것은 솔직하게 인정합니다.",
-    // },
+    mcp: {
+        servers: {},
+    },
+    model: {
+        provider: "bedrock",
+        model: AnthropicModel.CLAUDE_3_5_HAIKU,
+        temperature: 0.7,
+        maxTokens: 4096,
+        region: "us-east-1",
+        systemPrompt: "당신은 도움이 되고 친절한 AI 어시스턴트입니다. 항상 정확하고 유용한 정보를 제공하려고 노력하며, 모르는 것은 솔직하게 인정합니다.",
+    },
 };
 
 class ConfigManager {

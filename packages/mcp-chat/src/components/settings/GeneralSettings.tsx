@@ -26,13 +26,13 @@ const GeneralSettings: Component = () => {
                                 options={["light", "dark"]}
                                 itemComponent={(props) => (
                                     <SelectItem item={props.item}>
-                                        {props.item.rawValue === "light" ? "라이트 모드" : "다크 모드"}
+                                        {props.item.rawValue === "light" ? "Light" : "Dark"}
                                     </SelectItem>
                                 )}
                             >
                                 <SelectTrigger class="w-[180px]">
                                     <SelectValue<string>>
-                                        {(state) => state.selectedOption() === "light" ? "라이트 모드" : "다크 모드"}
+                                        {(state) => state.selectedOption() === "light" ? "Light" : "Dark"}
                                     </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent />

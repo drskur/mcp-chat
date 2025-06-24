@@ -1,4 +1,6 @@
-import {type Component, createSignal} from "solid-js";
+import {createAsync} from "@solidjs/router";
+import {type Component, createEffect, createSignal} from "solid-js";
+import {getConfigQuery} from "@/actions";
 import {
     Select,
     SelectContent,
@@ -8,31 +10,33 @@ import {
 } from "@/components/ui/select";
 import {TextArea} from "@/components/ui/textarea";
 import {TextFieldLabel, TextFieldRoot} from "@/components/ui/textfield";
-import {AnthropicModel} from "@/types/config";
+import {AnthropicModel, type BedrockModel} from "@/types/config";
+
 
 const anthropicModels = [
-    {
-        id: AnthropicModel.CLAUDE_3_5_HAIKU,
-        name: "Claude 3.5 Haiku",
-    },
-    {
-        id: AnthropicModel.CLAUDE_3_7_SONNET,
-        name: "Claude 3.7 Sonnet",
-    },
-    {
-        id: AnthropicModel.CLAUDE_4_OPUS,
-        name: "Claude 4 Opus",
-    },
-    {
-        id: AnthropicModel.CLAUDE_4_SONNET,
-        name: "Claude 4 Sonnet",
-    }
+    AnthropicModel.CLAUDE_3_5_HAIKU,
+    AnthropicModel.CLAUDE_3_7_SONNET,
+    AnthropicModel.CLAUDE_4_OPUS,
+    AnthropicModel.CLAUDE_4_SONNET
 ]
 
 const ModelSettings: Component = () => {
     const [model, setModel] = createSignal(AnthropicModel.CLAUDE_3_5_HAIKU);
-    const [temperature, setTemperature] = createSignal(0.7);
-    const [maxTokens, setMaxTokens] = createSignal(4096);
+    const [temperature, setTemperature] = createSignal(0);
+    const [maxTokens, setMaxTokens] = createSignal(0);
+    const [prompt, setPrompt] = createSignal("");
+
+    const config = createAsync(() => getConfigQuery());
+
+    createEffect(() => {
+        const modelConfig = config()?.model;
+        if (modelConfig) {
+            setModel(modelConfig.model);
+            setTemperature(modelConfig.temperature);
+            setMaxTokens(modelConfig.maxTokens);
+            setPrompt(modelConfig.systemPrompt);
+        }
+    })
 
     return (
         <div class="space-y-6">
@@ -47,21 +51,20 @@ const ModelSettings: Component = () => {
                         <div class="flex items-center justify-between">
                             <div class="text-sm font-medium">모델</div>
                             <Select
-                                value={model()}
-                                onChange={(value) => setModel(value ?? "")}
-                                options={anthropicModels.map(model => model.id)}
+                                defaultValue={model()}
+                                onChange={(value) => setModel(value ?? AnthropicModel.CLAUDE_3_5_HAIKU)}
+                                options={anthropicModels}
+                                optionValue="modelId"
+                                optionTextValue="name"
                                 itemComponent={(props) => (
                                     <SelectItem item={props.item}>
-                                        {anthropicModels.find(m => m.id === props.item.rawValue)?.name}
+                                        {props.item.rawValue.name}
                                     </SelectItem>
                                 )}
                             >
                                 <SelectTrigger class="w-[200px]">
-                                    <SelectValue<string>>
-                                        {(state) => {
-                                            const selected = state.selectedOption();
-                                            return anthropicModels.find(m => m.id === selected)?.name ?? "모델 선택";
-                                        }}
+                                    <SelectValue<BedrockModel>>
+                                        {(state) => state.selectedOption().name}
                                     </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent/>
@@ -126,14 +129,15 @@ const ModelSettings: Component = () => {
                                 class="w-full text-sm font-mono resize-none"
                                 rows={6}
                                 placeholder="AI의 기본 동작을 정의하는 시스템 프롬프트를 입력하세요..."
-                                value="당신은 도움이 되고 친절한 AI 어시스턴트입니다. 항상 정확하고 유용한 정보를 제공하려고 노력하며, 모르는 것은 솔직하게 인정합니다."
+                                value={prompt()}
                             />
                         </TextFieldRoot>
                     </div>
                 </div>
             </div>
         </div>
-    );
+    )
+        ;
 };
 
 export default ModelSettings;

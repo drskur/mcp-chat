@@ -6,9 +6,7 @@ const GeneralConfigSchema = z.object({
     language: z.enum(["ko", "en"]).default("ko"),
 });
 
-const MCPServerConfigSchema = z.object({
-    servers: z.record(z.string(), z.any()).default({}),
-});
+const MCPServerConfigSchema = z.record(z.string(), z.any()).default({});
 
 const ModelConfigSchema = z.object({
     provider: z.enum(["bedrock", "amazon"]).default("bedrock"),
@@ -24,7 +22,7 @@ const ModelConfigSchema = z.object({
 
 const ConfigSchema = z.object({
     general: GeneralConfigSchema,
-    mcp: MCPServerConfigSchema,
+    mcpServers: MCPServerConfigSchema,
     model: ModelConfigSchema,
 });
 
@@ -38,9 +36,7 @@ const defaultConfig: Config = {
     general: {
         language: "ko",
     },
-    mcp: {
-        servers: {},
-    },
+    mcpServers: {},
     model: {
         provider: "bedrock",
         model: AnthropicModel.CLAUDE_3_5_HAIKU,
@@ -77,8 +73,12 @@ class ConfigManager {
         this.conf.set(key, value);
     }
 
-    async setModel<K extends keyof ModelConfig>(key: K, value: ModelConfig[K]): Promise<void> {
+    async setModelConfigItem<K extends keyof ModelConfig>(key: K, value: ModelConfig[K]): Promise<void> {
         this.conf.set(`model.${key}`, value);
+    }
+
+    async setMCPServerConfig<K extends keyof MCPServerConfig>(value: MCPServerConfig[K]): Promise<void> {
+        this.conf.set("mcpServers", value);
     }
 
 }

@@ -1,5 +1,5 @@
-import {MultiServerMCPClient, type ClientConfig, type Connection} from "@langchain/mcp-adapters";
 import type {StructuredToolInterface} from "@langchain/core/tools";
+import {type ClientConfig, type Connection, MultiServerMCPClient } from "@langchain/mcp-adapters";
 import {getServerConfig} from "@/lib/config";
 
 export class MCPClientManager {
@@ -13,10 +13,10 @@ export class MCPClientManager {
     }
 
     static getInstance(): MCPClientManager {
-        if (!this.instance) {
-            this.instance = new MCPClientManager();
+        if (!MCPClientManager.instance) {
+            MCPClientManager.instance = new MCPClientManager();
         }
-        return this.instance;
+        return MCPClientManager.instance;
     }
 
     async initialize(): Promise<void> {
@@ -35,7 +35,7 @@ export class MCPClientManager {
     private async _initialize(): Promise<void> {
         try {
             const config = getServerConfig();
-            const mcpServers = config.getMCPServers();
+            const mcpServers = config.get("mcpServers");
 
             // 서버 설정이 없으면 초기화하지 않음
             if (!mcpServers || Object.keys(mcpServers).length === 0) {
@@ -54,7 +54,7 @@ export class MCPClientManager {
                 mcpServers: connections,
                 throwOnLoadError: false,
                 prefixToolNameWithServerName: true,
-                additionalToolNamePrefix: "mcp",
+                additionalToolNamePrefix: "",
                 useStandardContentBlocks: true,
             };
 
@@ -66,7 +66,7 @@ export class MCPClientManager {
 
             this.isInitialized = true;
             console.log(`MCP client initialized with ${this.tools.length} tools from ${Object.keys(connections).length} servers`);
-        } catch (error) {
+        } catch (_error) {
             console.log(`MCP client initialized with 0 tools`);
             this.isInitialized = true; // 실패해도 초기화 완료로 표시
             this.tools = [];

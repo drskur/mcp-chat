@@ -1,4 +1,4 @@
-import {action, query} from "@solidjs/router";
+import {action, query, revalidate} from "@solidjs/router";
 import {getServerConfig, type ModelConfig} from "@/lib/config";
 
 export const getConfigQuery = query(async () => {
@@ -11,5 +11,7 @@ export const setModelConfigAction = action(async (k: keyof ModelConfig, v: Model
     "use server";
 
     const config = getServerConfig();
-    await config.setModel(k, v);
+    await config.setModelConfigItem(k, v);
+
+    return revalidate("config");
 });

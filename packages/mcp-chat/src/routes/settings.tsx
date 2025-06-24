@@ -108,7 +108,7 @@ export default function Settings() {
                 {/* Desktop layout */}
                 <div class="flex w-full max-w-6xl mx-auto">
                     {/* Left navigation */}
-                    <nav class="w-64 border-r border-border p-6">
+                    <nav class="w-64 p-6">
                         <ul class="space-y-1">
                             <For each={categories}>
                                 {(category) => (
@@ -132,7 +132,7 @@ export default function Settings() {
                     </nav>
 
                     {/* Right content */}
-                    <div class="flex-1 p-6 overflow-y-auto">
+                    <div class="flex-1 p-6">
                         {renderActiveComponent()}
                     </div>
                 </div>

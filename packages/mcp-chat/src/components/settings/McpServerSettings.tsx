@@ -1,39 +1,26 @@
-import { type Component, createSignal, For } from "solid-js";
-import { Plus, Trash2 } from "lucide-solid";
-import { Button } from "@/components/ui/button";
-
-interface McpServer {
-    id: string;
-    name: string;
-    url: string;
-    enabled: boolean;
-}
+import {createAsync, useAction} from "@solidjs/router";
+import {FileText} from "lucide-solid";
+import {type Component, createSignal, For, Show} from "solid-js";
+import {getMCPServerConfigQuery, getMCPServerStatusQuery, setMCPConfigAction} from "@/actions/mcp";
+import {Button} from "@/components/ui/button";
+import McpServerCard from "./McpServerCard";
+import McpServerJsonEditor from "./McpServerJsonEditor";
 
 const McpServerSettings: Component = () => {
-    const [servers, setServers] = createSignal<McpServer[]>([
-        { id: "1", name: "Local MCP Server", url: "http://localhost:3001", enabled: true },
-        { id: "2", name: "Development Server", url: "http://dev.example.com:3001", enabled: false },
-    ]);
+    const serverStatus = createAsync(() => getMCPServerStatusQuery());
+    const mcpServerConfig = createAsync(() => getMCPServerConfigQuery());
+    const setMCPConfig = useAction(setMCPConfigAction);
 
-    const addServer = () => {
-        const newServer: McpServer = {
-            id: crypto.randomUUID(),
-            name: "새 MCP 서버",
-            url: "",
-            enabled: false,
-        };
-        setServers([...servers(), newServer]);
+    const [showJsonEditor, setShowJsonEditor] = createSignal(false);
+
+
+    const openJsonEditor = () => {
+        setShowJsonEditor(true);
     };
 
-    const removeServer = (id: string) => {
-        setServers(servers().filter(server => server.id !== id));
-    };
-
-    const toggleServer = (id: string) => {
-        setServers(servers().map(server =>
-            server.id === id ? { ...server, enabled: !server.enabled } : server
-        ));
-    };
+    const handleMCPConfig = async (config: Record<string, unknown>) => {
+        await setMCPConfig(config);
+    }
 
     return (
         <div class="space-y-6">
@@ -44,65 +31,33 @@ const McpServerSettings: Component = () => {
                 </p>
 
                 <div class="space-y-4">
-                    <For each={servers()}>
-                        {(server) => (
-                            <div class="rounded-lg border border-border p-4">
-                                <div class="flex items-start justify-between mb-3">
-                                    <div class="flex-1">
-                                        <input
-                                            type="text"
-                                            value={server.name}
-                                            placeholder="서버 이름"
-                                            class="font-medium text-base bg-transparent border-none outline-none w-full"
-                                            onInput={(e) => {
-                                                const newName = e.currentTarget.value;
-                                                setServers(servers().map(s =>
-                                                    s.id === server.id ? { ...s, name: newName } : s
-                                                ));
-                                            }}
-                                        />
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <label class="relative inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={server.enabled}
-                                                onChange={() => toggleServer(server.id)}
-                                                class="sr-only peer"
-                                            />
-                                            <div class="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                                        </label>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => removeServer(server.id)}
-                                        >
-                                            <Trash2 class="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                                <input
-                                    type="url"
-                                    value={server.url}
-                                    placeholder="서버 URL (예: http://localhost:3001)"
-                                    class="w-full p-2 rounded-md border border-input bg-background text-sm"
-                                    onInput={(e) => {
-                                        const newUrl = e.currentTarget.value;
-                                        setServers(servers().map(s =>
-                                            s.id === server.id ? { ...s, url: newUrl } : s
-                                        ));
-                                    }}
-                                />
-                            </div>
-                        )}
-                    </For>
+                    <div class="flex justify-end">
+                        <Button onClick={openJsonEditor} variant="outline">
+                            <FileText class="h-4 w-4 mr-2"/>
+                            JSON 편집
+                        </Button>
+                    </div>
 
-                    <Button onClick={addServer} variant="outline" class="w-full">
-                        <Plus class="h-4 w-4 mr-2" />
-                        서버 추가
-                    </Button>
+                    <Show when={serverStatus() && (serverStatus() ?? []).length > 0} fallback={
+                        <div class="rounded-lg border border-border p-6 text-center">
+                            <p class="text-sm text-muted-foreground">
+                                설정된 MCP 서버가 없습니다.
+                            </p>
+                        </div>
+                    }>
+                        <For each={serverStatus()}>
+                            {(server) => <McpServerCard server={server}/>}
+                        </For>
+                    </Show>
                 </div>
             </div>
+
+            <McpServerJsonEditor
+                open={showJsonEditor()}
+                onOpenChange={setShowJsonEditor}
+                mcpServers={mcpServerConfig()}
+                onConfigChange={handleMCPConfig}
+            />
         </div>
     );
 };

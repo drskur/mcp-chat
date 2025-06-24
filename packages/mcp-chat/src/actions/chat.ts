@@ -1,108 +1,152 @@
 import {AIMessage, AIMessageChunk, HumanMessage, ToolMessage} from "@langchain/core/messages";
 import {action, revalidate} from "@solidjs/router";
 import {getWorkflowGraph} from "@/lib/graph/workflow";
-import type {ChatMessageInput, ChatStreamChunk, MessageBlock} from "@/types/chat";
+import type {ChatMessageInput, ChatStreamChunk, HumanReviewChatInput, ToolUseBlock} from "@/types/chat";
+import {Command} from "@langchain/langgraph";
 
 // 진행 중인 스트림을 관리하기 위한 Map
 const activeStreams = new Map<string, AbortController>();
 
-// ReadableStream 기반 스트리밍 응답
-export const streamChatAction = action(async (input: ChatMessageInput & {
-    streamId: string
+// biome-ignore lint/suspicious/noExplicitAny: LangGraph stream output types are complex
+async function processGraphStream(graphStream: AsyncIterable<[string, any]>, accStr: string, controller: ReadableStreamDefaultController<ChatStreamChunk>) {
+    let toolUseBlock: ToolUseBlock | null = null;
+    for await (const output of graphStream) {
+        const [streamMode, stream] = output;
+        if (streamMode === "messages") {
+            const [chunk, _] = stream;
+            switch (true) {
+                case chunk instanceof AIMessageChunk:
+                    accStr += chunk.text;
+                    controller.enqueue(chunk.text);
+                    break;
+                case chunk instanceof AIMessage:
+                    // 텍스트 내용이 있으면 TextBlock 추가
+                    if (chunk.text) {
+                        controller.enqueue({
+                            id: crypto.randomUUID(),
+                            type: "text",
+                            content: chunk.text,
+                        });
+                    }
+
+                    // tool_calls가 있으면 ToolUseBlock 추가
+                    if (chunk.tool_calls && chunk.tool_calls.length > 0) {
+                        for (const toolCall of chunk.tool_calls) {
+                            toolUseBlock = {
+                                id: toolCall.id ?? crypto.randomUUID(),
+                                type: "tool_use",
+                                toolName: toolCall.name,
+                                toolInput: toolCall.args,
+                                collapse: true,
+                                status: "none",
+                            }
+                            controller.enqueue(toolUseBlock);
+                        }
+                    }
+                    break;
+                case chunk instanceof ToolMessage:
+                    controller.enqueue({
+                        id: crypto.randomUUID(),
+                        type: "tool_result",
+                        toolName: chunk.name ?? "",
+                        content: typeof chunk.content === 'string'
+                            ? chunk.content
+                            : JSON.stringify(chunk.content, null, 2),
+                        collapse: true,
+                    });
+                    break;
+                default:
+                    break;
+            }
+        } else if (streamMode === "updates" && "__interrupt__" in stream) {
+            if (toolUseBlock) {
+                controller.enqueue({
+                    ...toolUseBlock,
+                    status: "pending",
+                });
+            }
+        }
+    }
+    return accStr;
+}
+
+// 입력 준비 함수들
+function buildNewChatInput(message: string) {
+    return {messages: [new HumanMessage({content: message})]};
+}
+
+function buildResumeInput(resume: HumanReviewChatInput) {
+    return new Command<HumanReviewChatInput>({resume});
+}
+
+// 새 메시지 스트리밍 액션
+export const streamNewChatAction = action(async (input: ChatMessageInput): Promise<ReadableStream<ChatStreamChunk>> => {
+    "use server";
+    const graphInput = buildNewChatInput(input.message);
+    return createChatStream(graphInput, input.sessionId, input.streamId);
+});
+
+// Resume 스트리밍 액션
+export const streamResumeChatAction = action(async (input: {
+    sessionId: string,
+    streamId: string,
+    resume: HumanReviewChatInput
 }): Promise<ReadableStream<ChatStreamChunk>> => {
     "use server";
+    const {sessionId, streamId, resume} = input;
+    const graphInput = buildResumeInput(resume);
+    return createChatStream(graphInput, sessionId, streamId);
+});
 
+// 공통 스트리밍 로직
+function createChatStream(
+    graphInput: { messages: HumanMessage[] } | Command<HumanReviewChatInput>,
+    sessionId: string,
+    streamId: string
+): ReadableStream<ChatStreamChunk> {
     // 이전 스트림이 있으면 취소
-    const existingController = activeStreams.get(input.streamId);
+    const existingController = activeStreams.get(streamId);
     if (existingController) {
         existingController.abort();
     }
 
     // 새 AbortController 생성
     const abortController = new AbortController();
-    activeStreams.set(input.streamId, abortController);
+    activeStreams.set(streamId, abortController);
 
     return new ReadableStream<ChatStreamChunk>({
         async start(controller) {
             let accStr = "";
             try {
-                const humanMessage = new HumanMessage({content: input.message});
-
                 const graph = await getWorkflowGraph();
                 const graphStream = await graph.stream(
-                    {messages: [humanMessage]},
+                    graphInput,
                     {
-                        configurable: {thread_id: input.sessionId},
-                        streamMode: "messages",
+                        configurable: {thread_id: sessionId},
+                        streamMode: ["messages", "updates"],
                         signal: abortController.signal,
                     }
                 );
-
-                for await (const output of graphStream) {
-                    const [chunk, _] = output;
-                    switch (true) {
-                        case chunk instanceof AIMessageChunk:
-                            accStr += chunk.text;
-                            controller.enqueue(chunk.text);
-                            break;
-                        case chunk instanceof AIMessage:
-                            // 텍스트 내용이 있으면 TextBlock 추가
-                            if (chunk.text) {
-                                controller.enqueue({
-                                    id: crypto.randomUUID(),
-                                    type: "text",
-                                    content: chunk.text,
-                                });
-                            }
-
-                            // tool_calls가 있으면 ToolUseBlock 추가
-                            if (chunk.tool_calls && chunk.tool_calls.length > 0) {
-                                for (const toolCall of chunk.tool_calls) {
-                                    controller.enqueue({
-                                        id: toolCall.id ?? crypto.randomUUID(),
-                                        type: "tool_use",
-                                        toolName: toolCall.name,
-                                        toolInput: toolCall.args,
-                                        collapse: true,
-                                        status: "pending",
-                                    });
-                                }
-                            }
-                            break;
-                        case chunk instanceof ToolMessage:
-                            controller.enqueue({
-                                id: crypto.randomUUID(),
-                                type: "tool_result",
-                                toolName: chunk.name ?? "",
-                                content: typeof chunk.content === 'string'
-                                    ? chunk.content
-                                    : JSON.stringify(chunk.content, null, 2),
-                                collapse: true,
-                            });
-                            break;
-                        default:
-                            break;
-                    }
-                }
+                accStr = await processGraphStream(graphStream, accStr, controller);
 
                 // 스트림 종료
                 controller.close();
-                activeStreams.delete(input.streamId);
+                activeStreams.delete(streamId);
 
             } catch (error) {
                 console.error("Error in streamChatResponse:", error);
                 processError(error, accStr, controller);
                 controller.close();
-                activeStreams.delete(input.streamId);
+                activeStreams.delete(streamId);
             }
             accStr = "";
         },
         cancel() {
             // 스트림이 취소되면 정리
-            activeStreams.delete(input.streamId);
+            activeStreams.delete(streamId);
         }
     });
-});
+}
 
 // 스트림 취소 액션
 export const cancelChatAction = action(async (streamId: string) => {
@@ -114,21 +158,6 @@ export const cancelChatAction = action(async (streamId: string) => {
     }
 });
 
-// 도구 상태 업데이트 액션 (현재는 임시 구현)
-export const updateToolStatusAction = action(async (
-    messageId: string,
-    blockId: string,
-    status: "approved" | "rejected"
-) => {
-    "use server";
-    
-    // TODO: 실제 메시지 상태를 업데이트하는 로직 구현
-    // 현재는 console.log로 임시 처리
-    console.log(`Tool ${blockId} in message ${messageId} status changed to: ${status}`);
-    
-    // 실제 구현에서는 데이터베이스나 메모리 스토어에서 메시지를 찾아서 업데이트해야 함
-    // return revalidate("messages");
-});
 
 function processError(error: unknown, accStr: string, controller: ReadableStreamDefaultController<ChatStreamChunk>) {
     if (accStr.length > 0) {

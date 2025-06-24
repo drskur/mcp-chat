@@ -1,5 +1,21 @@
 export type MessageRole = "human" | "assistant";
 
+interface ToolCall {
+    name: string;
+    args: Record<string, unknown>;
+    id?: string;
+    type?: "tool_call";
+}
+
+export interface HumanReviewInput {
+    toolCall: ToolCall[],
+}
+
+export interface HumanReviewChatInput {
+    action: 'approved' | 'rejected';
+    feedback?: string;
+}
+
 export interface TextBlock {
     id: string;
     type: "text";
@@ -19,7 +35,7 @@ export interface ToolUseBlock {
     toolName: string;
     toolInput: unknown;
     collapse: boolean;
-    status?: "pending" | "approved" | "rejected";
+    status?: "pending" | "approved" | "rejected" | "none";
 }
 
 export interface ToolResultBlock {
@@ -55,7 +71,8 @@ export interface ChatSession {
 
 export interface ChatMessageInput {
     sessionId: string;
+    streamId: string;
     message: string;
 }
 
-export type ChatStreamChunk = string | MessageBlock;
+export type ChatStreamChunk = string | MessageBlock

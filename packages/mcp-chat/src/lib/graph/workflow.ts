@@ -1,10 +1,11 @@
 "use server";
 
-import {END, MemorySaver, START, StateGraph} from "@langchain/langgraph";
+import {MemorySaver, START, StateGraph} from "@langchain/langgraph";
+import {ToolNode} from "@langchain/langgraph/prebuilt";
 import {callModel} from "@/lib/graph/call-model";
-import {StateAnnotation} from "./state";
+import {humanReview, shouldHumanReview} from "@/lib/graph/human-review";
 import {getMCPManager} from "@/lib/mcp";
-import {ToolNode, toolsCondition} from "@langchain/langgraph/prebuilt";
+import {StateAnnotation} from "./state";
 
 class WorkflowSingleton {
     private static instance: WorkflowSingleton;
@@ -34,8 +35,9 @@ class WorkflowSingleton {
         const workflow = new StateGraph(StateAnnotation)
             .addNode("agent", callModel)
             .addNode("tools", new ToolNode(tools))
+            .addNode("humanReview", humanReview)
             .addEdge(START, "agent")
-            .addConditionalEdges("agent", toolsCondition)
+            .addConditionalEdges("agent", shouldHumanReview)
             .addEdge("tools", "agent");
 
         this.graph = workflow.compile({
@@ -52,11 +54,16 @@ class WorkflowSingleton {
 
     public async getGraph() {
         await this.initialize();
-        return this.graph!;
+        return this.graph;
     }
 }
 
 export async function getWorkflowGraph() {
     const instance = WorkflowSingleton.getInstance();
-    return instance.getGraph();
+    const graph = await instance.getGraph();
+    if (!graph) {
+        throw new Error("The graph is not initialized");
+    }
+
+    return graph;
 }

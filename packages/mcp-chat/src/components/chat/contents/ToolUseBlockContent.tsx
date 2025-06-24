@@ -57,13 +57,15 @@ export const ToolUseBlockContent: Component<ToolUseBlockProps> = (props) => {
               variant="default"
               onClick={() => props.onStatusChange?.("approved")}
             >
+              <Check class="w-3 h-3 mr-1" />
               승인
             </Button>
             <Button
               size="sm"
-              variant="destructive"
+              variant="outline"
               onClick={() => props.onStatusChange?.("rejected")}
             >
+              <X class="w-3 h-3 mr-1" />
               거절
             </Button>
           </div>

@@ -1,13 +1,14 @@
-import type { Component } from "solid-js";
-import { createEffect, createSignal, For, Match, Switch } from "solid-js";
-import type { ChatMessage } from "@/types/chat";
-import { AIMessageItem } from "./AIMessageItem";
-import { HumanMessageItem } from "./HumanMessageItem";
+import type {Component} from "solid-js";
+import {createEffect, createSignal, For, Match, Switch} from "solid-js";
+import type {ChatMessage, ToolUseBlock} from "@/types/chat";
+import {AIMessageItem} from "./AIMessageItem";
+import {HumanMessageItem} from "./HumanMessageItem";
 
 interface MessageListProps {
     messages: ChatMessage[];
     streamingMessageId?: string | null;
     streamingText?: string;
+    onToolStatusChange?: (toolUseBlock: ToolUseBlock, status: "approved" | "rejected") => void;
 }
 
 export const MessageList: Component<MessageListProps> = (props) => {
@@ -50,13 +51,14 @@ export const MessageList: Component<MessageListProps> = (props) => {
                 {(message) => (
                     <Switch>
                         <Match when={message.role === "human"}>
-                            <HumanMessageItem message={message} />
+                            <HumanMessageItem message={message}/>
                         </Match>
                         <Match when={message.role === "assistant"}>
                             <AIMessageItem
                                 message={message}
                                 isStreaming={message.id === props.streamingMessageId}
                                 streamingText={message.id === props.streamingMessageId ? props.streamingText : undefined}
+                                onToolStatusChange={props.onToolStatusChange}
                             />
                         </Match>
                     </Switch>

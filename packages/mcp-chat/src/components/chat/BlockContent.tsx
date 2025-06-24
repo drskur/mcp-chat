@@ -1,14 +1,14 @@
 import type {Component} from "solid-js";
 import {Match, Switch} from "solid-js";
-import type {ErrorBlock, MessageBlock, TextBlock, ToolUseBlock, ToolResultBlock} from "@/types/chat";
-import {TextBlockContent} from "./contents/TextBlockContent";
+import type {ErrorBlock, MessageBlock, TextBlock, ToolResultBlock, ToolUseBlock} from "@/types/chat";
 import {ErrorBlockContent} from "./contents/ErrorBlockContent";
-import {ToolUseBlockContent} from "./contents/ToolUseBlockContent";
+import {TextBlockContent} from "./contents/TextBlockContent";
 import {ToolResultBlockContent} from "./contents/ToolResultBlockContent";
+import {ToolUseBlockContent} from "./contents/ToolUseBlockContent";
 
 interface BlockContentProps {
     block: MessageBlock;
-    onToolStatusChange?: (blockId: string, status: "approved" | "rejected") => void;
+    onToolStatusChange?: (toolUseBlock: ToolUseBlock, status: "approved" | "rejected") => void;
 }
 
 export const BlockContent: Component<BlockContentProps> = (props) => {
@@ -21,9 +21,9 @@ export const BlockContent: Component<BlockContentProps> = (props) => {
                 <ErrorBlockContent block={props.block as ErrorBlock}/>
             </Match>
             <Match when={props.block.type === "tool_use"}>
-                <ToolUseBlockContent 
+                <ToolUseBlockContent
                     block={props.block as ToolUseBlock}
-                    onStatusChange={(status) => props.onToolStatusChange?.(props.block.id, status)}
+                    onStatusChange={(status) => props.onToolStatusChange?.(props.block as ToolUseBlock, status)}
                 />
             </Match>
             <Match when={props.block.type === "tool_result"}>

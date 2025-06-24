@@ -1,12 +1,12 @@
 import {useAction, useParams} from "@solidjs/router";
-import {createEffect, createSignal, onMount, Show} from "solid-js";
-import {cancelChatAction, streamChatAction} from "@/actions/chat";
+import {createEffect, createSignal, onMount, Show, untrack} from "solid-js";
+import {cancelChatAction, streamNewChatAction, streamResumeChatAction} from "@/actions/chat";
 import {ChatInput} from "@/components/chat/ChatInput";
 import {MessageList} from "@/components/chat/MessageList";
 import Loading from "@/components/layout/Loading";
 import {useTitleBar} from "@/components/layout/TitleBar";
 import {cn} from "@/lib/utils";
-import type {ChatMessage, ChatSession} from "@/types/chat";
+import type {ChatMessage, ChatSession, ChatStreamChunk, MessageBlock, ToolUseBlock} from "@/types/chat";
 
 export default function ChatPage() {
     const params = useParams();
@@ -18,7 +18,8 @@ export default function ChatPage() {
     const [streamingText, setStreamingText] = createSignal("");
     const [currentStreamId, setCurrentStreamId] = createSignal<string | null>(null);
     const {setTitle} = useTitleBar();
-    const sendChat = useAction(streamChatAction);
+    const streamNewChat = useAction(streamNewChatAction);
+    const streamResumeChat = useAction(streamResumeChatAction);
     const cancelStream = useAction(cancelChatAction);
 
     onMount(() => {
@@ -57,73 +58,117 @@ export default function ChatPage() {
         }
     });
 
-    const handleSubmit = async (message: string) => {
-        // 사용자 메시지 추가
-        const userMessage: ChatMessage = {
+    // 타입 가드 함수들
+    const isStreamingText = (value: unknown): value is string => {
+        return typeof value === "string";
+    };
+
+    // 메시지 블록 업데이트 헬퍼 함수
+    const updateMessageBlocks = (messages: ChatMessage[], messageId: string, newBlock: MessageBlock) => {
+        return messages.map(msg => {
+            if (msg.id !== messageId) return msg;
+
+            const {blocks} = msg;
+            const lastBlock = blocks[blocks.length - 1];
+
+            // 마지막 블록의 id와 newBlock id가 동일하면 대체
+            if (lastBlock?.id === newBlock.id) {
+                return {...msg, blocks: [...blocks.slice(0, -1), newBlock]};
+            }
+
+            return {...msg, blocks: [...blocks, newBlock]};
+        });
+    };
+
+    // 스트림 값 처리 함수
+    const processStreamValue = (value: unknown, aiMessageId: string) => {
+        if (isStreamingText(value)) {
+            setStreamingText(prev => prev + value);
+        } else {
+            const newBlock = value as MessageBlock;
+            setMessages(prev => updateMessageBlocks(prev, aiMessageId, newBlock));
+        }
+    };
+
+    // 사용자 메시지 생성 함수
+    const createUserMessage = (message: string): ChatMessage => ({
+        id: crypto.randomUUID(),
+        role: "human",
+        blocks: [{
             id: crypto.randomUUID(),
-            role: "human",
-            blocks: [{
-                id: crypto.randomUUID(),
-                type: "text",
-                content: message
-            }],
-            timestamp: new Date()
-        };
+            type: "text",
+            content: message
+        }],
+        timestamp: new Date()
+    });
 
+    // AI 메시지 생성 함수
+    const createAIMessage = (): ChatMessage => ({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        blocks: [],
+        timestamp: new Date()
+    });
+
+    // 스트리밍 상태 초기화 함수
+    const resetStreamingState = () => {
+        setIsStreaming(false);
+        setCurrentStreamId(null);
+        setStreamingText("");
+    };
+
+    const handleSubmit = async (message: string) => {
+        const isPendingToolUse = untrack(() => {
+            const lastMessage = messages().at(-1);
+            const lastBlock = lastMessage?.blocks?.at(-1);
+            return lastBlock?.type === "tool_use" &&
+                (lastBlock as ToolUseBlock).status === "pending";
+        });
+
+        // 사용자 메시지 추가
+        const userMessage = createUserMessage(message);
         setMessages(prev => [...prev, userMessage]);
-        setIsStreaming(true);
 
-        // AI 응답을 위한 빈 메시지 생성
-        const aiMessageId = crypto.randomUUID();
-        const aiMessage: ChatMessage = {
-            id: aiMessageId,
-            role: "assistant",
-            blocks: [],
-            timestamp: new Date()
-        };
-
+        // AI 응답 메시지 생성 및 스트리밍 상태 설정
+        const aiMessage = createAIMessage();
         setMessages(prev => [...prev, aiMessage]);
-        setStreamingMessageId(aiMessageId);
+
+        const streamId = crypto.randomUUID();
+        setIsStreaming(true);
+        setStreamingMessageId(aiMessage.id);
+        setCurrentStreamId(streamId);
 
         try {
-            const streamId = crypto.randomUUID();
-            setCurrentStreamId(streamId);
+            console.log("pending", isPendingToolUse);
 
-            const stream = await sendChat({
-                message,
-                sessionId: params.id,
-                streamId
-            });
+            let stream: ReadableStream<ChatStreamChunk>;
+            if (isPendingToolUse) {
+                stream = await streamResumeChat({
+                    sessionId: params.id,
+                    streamId,
+                    resume: {
+                        action: "rejected",
+                        feedback: message,
+                    }
+                })
+            } else {
+                stream = await streamNewChat({
+                    message,
+                    sessionId: params.id,
+                    streamId
+                });
+            }
 
-            // ReadableStream 처리
             const reader = stream.getReader();
 
             while (true) {
                 const {done, value} = await reader.read();
                 if (done) break;
 
-                switch (true) {
-                    case typeof value === "string":
-                        setStreamingText(prev => prev + value);
-                        break;
-                    default:
-                        setMessages(prev => prev.map(msg => {
-                                if (msg.id === aiMessageId) {
-                                    const {blocks} = msg;
-                                    return {...msg, blocks: [...blocks, value]}
-                                } else {
-                                    return msg;
-                                }
-                            }
-                        ));
-                        break;
-                }
+                processStreamValue(value, aiMessage.id);
             }
         } finally {
-            setIsStreaming(false);
-            setStreamingMessageId(null);
-            setCurrentStreamId(null);
-            setStreamingText("");
+            resetStreamingState();
         }
     };
 
@@ -137,6 +182,34 @@ export default function ChatPage() {
         setCurrentStreamId(null);
     };
 
+    const handleHumanReview = async (toolUseBlock: ToolUseBlock, action: "approved" | "rejected") => {
+
+        const streamId = crypto.randomUUID();
+        setIsStreaming(true);
+        setCurrentStreamId(streamId);
+
+        try {
+            const stream = await streamResumeChat({
+                sessionId: params.id,
+                streamId,
+                resume: {
+                    action
+                }
+            });
+
+            const reader = stream.getReader();
+
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+
+                processStreamValue(value, streamingMessageId() ?? "");
+            }
+        } finally {
+            resetStreamingState();
+        }
+    }
+
     return (
         <Show when={session()} fallback={<Loading/>}>
             <div class={cn("flex flex-col h-full w-full overflow-y-auto")}>
@@ -146,6 +219,7 @@ export default function ChatPage() {
                         messages={messages()}
                         streamingMessageId={streamingMessageId()}
                         streamingText={streamingText()}
+                        onToolStatusChange={handleHumanReview}
                     />
                 </div>
 

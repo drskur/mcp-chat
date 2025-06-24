@@ -1,6 +1,6 @@
 import {action, query, revalidate} from "@solidjs/router";
 import {getServerConfig} from "@/lib/config";
-import {MCPClientManager} from "@/lib/mcp";
+import {getMCPManager, MCPClientManager} from "@/lib/mcp";
 import {MCPServerStatus, MCPToolStatus} from "@/types/mcp";
 
 export const getMCPServerConfigQuery = query(async () => {
@@ -49,6 +49,9 @@ export const setMCPConfigAction = action(async (v: Record<string, unknown>) => {
 
     const config = getServerConfig();
     await config.setMCPServerConfig(v);
+
+    const mcpManager = getMCPManager();
+    await mcpManager.refreshConnections()
 
     return revalidate(["mcpServerStatus", "mcpServerConfig"]);
 });

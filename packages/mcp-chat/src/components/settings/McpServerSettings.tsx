@@ -30,7 +30,7 @@ const McpServerSettings: Component = () => {
     };
 
     const toggleServer = (id: string) => {
-        setServers(servers().map(server => 
+        setServers(servers().map(server =>
             server.id === id ? { ...server, enabled: !server.enabled } : server
         ));
     };
@@ -38,7 +38,7 @@ const McpServerSettings: Component = () => {
     return (
         <div class="space-y-6">
             <div>
-                <h2 class="text-xl font-semibold mb-4">MCP 서버 설정</h2>
+                <h2 class="text-xl font-semibold mb-4">MCP 서버</h2>
                 <p class="text-sm text-muted-foreground mb-6">
                     Model Context Protocol 서버를 관리합니다. 활성화된 서버의 도구를 대화에서 사용할 수 있습니다.
                 </p>
@@ -56,7 +56,7 @@ const McpServerSettings: Component = () => {
                                             class="font-medium text-base bg-transparent border-none outline-none w-full"
                                             onInput={(e) => {
                                                 const newName = e.currentTarget.value;
-                                                setServers(servers().map(s => 
+                                                setServers(servers().map(s =>
                                                     s.id === server.id ? { ...s, name: newName } : s
                                                 ));
                                             }}
@@ -88,7 +88,7 @@ const McpServerSettings: Component = () => {
                                     class="w-full p-2 rounded-md border border-input bg-background text-sm"
                                     onInput={(e) => {
                                         const newUrl = e.currentTarget.value;
-                                        setServers(servers().map(s => 
+                                        setServers(servers().map(s =>
                                             s.id === server.id ? { ...s, url: newUrl } : s
                                         ));
                                     }}

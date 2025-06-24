@@ -1,8 +1,6 @@
-import type {Connection} from "@langchain/mcp-adapters";
 import Conf from "conf";
 import {z} from "zod";
 
-// Configuration schema definitions
 const GeneralConfigSchema = z.object({
     language: z.enum(["ko", "en"]).default("ko"),
 });
@@ -17,12 +15,13 @@ const ModelConfigSchema = z.object({
     temperature: z.number().min(0).max(1).default(0.7),
     maxTokens: z.number().min(1).default(4096),
     region: z.string().default("us-east-1"),
+    systemPrompt: z.string().default(""),
 });
 
 const ConfigSchema = z.object({
     general: GeneralConfigSchema,
-    mcp: MCPServerConfigSchema,
-    model: ModelConfigSchema,
+    // mcp: MCPServerConfigSchema,
+    // model: ModelConfigSchema,
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -35,16 +34,17 @@ const defaultConfig: Config = {
     general: {
         language: "ko",
     },
-    mcp: {
-        servers: {},
-    },
-    model: {
-        provider: "bedrock",
-        defaultModel: "us.anthropic.claude-3-5-haiku-20241022-v1:0",
-        temperature: 0.7,
-        maxTokens: 4096,
-        region: "us-east-1",
-    },
+    // mcp: {
+    //     servers: {},
+    // },
+    // model: {
+    //     provider: "bedrock",
+    //     defaultModel: "us.anthropic.claude-3-5-haiku-20241022-v1:0",
+    //     temperature: 0.7,
+    //     maxTokens: 4096,
+    //     region: "us-east-1",
+    //     systemPrompt: "당신은 도움이 되고 친절한 AI 어시스턴트입니다. 항상 정확하고 유용한 정보를 제공하려고 노력하며, 모르는 것은 솔직하게 인정합니다.",
+    // },
 };
 
 class ConfigManager {
@@ -54,7 +54,6 @@ class ConfigManager {
         this.conf = new Conf<Config>({
             projectName: "mcp-chat",
             defaults: defaultConfig,
-            schema: ConfigSchema as any,
             serialize: (value) => JSON.stringify(value, null, 2),
         });
     }
@@ -99,42 +98,32 @@ class ConfigManager {
     }
 
     // Model-specific helpers
-    getActiveModel(): string {
-        return this.get("model").defaultModel;
-    }
-
-    setActiveModel(modelId: string): void {
-        const modelConfig = this.get("model");
-        this.set("model", {...modelConfig, defaultModel: modelId});
-    }
-
-    // MCP server helpers - servers follow Connection interface
-    getMCPServers(): Record<string, Connection> {
-        return this.get("mcp").servers as Record<string, Connection>;
-    }
-
-    setMCPServers(servers: Record<string, Connection>): void {
-        this.set("mcp", {servers});
-    }
-
-    updateMCPServers(updates: Record<string, Connection>): void {
-        const mcpConfig = this.get("mcp");
-        const servers = {...mcpConfig.servers, ...updates};
-        this.set("mcp", {servers});
-    }
+    // getActiveModel(): string {
+    //     return this.get("model").defaultModel;
+    // }
+    //
+    // setActiveModel(modelId: string): void {
+    //     const modelConfig = this.get("model");
+    //     this.set("model", {...modelConfig, defaultModel: modelId});
+    // }
+    //
+    // // MCP server helpers - servers follow Connection interface
+    // getMCPServers(): Record<string, Connection> {
+    //     return this.get("mcp").servers as Record<string, Connection>;
+    // }
+    //
+    // setMCPServers(servers: Record<string, Connection>): void {
+    //     this.set("mcp", {servers});
+    // }
+    //
+    // updateMCPServers(updates: Record<string, Connection>): void {
+    //     const mcpConfig = this.get("mcp");
+    //     const servers = {...mcpConfig.servers, ...updates};
+    //     this.set("mcp", {servers});
+    // }
 }
 
 // Export factory function for server-side usage
 export function getServerConfig() {
     return new ConfigManager();
-}
-
-// Export singleton for client-side usage
-let clientConfigInstance: ConfigManager | null = null;
-
-export function getClientConfig() {
-    if (!clientConfigInstance) {
-        clientConfigInstance = new ConfigManager();
-    }
-    return clientConfigInstance;
 }

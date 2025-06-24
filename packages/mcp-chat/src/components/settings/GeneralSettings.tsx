@@ -15,7 +15,7 @@ const GeneralSettings: Component = () => {
     return (
         <div class="space-y-6">
             <div>
-                <h2 class="text-xl font-semibold mb-4">일반 설정</h2>
+                <h2 class="text-xl font-semibold mb-4">일반</h2>
                 <div class="space-y-4">
                     <div class="rounded-lg p-4">
                         <div class="flex items-center justify-between">

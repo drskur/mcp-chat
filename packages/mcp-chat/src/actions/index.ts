@@ -1,2 +1,2 @@
-export { streamChatAction, cancelChatAction } from "./chat";
-export { getThemeQuery, setThemeAction } from "./config";
+export {cancelChatAction, streamChatAction} from "./chat";
+export {getConfigQuery} from "./config";

@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import type {
 	SelectContentProps,
@@ -8,6 +7,7 @@ import type {
 import { Select as SelectPrimitive } from "@kobalte/core/select";
 import type { ParentProps, ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
+import { cn } from "@/lib/utils";
 
 export const Select = SelectPrimitive;
 export const SelectValue = SelectPrimitive.Value;

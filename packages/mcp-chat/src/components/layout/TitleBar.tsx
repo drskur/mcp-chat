@@ -30,8 +30,8 @@ export const TitleBar: Component = () => {
 
     return (
         <Show when={title() !== ""}>
-            <header class="h-14 border-b border-border flex items-center px-6 flex-shrink-0">
-                <h2 class="text-lg font-semibold">{title()}</h2>
+            <header class="h-14 border-b border-border flex items-center px-6 flex-shrink-0 mt-0.5">
+                <h2 class="text-lg font-semibold ml-10">{title()}</h2>
             </header>
         </Show>
     );

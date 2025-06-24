@@ -1,10 +1,10 @@
-import {createSignal, onMount, Show, For} from "solid-js";
+import {Bot, Server, Settings as SettingsIcon} from "lucide-solid";
+import {createSignal, For, onMount, Show} from "solid-js";
 import {useTitleBar} from "@/components/layout/TitleBar";
 import GeneralSettings from "@/components/settings/GeneralSettings";
 import McpServerSettings from "@/components/settings/McpServerSettings";
 import ModelSettings from "@/components/settings/ModelSettings";
 import {cn} from "@/lib/utils";
-import {Settings as SettingsIcon, Server, Bot} from "lucide-solid";
 
 interface SettingCategory {
     id: string;
@@ -23,8 +23,22 @@ export default function Settings() {
     const [activeCategory, setActiveCategory] = createSignal("general");
     const [isMobile, setIsMobile] = createSignal(false);
 
+
+    // 해시 기반 라우팅을 위한 함수들
+    const getHashCategory = () => {
+        const hash = window.location.hash.slice(1);
+        return categories.find(cat => cat.id === hash) ? hash : "general";
+    };
+
+    const updateHash = (categoryId: string) => {
+        window.history.pushState(null, "", `#${categoryId}`);
+    };
+
     onMount(() => {
         setTitle("설정");
+
+        // 초기 해시에서 카테고리 설정
+        setActiveCategory(getHashCategory());
 
         // Check if mobile
         const checkMobile = () => {
@@ -33,8 +47,24 @@ export default function Settings() {
         checkMobile();
         window.addEventListener("resize", checkMobile);
 
-        return () => window.removeEventListener("resize", checkMobile);
+        // 해시 변경 감지
+        const handleHashChange = () => {
+            setActiveCategory(getHashCategory());
+        };
+        window.addEventListener("hashchange", handleHashChange);
+
+        return () => {
+            window.removeEventListener("resize", checkMobile);
+            window.removeEventListener("hashchange", handleHashChange);
+        };
     });
+
+    // 카테고리 변경 시 해시 업데이트
+    const handleCategoryChange = (categoryId: string) => {
+        setActiveCategory(categoryId);
+        updateHash(categoryId);
+    };
+
 
     const renderActiveComponent = () => {
         switch (activeCategory()) {
@@ -60,7 +90,7 @@ export default function Settings() {
                             <select
                                 class="w-full p-2 rounded-md border border-input bg-background"
                                 value={activeCategory()}
-                                onChange={(e) => setActiveCategory(e.currentTarget.value)}
+                                onChange={(e) => handleCategoryChange(e.currentTarget.value)}
                             >
                                 <For each={categories}>
                                     {(category) => (
@@ -79,13 +109,12 @@ export default function Settings() {
                 <div class="flex w-full max-w-6xl mx-auto">
                     {/* Left navigation */}
                     <nav class="w-64 border-r border-border p-6">
-                        <h2 class="text-lg font-semibold mb-4">설정</h2>
                         <ul class="space-y-1">
                             <For each={categories}>
                                 {(category) => (
                                     <li>
                                         <button
-                                            onClick={() => setActiveCategory(category.id)}
+                                            onClick={() => handleCategoryChange(category.id)}
                                             class={cn(
                                                 "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
                                                 activeCategory() === category.id

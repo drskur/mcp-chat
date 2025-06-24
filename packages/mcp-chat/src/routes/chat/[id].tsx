@@ -1,6 +1,6 @@
 import {useAction, useParams} from "@solidjs/router";
 import {createEffect, createSignal, onMount, Show} from "solid-js";
-import {cancelChatStream, streamChatResponse} from "@/actions/chat";
+import {cancelChatAction, streamChatAction} from "@/actions/chat";
 import {ChatInput} from "@/components/chat/ChatInput";
 import {MessageList} from "@/components/chat/MessageList";
 import Loading from "@/components/layout/Loading";
@@ -18,8 +18,8 @@ export default function ChatPage() {
     const [streamingText, setStreamingText] = createSignal("");
     const [currentStreamId, setCurrentStreamId] = createSignal<string | null>(null);
     const {setTitle} = useTitleBar();
-    const sendChat = useAction(streamChatResponse);
-    const cancelStream = useAction(cancelChatStream);
+    const sendChat = useAction(streamChatAction);
+    const cancelStream = useAction(cancelChatAction);
 
     onMount(() => {
         // Retrieve message from sessionStorage

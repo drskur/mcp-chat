@@ -1,10 +1,9 @@
+import type {Connection} from "@langchain/mcp-adapters";
 import Conf from "conf";
 import {z} from "zod";
-import type {Connection} from "@langchain/mcp-adapters";
 
 // Configuration schema definitions
 const GeneralConfigSchema = z.object({
-    theme: z.enum(["light", "dark", "system"]).default("system"),
     language: z.enum(["ko", "en"]).default("ko"),
 });
 
@@ -34,7 +33,6 @@ export type ModelConfig = z.infer<typeof ModelConfigSchema>;
 // Default configuration
 const defaultConfig: Config = {
     general: {
-        theme: "system",
         language: "ko",
     },
     mcp: {
@@ -124,19 +122,19 @@ class ConfigManager {
         const servers = {...mcpConfig.servers, ...updates};
         this.set("mcp", {servers});
     }
-
-    // Theme helpers
-    getTheme() {
-        return this.get("general").theme;
-    }
-
-    setTheme(theme: GeneralConfig["theme"]): void {
-        const generalConfig = this.get("general");
-        this.set("general", {...generalConfig, theme});
-    }
 }
 
-// Only export factory function for server-side usage
+// Export factory function for server-side usage
 export function getServerConfig() {
     return new ConfigManager();
+}
+
+// Export singleton for client-side usage
+let clientConfigInstance: ConfigManager | null = null;
+
+export function getClientConfig() {
+    if (!clientConfigInstance) {
+        clientConfigInstance = new ConfigManager();
+    }
+    return clientConfigInstance;
 }

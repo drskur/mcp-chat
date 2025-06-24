@@ -7,7 +7,7 @@ import type {ChatMessageInput, ChatStreamChunk} from "@/types/chat";
 const activeStreams = new Map<string, AbortController>();
 
 // ReadableStream 기반 스트리밍 응답
-export const streamChatResponse = action(async (input: ChatMessageInput & {
+export const streamChatAction = action(async (input: ChatMessageInput & {
     streamId: string
 }): Promise<ReadableStream<ChatStreamChunk>> => {
     "use server";
@@ -104,7 +104,7 @@ export const streamChatResponse = action(async (input: ChatMessageInput & {
 });
 
 // 스트림 취소 액션
-export const cancelChatStream = action(async (streamId: string) => {
+export const cancelChatAction = action(async (streamId: string) => {
     "use server";
     const controller = activeStreams.get(streamId);
     if (controller) {

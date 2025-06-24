@@ -1,7 +1,7 @@
 import {AIMessage, AIMessageChunk, HumanMessage, ToolMessage} from "@langchain/core/messages";
-import {action} from "@solidjs/router";
+import {action, revalidate} from "@solidjs/router";
 import {getWorkflowGraph} from "@/lib/graph/workflow";
-import type {ChatMessageInput, ChatStreamChunk} from "@/types/chat";
+import type {ChatMessageInput, ChatStreamChunk, MessageBlock} from "@/types/chat";
 
 // 진행 중인 스트림을 관리하기 위한 Map
 const activeStreams = new Map<string, AbortController>();
@@ -63,7 +63,8 @@ export const streamChatAction = action(async (input: ChatMessageInput & {
                                         type: "tool_use",
                                         toolName: toolCall.name,
                                         toolInput: toolCall.args,
-                                        collapse: false,
+                                        collapse: true,
+                                        status: "pending",
                                     });
                                 }
                             }
@@ -76,7 +77,7 @@ export const streamChatAction = action(async (input: ChatMessageInput & {
                                 content: typeof chunk.content === 'string'
                                     ? chunk.content
                                     : JSON.stringify(chunk.content, null, 2),
-                                collapse: false,
+                                collapse: true,
                             });
                             break;
                         default:
@@ -111,6 +112,22 @@ export const cancelChatAction = action(async (streamId: string) => {
         controller.abort();
         activeStreams.delete(streamId);
     }
+});
+
+// 도구 상태 업데이트 액션 (현재는 임시 구현)
+export const updateToolStatusAction = action(async (
+    messageId: string,
+    blockId: string,
+    status: "approved" | "rejected"
+) => {
+    "use server";
+    
+    // TODO: 실제 메시지 상태를 업데이트하는 로직 구현
+    // 현재는 console.log로 임시 처리
+    console.log(`Tool ${blockId} in message ${messageId} status changed to: ${status}`);
+    
+    // 실제 구현에서는 데이터베이스나 메모리 스토어에서 메시지를 찾아서 업데이트해야 함
+    // return revalidate("messages");
 });
 
 function processError(error: unknown, accStr: string, controller: ReadableStreamDefaultController<ChatStreamChunk>) {

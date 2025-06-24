@@ -19,6 +19,7 @@ export interface ToolUseBlock {
     toolName: string;
     toolInput: unknown;
     collapse: boolean;
+    status?: "pending" | "approved" | "rejected";
 }
 
 export interface ToolResultBlock {

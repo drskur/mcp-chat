@@ -6,41 +6,51 @@ import {MCPServerStatus, MCPToolStatus} from "@/types/mcp";
 export const getMCPServerConfigQuery = query(async () => {
     "use server";
 
-    const config = getServerConfig();
-    return config.get("mcpServers");
+    try {
+        const config = getServerConfig();
+        return config.get("mcpServers") ?? {};
+    } catch (error) {
+        console.error("Failed to get MCP server config:", error);
+        return {};
+    }
 }, "mcpServerConfig");
 
 export const getMCPServerStatusQuery = query(async () => {
     "use server";
 
-    const manager = MCPClientManager.getInstance();
-    const tools = await manager.getTools();
+    try {
+        const manager = MCPClientManager.getInstance();
+        const tools = await manager.getTools();
 
-    let servers: MCPServerStatus[] = [];
-    for (const t of tools) {
-        const [sn, tn] = t.name.split("__");
-        const server = servers.find(s => s.name === sn);
-        if (server) {
-            const tool: MCPToolStatus = {
-                name: tn,
-                description: t.description,
-            }
-            server.tools = [...server.tools, tool]
-        } else {
-            const server: MCPServerStatus = {
-                name: sn,
-                status: "online",
-                collapse: true,
-                tools: [{
+        let servers: MCPServerStatus[] = [];
+        for (const t of tools) {
+            const [sn, tn] = t.name.split("__");
+            const server = servers.find(s => s.name === sn);
+            if (server) {
+                const tool: MCPToolStatus = {
                     name: tn,
-                    description: t.description
-                }]
-            };
-            servers = [...servers, server];
+                    description: t.description,
+                }
+                server.tools = [...server.tools, tool]
+            } else {
+                const server: MCPServerStatus = {
+                    name: sn,
+                    status: "online",
+                    collapse: true,
+                    tools: [{
+                        name: tn,
+                        description: t.description
+                    }]
+                };
+                servers = [...servers, server];
+            }
         }
-    }
 
-    return servers;
+        return servers;
+    } catch (error) {
+        console.error("Failed to get MCP server status:", error);
+        return [];
+    }
 
 }, "mcpServerStatus");
 

@@ -1,7 +1,7 @@
 import {AIMessage, AIMessageChunk, HumanMessage, ToolMessage} from "@langchain/core/messages";
 import {action, revalidate} from "@solidjs/router";
 import {getWorkflowGraph} from "@/lib/graph/workflow";
-import type {ChatMessageInput, ChatStreamChunk, HumanReviewChatInput, ToolUseBlock} from "@/types/chat";
+import type {ChatMessageInput, ChatStreamChunk, HumanReviewChatInput} from "@/types/chat";
 import {Command} from "@langchain/langgraph";
 
 // 진행 중인 스트림을 관리하기 위한 Map
@@ -9,7 +9,7 @@ const activeStreams = new Map<string, AbortController>();
 
 // biome-ignore lint/suspicious/noExplicitAny: LangGraph stream output types are complex
 async function processGraphStream(graphStream: AsyncIterable<[string, any]>, accStr: string, controller: ReadableStreamDefaultController<ChatStreamChunk>) {
-    let toolUseBlock: ToolUseBlock | null = null;
+    let toolUseId: string | null = null;
     for await (const output of graphStream) {
         const [streamMode, stream] = output;
         if (streamMode === "messages") {
@@ -32,19 +32,19 @@ async function processGraphStream(graphStream: AsyncIterable<[string, any]>, acc
                     // tool_calls가 있으면 ToolUseBlock 추가
                     if (chunk.tool_calls && chunk.tool_calls.length > 0) {
                         for (const toolCall of chunk.tool_calls) {
-                            toolUseBlock = {
-                                id: toolCall.id ?? crypto.randomUUID(),
+                            toolUseId = toolCall.id ?? crypto.randomUUID();
+                            controller.enqueue({
+                                id: toolUseId,
                                 type: "tool_use",
                                 toolName: toolCall.name,
                                 toolInput: toolCall.args,
                                 collapse: true,
-                                status: "none",
-                            }
-                            controller.enqueue(toolUseBlock);
+                            });
                         }
                     }
                     break;
                 case chunk instanceof ToolMessage:
+                    console.log(chunk);
                     controller.enqueue({
                         id: crypto.randomUUID(),
                         type: "tool_result",
@@ -59,12 +59,7 @@ async function processGraphStream(graphStream: AsyncIterable<[string, any]>, acc
                     break;
             }
         } else if (streamMode === "updates" && "__interrupt__" in stream) {
-            if (toolUseBlock) {
-                controller.enqueue({
-                    ...toolUseBlock,
-                    status: "pending",
-                });
-            }
+            // TODO: Alert Dialog 뜰 수 있는 메세지 전달.
         }
     }
     return accStr;

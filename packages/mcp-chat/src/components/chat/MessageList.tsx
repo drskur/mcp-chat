@@ -1,6 +1,6 @@
 import type {Component} from "solid-js";
 import {createEffect, createSignal, For, Match, Switch} from "solid-js";
-import type {ChatMessage, ToolUseBlock} from "@/types/chat";
+import type {ChatMessage} from "@/types/chat";
 import {AIMessageItem} from "./AIMessageItem";
 import {HumanMessageItem} from "./HumanMessageItem";
 
@@ -8,7 +8,7 @@ interface MessageListProps {
     messages: ChatMessage[];
     streamingMessageId?: string | null;
     streamingText?: string;
-    onToolStatusChange?: (toolUseBlock: ToolUseBlock, status: "approved" | "rejected") => void;
+    onToolStatusChange?: (action: "approved" | "rejected") => void;
 }
 
 export const MessageList: Component<MessageListProps> = (props) => {

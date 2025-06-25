@@ -1,13 +1,13 @@
 import type {Component} from "solid-js";
 import {For, Show} from "solid-js";
-import type {ChatMessage, ToolUseBlock} from "@/types/chat";
+import type {ChatMessage} from "@/types/chat";
 import {BlockContent} from "./BlockContent";
 
 interface MessageItemProps {
     message: ChatMessage;
     isStreaming: boolean;
     streamingText?: string;
-    onToolStatusChange?: (toolUseBlock: ToolUseBlock, status: "approved" | "rejected") => void;
+    onToolStatusChange?: (action: "approved" | "rejected") => void;
 }
 
 export const AIMessageItem: Component<MessageItemProps> = (props) => {

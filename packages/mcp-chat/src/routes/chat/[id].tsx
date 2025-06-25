@@ -1,12 +1,12 @@
 import {useAction, useParams} from "@solidjs/router";
-import {createEffect, createSignal, onMount, Show, untrack} from "solid-js";
+import {createEffect, createSignal, onMount, Show} from "solid-js";
 import {cancelChatAction, streamNewChatAction, streamResumeChatAction} from "@/actions/chat";
 import {ChatInput} from "@/components/chat/ChatInput";
 import {MessageList} from "@/components/chat/MessageList";
 import Loading from "@/components/layout/Loading";
 import {useTitleBar} from "@/components/layout/TitleBar";
 import {cn} from "@/lib/utils";
-import type {ChatMessage, ChatSession, ChatStreamChunk, MessageBlock, ToolUseBlock} from "@/types/chat";
+import type {ChatMessage, ChatSession, MessageBlock} from "@/types/chat";
 
 export default function ChatPage() {
     const params = useParams();
@@ -67,14 +67,7 @@ export default function ChatPage() {
     const updateMessageBlocks = (messages: ChatMessage[], messageId: string, newBlock: MessageBlock) => {
         return messages.map(msg => {
             if (msg.id !== messageId) return msg;
-
             const {blocks} = msg;
-            const lastBlock = blocks[blocks.length - 1];
-
-            // 마지막 블록의 id와 newBlock id가 동일하면 대체
-            if (lastBlock?.id === newBlock.id) {
-                return {...msg, blocks: [...blocks.slice(0, -1), newBlock]};
-            }
 
             return {...msg, blocks: [...blocks, newBlock]};
         });
@@ -118,13 +111,6 @@ export default function ChatPage() {
     };
 
     const handleSubmit = async (message: string) => {
-        const isPendingToolUse = untrack(() => {
-            const lastMessage = messages().at(-1);
-            const lastBlock = lastMessage?.blocks?.at(-1);
-            return lastBlock?.type === "tool_use" &&
-                (lastBlock as ToolUseBlock).status === "pending";
-        });
-
         // 사용자 메시지 추가
         const userMessage = createUserMessage(message);
         setMessages(prev => [...prev, userMessage]);
@@ -139,25 +125,11 @@ export default function ChatPage() {
         setCurrentStreamId(streamId);
 
         try {
-            console.log("pending", isPendingToolUse);
-
-            let stream: ReadableStream<ChatStreamChunk>;
-            if (isPendingToolUse) {
-                stream = await streamResumeChat({
-                    sessionId: params.id,
-                    streamId,
-                    resume: {
-                        action: "rejected",
-                        feedback: message,
-                    }
-                })
-            } else {
-                stream = await streamNewChat({
-                    message,
-                    sessionId: params.id,
-                    streamId
-                });
-            }
+            const stream = await streamNewChat({
+                message,
+                sessionId: params.id,
+                streamId
+            });
 
             const reader = stream.getReader();
 
@@ -182,7 +154,7 @@ export default function ChatPage() {
         setCurrentStreamId(null);
     };
 
-    const handleHumanReview = async (toolUseBlock: ToolUseBlock, action: "approved" | "rejected") => {
+    const handleHumanReview = async (action: "approved" | "rejected") => {
 
         const streamId = crypto.randomUUID();
         setIsStreaming(true);

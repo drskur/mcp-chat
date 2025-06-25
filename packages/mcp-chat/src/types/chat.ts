@@ -35,7 +35,6 @@ export interface ToolUseBlock {
     toolName: string;
     toolInput: unknown;
     collapse: boolean;
-    status?: "pending" | "approved" | "rejected" | "none";
 }
 
 export interface ToolResultBlock {

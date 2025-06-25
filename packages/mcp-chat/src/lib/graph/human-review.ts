@@ -31,7 +31,7 @@ export async function humanReview(state: typeof StateAnnotation.State) {
         // (AI messages with tool calls need to be followed by tool call messages)
         const toolCall = (lastMessage.tool_calls ?? []).at(0);
         const toolMessage = new ToolMessage({
-            content: review.feedback ?? "The execution canceled by human",
+            content: review.feedback ?? "The user has chosen to disallow the tool call.",
             tool_call_id: toolCall?.id ?? "",
             name: toolCall?.name,
             additional_kwargs: {

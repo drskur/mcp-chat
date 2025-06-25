@@ -1,6 +1,6 @@
 export type MessageRole = "human" | "assistant";
 
-interface ToolCall {
+export interface ToolCall {
     name: string;
     args: Record<string, unknown>;
     id?: string;
@@ -51,7 +51,13 @@ export interface ErrorBlock {
     content: string;
 }
 
-export type MessageBlock = TextBlock | CodeBlock | ToolUseBlock | ToolResultBlock | ErrorBlock;
+export interface InterruptBlock {
+    id: string;
+    type: "interrupt";
+    toolCall: ToolCall;
+}
+
+export type MessageBlock = TextBlock | CodeBlock | ToolUseBlock | ToolResultBlock | ErrorBlock | InterruptBlock;
 
 export interface ChatMessage {
     id: string;

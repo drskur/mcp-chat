@@ -3,10 +3,11 @@ import {createEffect, createSignal, onMount, Show} from "solid-js";
 import {cancelChatAction, streamNewChatAction, streamResumeChatAction} from "@/actions/chat";
 import {ChatInput} from "@/components/chat/ChatInput";
 import {MessageList} from "@/components/chat/MessageList";
+import {ToolApprovalDialog} from "@/components/chat/ToolApprovalDialog";
 import Loading from "@/components/layout/Loading";
 import {useTitleBar} from "@/components/layout/TitleBar";
 import {cn} from "@/lib/utils";
-import type {ChatMessage, ChatSession, MessageBlock} from "@/types/chat";
+import type {ChatMessage, ChatSession, InterruptBlock, MessageBlock, ToolCall} from "@/types/chat";
 
 export default function ChatPage() {
     const params = useParams();
@@ -17,6 +18,8 @@ export default function ChatPage() {
     const [streamingMessageId, setStreamingMessageId] = createSignal<string | null>(null);
     const [streamingText, setStreamingText] = createSignal("");
     const [currentStreamId, setCurrentStreamId] = createSignal<string | null>(null);
+    const [toolApprovalOpen, setToolApprovalOpen] = createSignal(false);
+    const [pendingToolCall, setPendingToolCall] = createSignal<ToolCall | undefined>();
     const {setTitle} = useTitleBar();
     const streamNewChat = useAction(streamNewChatAction);
     const streamResumeChat = useAction(streamResumeChatAction);
@@ -79,7 +82,17 @@ export default function ChatPage() {
             setStreamingText(prev => prev + value);
         } else {
             const newBlock = value as MessageBlock;
-            setMessages(prev => updateMessageBlocks(prev, aiMessageId, newBlock));
+
+            // Interrupt 블록 처리
+            if (newBlock.type === "interrupt") {
+                const interruptBlock = newBlock as InterruptBlock;
+                setPendingToolCall(interruptBlock.toolCall);
+                setToolApprovalOpen(true);
+                // 스트리밍 일시 중지
+                setIsStreaming(false);
+            } else {
+                setMessages(prev => updateMessageBlocks(prev, aiMessageId, newBlock));
+            }
         }
     };
 
@@ -182,6 +195,16 @@ export default function ChatPage() {
         }
     }
 
+    const handleToolApproval = async () => {
+        setToolApprovalOpen(false);
+        await handleHumanReview("approved");
+    };
+
+    const handleToolRejection = async () => {
+        setToolApprovalOpen(false);
+        await handleHumanReview("rejected");
+    };
+
     return (
         <Show when={session()} fallback={<Loading/>}>
             <div class={cn("flex flex-col h-full w-full overflow-y-auto")}>
@@ -204,6 +227,15 @@ export default function ChatPage() {
                     />
                 </div>
             </div>
+
+            {/* Tool Approval Dialog */}
+            <ToolApprovalDialog
+                open={toolApprovalOpen()}
+                onOpenChange={setToolApprovalOpen}
+                toolCall={pendingToolCall()}
+                onApprove={handleToolApproval}
+                onReject={handleToolRejection}
+            />
         </Show>
     );
 }

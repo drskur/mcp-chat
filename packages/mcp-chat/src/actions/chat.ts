@@ -1,7 +1,7 @@
 import {AIMessage, AIMessageChunk, HumanMessage, ToolMessage} from "@langchain/core/messages";
 import {action, revalidate} from "@solidjs/router";
 import {getWorkflowGraph} from "@/lib/graph/workflow";
-import type {ChatMessageInput, ChatStreamChunk, HumanReviewChatInput} from "@/types/chat";
+import type {ChatMessageInput, ChatStreamChunk, HumanReviewChatInput, HumanReviewInput} from "@/types/chat";
 import {Command} from "@langchain/langgraph";
 
 // 진행 중인 스트림을 관리하기 위한 Map
@@ -59,7 +59,23 @@ async function processGraphStream(graphStream: AsyncIterable<[string, any]>, acc
                     break;
             }
         } else if (streamMode === "updates" && "__interrupt__" in stream) {
-            // TODO: Alert Dialog 뜰 수 있는 메세지 전달.
+            // Interrupt 이벤트 전달
+            const [chunk, _] = stream.__interrupt__;
+            const value = chunk.value as HumanReviewInput;
+            const toolCall = value.toolCall.at(0);
+
+            if (toolCall) {
+                controller.enqueue({
+                    id: crypto.randomUUID(),
+                    type: "interrupt",
+                    toolCall: {
+                        id: toolCall.id,
+                        type: toolCall.type,
+                        name: toolCall.name,
+                        args: toolCall.args,
+                    }
+                });
+            }
         }
     }
     return accStr;

@@ -1,7 +1,8 @@
 import {action, query, revalidate} from "@solidjs/router";
 import {getServerConfig} from "@/lib/config";
+import {refreshWorkflowGraph} from "@/lib/graph/workflow";
 import {getMCPManager, MCPClientManager} from "@/lib/mcp";
-import {MCPServerStatus, MCPToolStatus} from "@/types/mcp";
+import type {MCPServerStatus, MCPToolStatus} from "@/types/mcp";
 
 export const getMCPServerConfigQuery = query(async () => {
     "use server";
@@ -62,6 +63,9 @@ export const setMCPConfigAction = action(async (v: Record<string, unknown>) => {
 
     const mcpManager = getMCPManager();
     await mcpManager.refreshConnections()
+
+    // MCP 툴이 변경되었으므로 워크플로 그래프를 새로고침
+    await refreshWorkflowGraph();
 
     return revalidate(["mcpServerStatus", "mcpServerConfig"]);
 });

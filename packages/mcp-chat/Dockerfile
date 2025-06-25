@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     make \
     g++ \
     curl \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv for uvx support
@@ -16,22 +17,22 @@ ENV PATH="/root/.cargo/bin:$PATH"
 WORKDIR /app
 
 # Copy package files first for better layer caching
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json bun.lock ./
 
-RUN npm i -g pnpm@latest
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:$PATH"
 
-# Install dependencies and rebuild native modules
-RUN pnpm install --no-frozen-lockfile && \
-    pnpm rebuild lightningcss
+RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN pnpm run build
+RUN bun run build
 
 ENV NODE_ENV=production
 
 EXPOSE 3000
 
-CMD ["pnpm", "start"]
+CMD ["bun", "start"]

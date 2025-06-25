@@ -56,6 +56,12 @@ class WorkflowSingleton {
         await this.initialize();
         return this.graph;
     }
+
+    public async refresh(): Promise<void> {
+        this.graph = null;
+        this.initPromise = null;
+        await this.initialize();
+    }
 }
 
 export async function getWorkflowGraph() {
@@ -66,4 +72,9 @@ export async function getWorkflowGraph() {
     }
 
     return graph;
+}
+
+export async function refreshWorkflowGraph(): Promise<void> {
+    const instance = WorkflowSingleton.getInstance();
+    await instance.refresh();
 }

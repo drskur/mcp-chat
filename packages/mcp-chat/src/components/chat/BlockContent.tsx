@@ -8,7 +8,6 @@ import {ToolUseBlockContent} from "./contents/ToolUseBlockContent";
 
 interface BlockContentProps {
     block: MessageBlock;
-    onToolStatusChange?: (action: "approved" | "rejected") => void;
 }
 
 export const BlockContent: Component<BlockContentProps> = (props) => {
@@ -23,7 +22,6 @@ export const BlockContent: Component<BlockContentProps> = (props) => {
             <Match when={props.block.type === "tool_use"}>
                 <ToolUseBlockContent
                     block={props.block as ToolUseBlock}
-                    onStatusChange={(status) => props.onToolStatusChange?.(status)}
                 />
             </Match>
             <Match when={props.block.type === "tool_result"}>

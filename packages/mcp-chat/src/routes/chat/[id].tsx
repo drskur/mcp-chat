@@ -7,7 +7,7 @@ import {ToolApprovalDialog} from "@/components/chat/ToolApprovalDialog";
 import Loading from "@/components/layout/Loading";
 import {useTitleBar} from "@/components/layout/TitleBar";
 import {cn} from "@/lib/utils";
-import type {ChatMessage, ChatSession, InterruptBlock, MessageBlock, ToolCall} from "@/types/chat";
+import type {ChatMessage, ChatSession, InterruptBlock, MessageBlock, ToolCall, ToolUseBlock} from "@/types/chat";
 
 export default function ChatPage() {
     const params = useParams();
@@ -123,6 +123,38 @@ export default function ChatPage() {
         setStreamingText("");
     };
 
+    // 마지막 메시지의 마지막 tool use 블록 args 업데이트 함수
+    const updateLastToolUseBlockArgs = (modifiedArgs: Record<string, unknown>) => {
+        setMessages(prev => {
+            const lastMessage = prev[prev.length - 1];
+            if (!lastMessage) return prev;
+            
+            // 마지막 tool use 블록 찾기
+            const toolUseBlocks = lastMessage.blocks.filter(block => block.type === "tool_use");
+            if (toolUseBlocks.length === 0) return prev;
+            
+            const lastToolUseBlock = toolUseBlocks[toolUseBlocks.length - 1] as ToolUseBlock;
+            
+            // 해당 블록의 toolInput 업데이트
+            const updatedBlocks = lastMessage.blocks.map(block => {
+                if (block.id === lastToolUseBlock.id) {
+                    return {
+                        ...block,
+                        toolInput: modifiedArgs
+                    } as ToolUseBlock;
+                }
+                return block;
+            });
+            
+            const updatedLastMessage = {
+                ...lastMessage,
+                blocks: updatedBlocks
+            };
+            
+            return [...prev.slice(0, -1), updatedLastMessage];
+        });
+    };
+
     const handleSubmit = async (message: string) => {
         // 사용자 메시지 추가
         const userMessage = createUserMessage(message);
@@ -198,6 +230,12 @@ export default function ChatPage() {
 
     const handleToolApproval = async (modifiedArgs?: Record<string, unknown>) => {
         setToolApprovalOpen(false);
+        
+        // 수정된 args가 있으면 마지막 tool use 블록 업데이트
+        if (modifiedArgs) {
+            updateLastToolUseBlockArgs(modifiedArgs);
+        }
+        
         await handleHumanReview("approved", modifiedArgs);
     };
 
@@ -215,7 +253,6 @@ export default function ChatPage() {
                         messages={messages()}
                         streamingMessageId={streamingMessageId()}
                         streamingText={streamingText()}
-                        onToolStatusChange={handleHumanReview}
                     />
                 </div>
 

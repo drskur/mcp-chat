@@ -8,7 +8,6 @@ interface MessageListProps {
     messages: ChatMessage[];
     streamingMessageId?: string | null;
     streamingText?: string;
-    onToolStatusChange?: (action: "approved" | "rejected") => void;
 }
 
 export const MessageList: Component<MessageListProps> = (props) => {
@@ -58,7 +57,6 @@ export const MessageList: Component<MessageListProps> = (props) => {
                                 message={message}
                                 isStreaming={message.id === props.streamingMessageId}
                                 streamingText={message.id === props.streamingMessageId ? props.streamingText : undefined}
-                                onToolStatusChange={props.onToolStatusChange}
                             />
                         </Match>
                     </Switch>

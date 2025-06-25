@@ -7,7 +7,6 @@ interface MessageItemProps {
     message: ChatMessage;
     isStreaming: boolean;
     streamingText?: string;
-    onToolStatusChange?: (action: "approved" | "rejected") => void;
 }
 
 export const AIMessageItem: Component<MessageItemProps> = (props) => {
@@ -17,7 +16,7 @@ export const AIMessageItem: Component<MessageItemProps> = (props) => {
             <div class="w-full p-4 text-sm">
                 <Show when={props.message.blocks.length > 0}>
                     <For each={props.message.blocks}>
-                        {(block) => <BlockContent block={block} onToolStatusChange={props.onToolStatusChange}/>}
+                        {(block) => <BlockContent block={block}/>}
                     </For>
                 </Show>
 

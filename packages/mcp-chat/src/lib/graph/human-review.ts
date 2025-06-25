@@ -1,7 +1,7 @@
 import {AIMessage, ToolMessage} from "@langchain/core/messages";
 import {Command, END, interrupt} from "@langchain/langgraph";
 import type {StateAnnotation} from "@/lib/graph/state";
-import type {HumanReviewChatInput, HumanReviewInput } from "@/types/chat";
+import type {HumanReviewChatInput, HumanReviewInput} from "@/types/chat";
 
 export async function humanReview(state: typeof StateAnnotation.State) {
     const lastMessage = state.messages.at(-1);
@@ -23,6 +23,32 @@ export async function humanReview(state: typeof StateAnnotation.State) {
     })
 
     if (review.action === "approved") {
+        // 수정된 args가 있는 경우 tool call을 업데이트
+        if (review.modifiedArgs) {
+            const toolCall = (lastMessage.tool_calls ?? []).at(0);
+            if (toolCall) {
+                // 새로운 ID로 수정된 tool call 생성
+                const updatedToolCall = {
+                    ...toolCall,
+                    args: review.modifiedArgs
+                };
+
+                // AIMessage의 tool_calls 업데이트
+                const updatedMessage = new AIMessage({
+                    ...lastMessage,
+                    content: lastMessage.content,
+                    tool_calls: [updatedToolCall]
+                });
+
+                const newMessages = [...state.messages.slice(0, -1), updatedMessage];
+
+                return new Command({
+                    goto: "tools",
+                    update: {messages: newMessages}
+                });
+            }
+        }
+
         return new Command({
             goto: "tools"
         });

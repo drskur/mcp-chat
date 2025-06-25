@@ -167,7 +167,7 @@ export default function ChatPage() {
         setCurrentStreamId(null);
     };
 
-    const handleHumanReview = async (action: "approved" | "rejected") => {
+    const handleHumanReview = async (action: "approved" | "rejected", modifiedArgs?: Record<string, unknown>) => {
 
         const streamId = crypto.randomUUID();
         setIsStreaming(true);
@@ -178,7 +178,8 @@ export default function ChatPage() {
                 sessionId: params.id,
                 streamId,
                 resume: {
-                    action
+                    action,
+                    modifiedArgs
                 }
             });
 
@@ -195,9 +196,9 @@ export default function ChatPage() {
         }
     }
 
-    const handleToolApproval = async () => {
+    const handleToolApproval = async (modifiedArgs?: Record<string, unknown>) => {
         setToolApprovalOpen(false);
-        await handleHumanReview("approved");
+        await handleHumanReview("approved", modifiedArgs);
     };
 
     const handleToolRejection = async () => {

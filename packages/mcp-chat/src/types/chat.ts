@@ -14,6 +14,7 @@ export interface HumanReviewInput {
 export interface HumanReviewChatInput {
     action: 'approved' | 'rejected';
     feedback?: string;
+    modifiedArgs?: Record<string, unknown>;
 }
 
 export interface TextBlock {

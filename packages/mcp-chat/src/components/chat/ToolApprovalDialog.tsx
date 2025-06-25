@@ -1,6 +1,7 @@
 import type {Component} from "solid-js";
-import {createSignal, Show} from "solid-js";
+import {createSignal, Show, createEffect, createMemo} from "solid-js";
 import {Button} from "@/components/ui/button";
+import {TextArea} from "@/components/ui/textarea";
 import {
     Dialog,
     DialogContent,
@@ -10,18 +11,29 @@ import {
     DialogTitle
 } from "@/components/ui/dialog";
 import type {ToolCall} from "@/types/chat";
+import {TextFieldRoot} from "@/components/ui/textfield";
 
 interface ToolApprovalDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     toolCall?: ToolCall;
-    onApprove: () => void;
+    onApprove: (modifiedArgs?: Record<string, unknown>) => void;
     onReject: () => void;
     onAlwaysAllow?: () => void;
 }
 
 export const ToolApprovalDialog: Component<ToolApprovalDialogProps> = (props) => {
     const [isProcessing, setIsProcessing] = createSignal(false);
+    const [editedArgs, setEditedArgs] = createSignal("");
+    const [parseError, setParseError] = createSignal("");
+
+    // Initialize edited args when dialog opens or toolCall changes
+    createEffect(() => {
+        if (props.open && props.toolCall?.args) {
+            setEditedArgs(JSON.stringify(props.toolCall.args, null, 2));
+            setParseError("");
+        }
+    });
 
     const handleReject = async () => {
         setIsProcessing(true);
@@ -32,47 +44,96 @@ export const ToolApprovalDialog: Component<ToolApprovalDialogProps> = (props) =>
 
     const handleApproveOnce = async () => {
         setIsProcessing(true);
-        props.onApprove();
+        let modifiedArgs: Record<string, unknown> | undefined;
+
+        try {
+            modifiedArgs = JSON.parse(editedArgs());
+            setParseError("");
+        } catch (_error) {
+            setParseError("유효하지 않은 JSON 형식입니다.");
+            setIsProcessing(false);
+            return;
+        }
+
+        props.onApprove(modifiedArgs);
         props.onOpenChange(false);
         setIsProcessing(false);
     };
 
     const handleAlwaysAllow = async () => {
         setIsProcessing(true);
+        let modifiedArgs: Record<string, unknown> | undefined;
+
+        try {
+            modifiedArgs = JSON.parse(editedArgs());
+            setParseError("");
+        } catch (_error) {
+            setParseError("유효하지 않은 JSON 형식입니다.");
+            setIsProcessing(false);
+            return;
+        }
+
         props.onAlwaysAllow?.();
-        props.onApprove();
+        props.onApprove(modifiedArgs);
         props.onOpenChange(false);
         setIsProcessing(false);
     };
 
+    const parsedToolName = createMemo(() => {
+        const serverToolName = props.toolCall?.name ?? "서버__도구";
+        const [server, tool] = serverToolName.split("__");
+        return { serverName: server, toolName: tool };
+    });
+    
+    const serverName = () => parsedToolName().serverName;
+    const toolName = () => parsedToolName().toolName;
+
+
     return (
-        <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-            <DialogContent class="sm:max-w-[500px]">
+        <Dialog open={props.open} onOpenChange={props.onOpenChange} modal={true}>
+            <DialogContent
+                class="sm:max-w-[500px]"
+                onPointerDownOutside={(e) => e.preventDefault()}
+                hideCloseButton={true}
+            >
                 <DialogHeader>
                     <DialogTitle>외부 연동 서비스를 사용하고자 합니다</DialogTitle>
                 </DialogHeader>
 
                 <div class="space-y-4">
                     {/* Tool information card */}
-                    <div class="rounded-lg border border-border bg-muted/50 p-4">
+                    <div class="rounded-lg border border-border bg-muted/50 p-4 space-y-3">
                         <div class="flex items-start gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-background text-lg font-semibold">
-                                {props.toolCall?.name?.charAt(0).toUpperCase() ?? "T"}
+                            <div
+                                class="flex h-10 w-10 items-center justify-center rounded-full bg-background text-lg font-semibold">
+                                {serverName()?.charAt(0).toUpperCase() ?? "M"}
                             </div>
-                            <div class="flex-1 space-y-2">
-                                <div class="font-medium">{props.toolCall?.name ?? "도구"}</div>
-                                <Show when={props.toolCall?.args}>
-                                    <div class="space-y-1">
-                                        <div class="text-sm text-muted-foreground">요청:</div>
-                                        <div class="rounded bg-background p-2 text-sm font-mono">
-                                            <pre class="whitespace-pre-wrap break-all">
-                                                {JSON.stringify(props.toolCall?.args, null, 2)}
-                                            </pre>
-                                        </div>
-                                    </div>
-                                </Show>
+                            <div class="flex-1">
+                                <div class="space-y-0.5">
+                                    <div class="font-medium">{toolName()}</div>
+                                    <div class="text-sm text-muted-foreground">{serverName()}</div>
+                                </div>
+
                             </div>
                         </div>
+                        <Show when={props.toolCall?.args}>
+                            <div class="space-y-2">
+                                <div class="text-sm text-muted-foreground">요청:</div>
+                                <div class="space-y-2">
+                                    <TextFieldRoot>
+                                        <TextArea
+                                            value={editedArgs()}
+                                            onInput={(e) => setEditedArgs(e.currentTarget.value)}
+                                            class="font-mono text-sm min-h-[120px]"
+                                            placeholder="JSON 형식으로 입력하세요..."
+                                        />
+                                    </TextFieldRoot>
+                                    <Show when={parseError()}>
+                                        <div class="text-xs text-destructive">{parseError()}</div>
+                                    </Show>
+                                </div>
+                            </div>
+                        </Show>
                     </div>
 
                     <DialogDescription class="text-sm">

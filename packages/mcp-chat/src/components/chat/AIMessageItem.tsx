@@ -22,7 +22,7 @@ export const AIMessageItem: Component<MessageItemProps> = (props) => {
                 </Show>
 
                 <Show when={props.isStreaming && props.streamingText}>
-                    <div class="whitespace-pre-wrap break-words prose prose-stone">
+                    <div class="whitespace-pre-wrap break-words prose prose-stone text-justify">
                         {props.streamingText}
                         <span class="inline-block w-2 h-4 bg-foreground/70 animate-pulse ml-1"/>
                     </div>

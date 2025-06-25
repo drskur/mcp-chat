@@ -1,14 +1,15 @@
-import {type Component, createEffect, createSignal} from "solid-js";
+import {type Component, createEffect, createSignal, Show} from "solid-js";
 import {Button} from "@/components/ui/button";
 import {Sheet, SheetContent, SheetHeader, SheetTitle} from "@/components/ui/sheet";
 import {TextArea} from "@/components/ui/textarea";
 import {TextFieldLabel, TextFieldRoot} from "@/components/ui/textfield";
+import Loading from "@/components/layout/Loading";
 
 interface McpServerJsonEditorProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     mcpServers: unknown;
-    onConfigChange: (config: Record<string, unknown>) => void;
+    onConfigChange: (config: Record<string, unknown>) => Promise<void>;
 }
 
 const sampleMCPConfig = {
@@ -23,6 +24,7 @@ const sampleMCPConfig = {
 const McpServerJsonEditor: Component<McpServerJsonEditorProps> = (props) => {
     const [jsonValue, setJsonValue] = createSignal("");
     const [jsonError, setJsonError] = createSignal("");
+    const [isSaving, setIsSaving] = createSignal(false);
 
     // props.open이 true가 될 때 JSON 값을 초기화
     createEffect(() => {
@@ -34,25 +36,37 @@ const McpServerJsonEditor: Component<McpServerJsonEditorProps> = (props) => {
 
             setJsonValue(value);
             setJsonError("");
+            setIsSaving(false); // 다이얼로그 열 때 로딩 상태 초기화
         }
     });
 
-    const saveJsonConfig = () => {
+    const saveJsonConfig = async () => {
         try {
             const parsed = JSON.parse(jsonValue());
-            props.onConfigChange(parsed);
+            setIsSaving(true);
+            setJsonError("");
+            
+            await props.onConfigChange(parsed);
             props.onOpenChange(false);
-        } catch (_e) {
-            setJsonError("유효하지 않은 JSON 형식입니다.");
+        } catch (error) {
+            if (error instanceof SyntaxError) {
+                setJsonError("유효하지 않은 JSON 형식입니다.");
+            } else {
+                setJsonError("설정 저장 중 오류가 발생했습니다.");
+            }
+        } finally {
+            setIsSaving(false);
         }
     };
 
     return (
-        <Sheet open={props.open} onOpenChange={props.onOpenChange}>
+        <Sheet open={props.open} onOpenChange={(open) => !isSaving() && props.onOpenChange(open)}>
             <SheetContent side="right" class="w-[600px] sm:w-[800px] flex flex-col">
-                <SheetHeader class="flex-shrink-0">
-                    <SheetTitle>JSON으로 서버 설정 편집</SheetTitle>
-                </SheetHeader>
+                <Show when={isSaving()} fallback={
+                    <>
+                        <SheetHeader class="flex-shrink-0">
+                            <SheetTitle>JSON으로 서버 설정 편집</SheetTitle>
+                        </SheetHeader>
 
                 <div class="flex-1 flex flex-col mt-6 min-h-0">
                     <div class="flex-1 flex flex-col min-h-0">
@@ -80,14 +94,26 @@ const McpServerJsonEditor: Component<McpServerJsonEditorProps> = (props) => {
                         <Button
                             variant="outline"
                             onClick={() => props.onOpenChange(false)}
+                            disabled={isSaving()}
                         >
                             취소
                         </Button>
-                        <Button onClick={saveJsonConfig}>
-                            적용
+                        <Button onClick={saveJsonConfig} disabled={isSaving()}>
+                            {isSaving() ? "저장 중..." : "적용"}
                         </Button>
                     </div>
                 </div>
+                    </>
+                }>
+                    <div class="flex-1 flex items-center justify-center">
+                        <div class="text-center space-y-4">
+                            <Loading />
+                            <p class="text-sm text-muted-foreground">
+                                MCP 서버 설정을 저장하고 있습니다...
+                            </p>
+                        </div>
+                    </div>
+                </Show>
             </SheetContent>
         </Sheet>
     );

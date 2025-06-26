@@ -1,6 +1,7 @@
 import type {StructuredToolInterface} from "@langchain/core/tools";
 import {type ClientConfig, type Connection, MultiServerMCPClient } from "@langchain/mcp-adapters";
 import {getServerConfig} from "@/lib/config";
+import {applyMCPDefaults} from "@/lib/mcp/defaults";
 
 export class MCPClientManager {
     private static instance: MCPClientManager;
@@ -44,11 +45,8 @@ export class MCPClientManager {
                 return;
             }
 
-            // Connection 타입으로 변환
-            const connections: Record<string, Connection> = {};
-            for (const [name, serverConfig] of Object.entries(mcpServers)) {
-                connections[name] = serverConfig as Connection;
-            }
+            // 기본값 적용 후 Connection 타입으로 변환
+            const connections = applyMCPDefaults(mcpServers);
 
             const clientConfig: ClientConfig = {
                 mcpServers: connections,

@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "vinxi dev",
     "build": "vinxi build",
-    "start": "vinxi start"
+    "start": "vinxi start",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "~3.750.0",
@@ -29,10 +32,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.2",
+    "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.1.10",
     "@types/node": "^24.0.3",
-    "@tailwindcss/typography": "^0.5.16",
-    "tailwindcss": "^4.1.10"
+    "@vitest/ui": "^3.2.4",
+    "tailwindcss": "^4.1.10",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=22"

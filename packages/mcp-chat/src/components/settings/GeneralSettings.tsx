@@ -8,6 +8,7 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
+import {APP_VERSION} from "@/lib/version";
 
 const GeneralSettings: Component = () => {
     const {theme, saveTheme} = useTheme();
@@ -37,6 +38,13 @@ const GeneralSettings: Component = () => {
                                 </SelectTrigger>
                                 <SelectContent />
                             </Select>
+                        </div>
+                    </div>
+
+                    <div class="rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm font-medium">버전</div>
+                            <div class="text-sm text-muted-foreground">v{APP_VERSION}</div>
                         </div>
                     </div>
 

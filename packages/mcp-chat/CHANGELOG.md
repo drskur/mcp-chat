@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2025-06-26
+
+### Added
+
+- Loading screen during MCP server configuration save
+- Tool use block arguments update functionality in approval dialog
+
+### Changed
+
+- Updated Dockerfile to use Bun for better performance
+- Improved MCP workflow management
+
+### Fixed
+
+- Tool approval dialog argument editing issues
+
 ## [0.1.1] - 2025-06-25
 
 ### Added

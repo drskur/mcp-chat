@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2025-06-26
+
+### Added
+
+- MCP defaults system with intelligent transport detection
+- App version display on general settings page
+
+### Changed
+
+- Enhanced Loading component with customizable text and theme styling
+
 ## [0.1.2] - 2025-06-26
 
 ### Added

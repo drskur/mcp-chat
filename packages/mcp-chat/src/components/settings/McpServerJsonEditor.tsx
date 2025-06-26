@@ -45,7 +45,7 @@ const McpServerJsonEditor: Component<McpServerJsonEditorProps> = (props) => {
             const parsed = JSON.parse(jsonValue());
             setIsSaving(true);
             setJsonError("");
-            
+
             await props.onConfigChange(parsed);
             props.onOpenChange(false);
         } catch (error) {
@@ -68,49 +68,46 @@ const McpServerJsonEditor: Component<McpServerJsonEditorProps> = (props) => {
                             <SheetTitle>JSON으로 서버 설정 편집</SheetTitle>
                         </SheetHeader>
 
-                <div class="flex-1 flex flex-col mt-6 min-h-0">
-                    <div class="flex-1 flex flex-col min-h-0">
-                        <TextFieldRoot class="flex-1 flex flex-col">
-                            <TextFieldLabel class="text-sm font-medium block mb-2 flex-shrink-0">
-                                서버 설정 JSON
-                            </TextFieldLabel>
+                        <div class="flex-1 flex flex-col mt-6 min-h-0">
                             <div class="flex-1 flex flex-col min-h-0">
-                                <TextArea
-                                    value={jsonValue()}
-                                    onInput={(e: InputEvent & { currentTarget: HTMLTextAreaElement }) =>
-                                        setJsonValue(e.currentTarget.value)
-                                    }
-                                    class="font-mono text-sm flex-1 resize-none min-h-0"
-                                    placeholder={JSON.stringify(sampleMCPConfig, null, 2)}
-                                />
+                                <TextFieldRoot class="flex-1 flex flex-col">
+                                    <TextFieldLabel class="text-sm font-medium block mb-2 flex-shrink-0">
+                                        서버 설정 JSON
+                                    </TextFieldLabel>
+                                    <div class="flex-1 flex flex-col min-h-0">
+                                        <TextArea
+                                            value={jsonValue()}
+                                            onInput={(e: InputEvent & { currentTarget: HTMLTextAreaElement }) =>
+                                                setJsonValue(e.currentTarget.value)
+                                            }
+                                            class="font-mono text-sm flex-1 resize-none min-h-0"
+                                            placeholder={JSON.stringify(sampleMCPConfig, null, 2)}
+                                        />
+                                    </div>
+                                </TextFieldRoot>
+                                {jsonError() && (
+                                    <p class="text-sm text-destructive mt-2 flex-shrink-0">{jsonError()}</p>
+                                )}
                             </div>
-                        </TextFieldRoot>
-                        {jsonError() && (
-                            <p class="text-sm text-destructive mt-2 flex-shrink-0">{jsonError()}</p>
-                        )}
-                    </div>
 
-                    <div class="flex justify-end gap-2 pt-4 flex-shrink-0 mt-4">
-                        <Button
-                            variant="outline"
-                            onClick={() => props.onOpenChange(false)}
-                            disabled={isSaving()}
-                        >
-                            취소
-                        </Button>
-                        <Button onClick={saveJsonConfig} disabled={isSaving()}>
-                            {isSaving() ? "저장 중..." : "적용"}
-                        </Button>
-                    </div>
-                </div>
+                            <div class="flex justify-end gap-2 pt-4 flex-shrink-0 mt-4">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => props.onOpenChange(false)}
+                                    disabled={isSaving()}
+                                >
+                                    취소
+                                </Button>
+                                <Button onClick={saveJsonConfig} disabled={isSaving()}>
+                                    {isSaving() ? "저장 중..." : "적용"}
+                                </Button>
+                            </div>
+                        </div>
                     </>
                 }>
                     <div class="flex-1 flex items-center justify-center">
                         <div class="text-center space-y-4">
-                            <Loading />
-                            <p class="text-sm text-muted-foreground">
-                                MCP 서버 설정을 저장하고 있습니다...
-                            </p>
+                            <Loading text={"MCP 서버 설정을 저장하고 있습니다..."}/>
                         </div>
                     </div>
                 </Show>

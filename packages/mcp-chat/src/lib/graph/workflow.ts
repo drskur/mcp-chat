@@ -31,7 +31,6 @@ class WorkflowSingleton {
 
     private async _initialize(): Promise<void> {
         const tools = await getMCPManager().getTools();
-        console.log(tools);
         const workflow = new StateGraph(StateAnnotation)
             .addNode("agent", callModel)
             .addNode("tools", new ToolNode(tools))

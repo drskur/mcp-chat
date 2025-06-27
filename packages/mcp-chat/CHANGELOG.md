@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2025-06-27
+
+### Added
+
+- Current date context to model prompts for time-aware AI responses
+- `currentDatePrompt` function to provide temporal context in ISO format
+
+### Changed
+
+- Model configuration to use dynamic system prompts with date/time context
+- Updated model IDs to use cross-region prefix format for better AWS region support
+
+### Removed
+
+- Debug console.log statements from workflow
+- Unused `getToolCount` method from MCP manager
+
 ## [0.1.3] - 2025-06-26
 
 ### Added

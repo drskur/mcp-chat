@@ -1,5 +1,5 @@
 import type {StructuredToolInterface} from "@langchain/core/tools";
-import {type ClientConfig, type Connection, MultiServerMCPClient } from "@langchain/mcp-adapters";
+import {type ClientConfig, MultiServerMCPClient } from "@langchain/mcp-adapters";
 import {getServerConfig} from "@/lib/config";
 import {applyMCPDefaults} from "@/lib/mcp/defaults";
 
@@ -106,10 +106,6 @@ export class MCPClientManager {
 
     isReady(): boolean {
         return this.isInitialized && this.client !== null;
-    }
-
-    getToolCount(): number {
-        return this.tools.length;
     }
 }
 

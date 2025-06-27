@@ -1,24 +1,32 @@
 "use server";
 
 import {ChatBedrockConverse} from "@langchain/aws";
-import {AIMessage} from "@langchain/core/messages";
+import {AIMessage, SystemMessage} from "@langchain/core/messages";
+import {getServerConfig} from "@/lib/config";
 import type {StateAnnotation} from "@/lib/graph/state";
 import {getMCPManager} from "@/lib/mcp";
 
-const HAIKU35 = "us.anthropic.claude-3-5-haiku-20241022-v1:0";
-
 export async function callModel(state: typeof StateAnnotation.State) {
 
-    const region = process.env.AWS_REGION ?? "us-east-1";
+    const modelConfig = getServerConfig().get("model");
 
+    const [crossRegionPrefix,] = modelConfig.region.split("-");
+    const modelId = `${crossRegionPrefix}.${modelConfig.model.modelId}`;
     const llm = new ChatBedrockConverse({
-        model: HAIKU35,
-        region,
+        model: modelId,
+        region: modelConfig.region,
+        temperature: modelConfig.temperature,
+        maxTokens: modelConfig.maxTokens,
     });
 
     const tools = await getMCPManager().getTools();
 
-    const res = await llm.bindTools(tools).invoke(state.messages)
+    const systemMessage = new SystemMessage({
+        content: `${modelConfig.systemPrompt}\n\n${currentDatePrompt()}`,
+    });
+    const input = [systemMessage, ...state.messages];
+
+    const res = await llm.bindTools(tools).invoke(input);
 
     const aiMessage = new AIMessage({
         content: res.content,
@@ -26,4 +34,10 @@ export async function callModel(state: typeof StateAnnotation.State) {
     })
 
     return {messages: [aiMessage]};
+}
+
+const currentDatePrompt = () => {
+    const now = new Date();
+
+    return `Now is ${now.toISOString()}. You should be aware of the current date and time when providing responses, especially for time-sensitive information, scheduling, or when referencing recent events. Always consider the temporal context when answering questions.`;
 }

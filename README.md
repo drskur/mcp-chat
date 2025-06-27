@@ -154,7 +154,7 @@ bun start
 
 ### 사전 빌드된 Docker 이미지 사용
 
-AWS ECR Public Gallery에 사전 빌드된 이미지가 제공됩니다:
+[AWS ECR Public Gallery](https://gallery.ecr.aws/z7w0k2i4/pace-korea/pace-mcp-client)에 사전 빌드된 이미지가 제공됩니다:
 
 ```bash
 # 최신 이미지 pull
@@ -214,7 +214,7 @@ services:
 
 ### 설정 저장 방식의 제한사항
 
-현재 PACE MCP Client는 서버 측 설정을 로컬 파일 시스템에 저장하는 방식을 사용하고 있습니다. 이로 인해 다음과 같은 제한사항이 있습니다:
+현재 MCP Chat은 서버 측 설정을 로컬 파일 시스템에 저장하는 방식을 사용하고 있습니다. 이로 인해 다음과 같은 제한사항이 있습니다:
 
 1. **로드 밸런싱 미지원**
    - 설정이 각 서버의 로컬 파일에 저장되므로, 여러 대의 서버를 통한 로드 밸런싱을 구성할 수 없습니다

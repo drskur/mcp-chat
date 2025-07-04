@@ -1,7 +1,24 @@
 import type {StructuredToolInterface} from "@langchain/core/tools";
-import {type ClientConfig, MultiServerMCPClient } from "@langchain/mcp-adapters";
+import {
+    type ClientConfig,
+    Connection,
+    MultiServerMCPClient,
+} from "@langchain/mcp-adapters";
 import {getServerConfig} from "@/lib/config";
 import {applyMCPDefaults} from "@/lib/mcp/defaults";
+import {Client} from "@modelcontextprotocol/sdk/client/index.js";
+import {
+    StdioClientTransport,
+    StdioServerParameters,
+} from "@modelcontextprotocol/sdk/client/stdio.js";
+import {Transport} from "@modelcontextprotocol/sdk/shared/transport.js";
+import {StreamableHTTPClientTransport} from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import {FileSystemOAuthClientProvider} from "@/lib/mcp/oauth";
+import {redirect} from "@solidjs/router";
+
+interface DeferFunction {
+    defer: () => Promise<void>;
+}
 
 export class MCPClientManager {
     private static instance: MCPClientManager;
@@ -9,6 +26,9 @@ export class MCPClientManager {
     private tools: StructuredToolInterface[] = [];
     private isInitialized = false;
     private initPromise: Promise<void> | null = null;
+    private clients: Record<string, Client> = {};
+    private transports: Record<string, Transport> = {};
+    private deferFunctions: DeferFunction[] = [];
 
     private constructor() {
     }
@@ -33,6 +53,72 @@ export class MCPClientManager {
         return this.initPromise;
     }
 
+    private async findWorkingConnections(
+        servers: Record<string, Connection>,
+    ): Promise<Record<string, Connection>> {
+        const out: Record<string, Connection> = {};
+        for (const name of Object.keys(servers)) {
+            const connection = servers[name];
+            const working = await this.checkWorking(name, connection);
+            if (working) {
+                out[name] = connection;
+            }
+        }
+
+        return out;
+    }
+
+    private async checkWorking(serverName: string, connection: Connection): Promise<boolean> {
+        const client = new Client({
+            name: "tester-client",
+            version: "0.0.1",
+        });
+
+        try {
+            if ("command" in connection) {
+                const {command, cwd, args, stderr, env} = connection;
+                const transport = new StdioClientTransport({
+                    command,
+                    cwd,
+                    args,
+                    stderr,
+                    ...(env ? {env: {PATH: process.env.PATH ?? '', ...env}} : {}),
+                });
+                await client.connect(transport);
+            } else if ("url" in connection) {
+                const {url} = connection;
+                const transport = new StreamableHTTPClientTransport(new URL(url), {
+                    authProvider: new FileSystemOAuthClientProvider(
+                        serverName,
+                        "http://localhost:3000/oauth/callback",
+                        {
+                            client_name: serverName,
+                            client_uri: "http://localhost:3000",
+                            redirect_uris: ["http://localhost:3000/oauth/callback"],
+                            response_types: ["code"],
+                            grant_types: ["authorization_code", "refresh_token"],
+                            scope: "profile email",
+                        },
+                        // onRedirect 콜백: SolidStart redirect 사용
+                        (url: URL) => {
+                            console.log("url", url.toString());
+                            redirect(url.toString());
+                        },
+                    ),
+                })
+
+                await client.connect(transport);
+            }
+        } catch (err) {
+            console.error("Check Connection", `${serverName}: ${err}`);
+            return false;
+        } finally {
+            await client.close();
+        }
+
+        return true;
+    }
+
     private async _initialize(): Promise<void> {
         try {
             const config = getServerConfig();
@@ -49,8 +135,8 @@ export class MCPClientManager {
             const connections = applyMCPDefaults(mcpServers);
 
             const clientConfig: ClientConfig = {
-                mcpServers: connections,
-                throwOnLoadError: false,
+                mcpServers: await this.findWorkingConnections(connections),
+                throwOnLoadError: true,
                 prefixToolNameWithServerName: true,
                 additionalToolNamePrefix: "",
                 useStandardContentBlocks: true,
@@ -63,9 +149,12 @@ export class MCPClientManager {
             this.tools = await this.client.getTools();
 
             this.isInitialized = true;
-            console.log(`MCP client initialized with ${this.tools.length} tools from ${Object.keys(connections).length} servers`);
-        } catch (_error) {
+            console.log(
+                `MCP client initialized with ${this.tools.length} tools from ${Object.keys(connections).length} servers`,
+            );
+        } catch (error) {
             console.log(`MCP client initialized with 0 tools`);
+            console.error(error);
             this.isInitialized = true; // 실패해도 초기화 완료로 표시
             this.tools = [];
         }

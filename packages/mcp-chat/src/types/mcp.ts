@@ -9,3 +9,8 @@ export interface MCPServerStatus {
     tools: MCPToolStatus[]
     collapse: boolean;
 }
+
+export interface AuthProviderProps {
+    redirectUrl: string;
+    clientId: string;
+}

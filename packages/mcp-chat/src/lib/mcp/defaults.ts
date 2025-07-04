@@ -1,11 +1,14 @@
-import type { Connection } from "@langchain/mcp-adapters";
+import type {Connection} from "@langchain/mcp-adapters";
+import {redirect} from "@solidjs/router";
+import {FileSystemOAuthClientProvider} from "@/lib/mcp/oauth";
+import type {AuthProviderProps} from "@/types/mcp";
 
 /**
  * MCP 서버 설정의 기본값
  */
 export const MCP_DEFAULTS = {
-  stdio: "stdio" as const,
-  http: "http" as const,
+    stdio: "stdio" as const,
+    http: "http" as const,
 } as const;
 
 /**
@@ -15,13 +18,13 @@ export const MCP_DEFAULTS = {
  * - 둘 다 없으면 "stdio" (fallback)
  */
 function getDefaultTransport(config: Record<string, unknown>): string {
-  if ("command" in config) {
-    return MCP_DEFAULTS.stdio;
-  }
-  if ("url" in config) {
-    return MCP_DEFAULTS.http;
-  }
-  return MCP_DEFAULTS.stdio; // fallback
+    if ("command" in config) {
+        return MCP_DEFAULTS.stdio;
+    }
+    if ("url" in config) {
+        return MCP_DEFAULTS.http;
+    }
+    return MCP_DEFAULTS.stdio; // fallback
 }
 
 /**
@@ -32,26 +35,44 @@ function getDefaultTransport(config: Record<string, unknown>): string {
  * @returns 기본값이 적용된 설정 객체
  */
 export function applyMCPDefaults(
-  config: Record<string, unknown>,
+    config: Record<string, unknown>,
 ): Record<string, Connection> {
-  const result: Record<string, Connection> = {};
+    const result: Record<string, Connection> = {};
 
-  for (const [serverName, serverConfig] of Object.entries(config)) {
-    if (typeof serverConfig !== "object" || serverConfig === null) {
-      continue;
+    for (const [serverName, serverConfig] of Object.entries(config)) {
+        if (typeof serverConfig !== "object" || serverConfig === null) {
+            continue;
+        }
+
+        // transport가 없으면 기본값 적용
+        const configTyped = serverConfig as Record<string, any>;
+        const configWithDefaults = {
+            ...configTyped,
+            transport: configTyped.transport ?? getDefaultTransport(configTyped),
+        } as any;
+
+        configWithDefaults.authProvider = new FileSystemOAuthClientProvider(
+            serverName,
+            "http://localhost:3000/oauth/callback",
+            {
+                client_name: serverName,
+                client_uri: "http://localhost:3000",
+                redirect_uris: ["http://localhost:3000/oauth/callback"],
+                response_types: ["code"],
+                grant_types: ["authorization_code", "refresh_token"],
+                scope: "profile email",
+            },
+            // onRedirect 콜백: SolidStart redirect 사용
+            (url: URL) => {
+                console.log("url", url.toString());
+                redirect(url.toString());
+            },
+        );
+
+        result[serverName] = configWithDefaults as Connection;
     }
 
-    // transport가 없으면 기본값 적용
-    const configTyped = serverConfig as Record<string, unknown>;
-    const configWithDefaults = {
-      ...configTyped,
-      transport: configTyped.transport ?? getDefaultTransport(configTyped),
-    };
-
-    result[serverName] = configWithDefaults as Connection;
-  }
-
-  return result;
+    return result;
 }
 
 /**
@@ -61,14 +82,14 @@ export function applyMCPDefaults(
  * @returns 기본값이 적용된 설정
  */
 export function applySingleMCPDefaults(serverConfig: unknown): Connection {
-  if (typeof serverConfig !== "object" || serverConfig === null) {
-    throw new Error("Invalid MCP server configuration");
-  }
+    if (typeof serverConfig !== "object" || serverConfig === null) {
+        throw new Error("Invalid MCP server configuration");
+    }
 
-  const config = serverConfig as Record<string, unknown>;
+    const config = serverConfig as Record<string, unknown>;
 
-  return {
-    ...config,
-    transport: config.transport ?? getDefaultTransport(config),
-  } as Connection;
+    return {
+        ...config,
+        transport: config.transport ?? getDefaultTransport(config),
+    } as Connection;
 }

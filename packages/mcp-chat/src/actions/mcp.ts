@@ -61,10 +61,9 @@ export const getMCPServerStatusQuery = query(async () => {
       
       servers.push({
         name: serverName,
-        status: status.success ? "online" : "offline",
         tools: serverTools,
         collapse: true,
-        error: status.error,
+        connectionStatus: status,
       });
     }
 
@@ -133,10 +132,9 @@ export const refreshMCPServerStatusAction = action(async () => {
       
       servers.push({
         name: serverName,
-        status: status.success ? "online" : "offline",
         tools: serverTools,
         collapse: true,
-        error: status.error,
+        connectionStatus: status,
       });
     }
 

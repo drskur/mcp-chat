@@ -1,4 +1,4 @@
-import {ChevronDown, ChevronUp, Wrench} from "lucide-solid";
+import {ChevronDown, ChevronUp, Wrench, ExternalLink} from "lucide-solid";
 import {type Component, createSignal, For, Show} from "solid-js";
 import type {MCPServerStatus} from "@/types/mcp";
 
@@ -16,19 +16,36 @@ const McpServerCard: Component<McpServerCardProps> = (props) => {
                     <h3 class="font-medium text-base">{props.server.name}</h3>
                     <div class="flex items-center gap-2 mt-1">
                         <div
-                            class={`w-2 h-2 rounded-full ${props.server.status === "online" ? "bg-green-500" : "bg-red-500"}`}>
+                            class={`w-2 h-2 rounded-full ${
+                                props.server.connectionStatus.success ? "bg-green-500" : 
+                                props.server.connectionStatus.isPending ? "bg-yellow-500" : 
+                                "bg-red-500"
+                            }`}>
                         </div>
-                        <span class="text-sm text-muted-foreground capitalize">{props.server.status}</span>
+                        <span class="text-sm text-muted-foreground capitalize">
+                            {props.server.connectionStatus.success ? "online" : 
+                             props.server.connectionStatus.isPending ? "인증 필요" : 
+                             "offline"}
+                        </span>
                         {isCollapsed() && props.server.tools.length > 0 && (
                             <span class="text-sm text-muted-foreground">
                                 • {props.server.tools.length}개 도구
                             </span>
                         )}
                     </div>
-                    <Show when={props.server.status === "offline" && props.server.error}>
+                    <Show when={!props.server.connectionStatus.success && !props.server.connectionStatus.isPending && props.server.connectionStatus.error}>
                         <p class="text-xs text-muted-foreground mt-1 ml-4">
-                            {props.server.error}
+                            {props.server.connectionStatus.error}
                         </p>
+                    </Show>
+                    <Show when={props.server.connectionStatus.isPending && props.server.connectionStatus.authUrl}>
+                        <button
+                            onClick={() => window.open(props.server.connectionStatus.authUrl, "_blank")}
+                            class="mt-2 inline-flex items-center gap-1 px-3 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-md hover:bg-yellow-200 dark:hover:bg-yellow-900/30 transition-colors"
+                        >
+                            <ExternalLink class="h-3 w-3" />
+                            통합
+                        </button>
                     </Show>
                 </div>
                 {props.server.tools.length > 0 && (

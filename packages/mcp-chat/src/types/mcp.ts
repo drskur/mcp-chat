@@ -3,12 +3,18 @@ export interface MCPToolStatus {
     description: string;
 }
 
+export interface MCPServerConnectionStatus {
+    success: boolean;
+    error?: string;
+    authUrl?: string;
+    isPending?: boolean;
+}
+
 export interface MCPServerStatus {
     name: string;
-    status: "online" | "offline"
     tools: MCPToolStatus[]
     collapse: boolean;
-    error?: string;
+    connectionStatus: MCPServerConnectionStatus;
 }
 
 export interface AuthProviderProps {

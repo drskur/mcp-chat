@@ -12,6 +12,7 @@ import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { FileSystemOAuthClientProvider } from "@/lib/mcp/oauth";
 import { redirect } from "@solidjs/router";
+import type { MCPServerConnectionStatus } from "@/types/mcp";
 
 export class MCPClientManager {
   private static instance: MCPClientManager;
@@ -19,7 +20,7 @@ export class MCPClientManager {
   private tools: StructuredToolInterface[] = [];
   private isInitialized = false;
   private initPromise: Promise<void> | null = null;
-  private serverStatusCache: Record<string, { success: boolean; error?: string }> | null = null;
+  private serverStatusCache: Record<string, MCPServerConnectionStatus> | null = null;
 
   private constructor() {}
 
@@ -61,7 +62,7 @@ export class MCPClientManager {
   private async checkWorking(
     serverName: string,
     connection: Connection,
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<MCPServerConnectionStatus> {
     const client = new Client({
       name: "tester-client",
       version: "0.0.1",
@@ -80,6 +81,8 @@ export class MCPClientManager {
         await client.connect(transport);
       } else if ("url" in connection) {
         const { url } = connection;
+        let capturedAuthUrl: string | undefined;
+        
         const transport = new StreamableHTTPClientTransport(new URL(url), {
           authProvider: new FileSystemOAuthClientProvider(
             serverName,
@@ -92,15 +95,24 @@ export class MCPClientManager {
               grant_types: ["authorization_code", "refresh_token"],
               scope: "profile email",
             },
-            // onRedirect 콜백: SolidStart redirect 사용
-            (url: URL) => {
-              console.log("url-checking", url.toString());
-              redirect(url.toString());
+            // onRedirect 콜백: 인증 URL을 캐치하고 실제 리디렉션하지 않음
+            (authUrl: URL) => {
+              console.log("OAuth authentication required", authUrl.toString());
+              capturedAuthUrl = authUrl.toString();
+              // 실제 리디렉션하지 않고 URL만 저장
+              throw new Error("OAUTH_REQUIRED");
             },
           ),
         });
 
-        await client.connect(transport);
+        try {
+          await client.connect(transport);
+        } catch (err) {
+          if (err instanceof Error && err.message === "OAUTH_REQUIRED" && capturedAuthUrl) {
+            return { success: false, isPending: true, authUrl: capturedAuthUrl };
+          }
+          throw err; // 다른 오류는 그대로 전파
+        }
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
@@ -195,7 +207,7 @@ export class MCPClientManager {
   async getAllServerStatuses(
     servers: Record<string, Connection>,
     forceRefresh = false,
-  ): Promise<Record<string, { success: boolean; error?: string }>> {
+  ): Promise<Record<string, MCPServerConnectionStatus>> {
     // 캐시가 있고 강제 새로고침이 아니면 캐시 반환
     if (this.serverStatusCache && !forceRefresh) {
       console.log("Using cached server statuses");
@@ -203,7 +215,7 @@ export class MCPClientManager {
     }
     
     console.log("Checking server statuses...");
-    const statuses: Record<string, { success: boolean; error?: string }> = {};
+    const statuses: Record<string, MCPServerConnectionStatus> = {};
     
     for (const [name, connection] of Object.entries(servers)) {
       statuses[name] = await this.checkWorking(name, connection);

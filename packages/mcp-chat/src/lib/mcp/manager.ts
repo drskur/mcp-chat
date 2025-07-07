@@ -98,10 +98,6 @@ export class MCPClientManager {
             // onRedirect 콜백: 인증 URL을 캐치하고 실제 리디렉션하지 않음
             (authUrl: URL) => {
               console.log("OAuth authentication required", authUrl.toString());
-              // state 파라미터에 서버 정보를 Base64로 인코딩하여 추가
-              const stateData = { serverName, timestamp: Date.now() };
-              const encodedState = Buffer.from(JSON.stringify(stateData)).toString('base64');
-              authUrl.searchParams.set("state", encodedState);
               capturedAuthUrl = authUrl.toString();
               // 실제 리디렉션하지 않고 URL만 저장
               throw new Error("OAUTH_REQUIRED");

@@ -1,6 +1,7 @@
 import {ChevronDown, ChevronUp, Wrench, ExternalLink} from "lucide-solid";
 import {type Component, createSignal, For, Show} from "solid-js";
 import type {MCPServerStatus} from "@/types/mcp";
+import { Buffer } from "buffer";
 
 interface McpServerCardProps {
     server: MCPServerStatus;
@@ -40,7 +41,14 @@ const McpServerCard: Component<McpServerCardProps> = (props) => {
                     </Show>
                     <Show when={props.server.connectionStatus.isPending && props.server.connectionStatus.authUrl}>
                         <button
-                            onClick={() => window.open(props.server.connectionStatus.authUrl, "_blank")}
+                            onClick={() => {
+                                // 버튼 클릭 시점에 새로운 timestamp로 state 업데이트
+                                const authUrl = new URL(props.server.connectionStatus.authUrl!);
+                                const stateData = { serverName: props.server.name, timestamp: Date.now() };
+                                const encodedState = Buffer.from(JSON.stringify(stateData)).toString('base64');
+                                authUrl.searchParams.set("state", encodedState);
+                                window.open(authUrl.toString(), "_blank");
+                            }}
                             class="mt-2 inline-flex items-center gap-1 px-3 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-md hover:bg-yellow-200 dark:hover:bg-yellow-900/30 transition-colors"
                         >
                             <ExternalLink class="h-3 w-3" />

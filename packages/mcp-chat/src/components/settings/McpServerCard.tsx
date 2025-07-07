@@ -25,6 +25,11 @@ const McpServerCard: Component<McpServerCardProps> = (props) => {
                             </span>
                         )}
                     </div>
+                    <Show when={props.server.status === "offline" && props.server.error}>
+                        <p class="text-xs text-muted-foreground mt-1 ml-4">
+                            {props.server.error}
+                        </p>
+                    </Show>
                 </div>
                 {props.server.tools.length > 0 && (
                     <button

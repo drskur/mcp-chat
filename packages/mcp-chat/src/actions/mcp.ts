@@ -2,6 +2,7 @@ import { action, query, revalidate, redirect } from "@solidjs/router";
 import { getServerConfig } from "@/lib/config";
 import { refreshWorkflowGraph } from "@/lib/graph/workflow";
 import { getMCPManager, MCPClientManager } from "@/lib/mcp";
+import { applyMCPDefaults } from "@/lib/mcp/defaults";
 import type { MCPServerStatus, MCPToolStatus } from "@/types/mcp";
 
 export const getMCPServerConfigQuery = query(async () => {
@@ -20,33 +21,51 @@ export const getMCPServerStatusQuery = query(async () => {
   "use server";
 
   try {
-    const manager = MCPClientManager.getInstance();
-    const tools = await manager.getTools();
+    const config = getServerConfig();
+    const mcpServers = config.get("mcpServers") ?? {};
+    
+    // 서버가 없으면 빈 배열 반환
+    if (Object.keys(mcpServers).length === 0) {
+      return [];
+    }
 
-    let servers: MCPServerStatus[] = [];
-    for (const t of tools) {
-      const [sn, tn] = t.name.split("__");
-      const server = servers.find((s) => s.name === sn);
-      if (server) {
-        const tool: MCPToolStatus = {
-          name: tn,
-          description: t.description,
-        };
-        server.tools = [...server.tools, tool];
-      } else {
-        const server: MCPServerStatus = {
-          name: sn,
-          status: "online",
-          collapse: true,
-          tools: [
-            {
+    // 기본값 적용 후 Connection 타입으로 변환
+    const connections = applyMCPDefaults(mcpServers);
+    
+    // 모든 서버의 상태 확인
+    const manager = MCPClientManager.getInstance();
+    const serverStatuses = await manager.getAllServerStatuses(connections);
+    
+    // 도구 목록 가져오기
+    const tools = await manager.getTools();
+    
+    // 서버별로 상태 정보 구성
+    const servers: MCPServerStatus[] = [];
+    
+    for (const [serverName, connection] of Object.entries(connections)) {
+      const status = serverStatuses[serverName];
+      const serverTools: MCPToolStatus[] = [];
+      
+      // 연결 성공한 서버의 도구만 추가
+      if (status.success) {
+        for (const tool of tools) {
+          const [sn, tn] = tool.name.split("__");
+          if (sn === serverName) {
+            serverTools.push({
               name: tn,
-              description: t.description,
-            },
-          ],
-        };
-        servers = [...servers, server];
+              description: tool.description,
+            });
+          }
+        }
       }
+      
+      servers.push({
+        name: serverName,
+        status: status.success ? "online" : "offline",
+        tools: serverTools,
+        collapse: true,
+        error: status.error,
+      });
     }
 
     return servers;

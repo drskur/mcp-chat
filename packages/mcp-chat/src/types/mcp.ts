@@ -8,6 +8,7 @@ export interface MCPServerStatus {
     status: "online" | "offline"
     tools: MCPToolStatus[]
     collapse: boolean;
+    error?: string;
 }
 
 export interface AuthProviderProps {

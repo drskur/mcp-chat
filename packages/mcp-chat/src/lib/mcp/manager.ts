@@ -98,6 +98,10 @@ export class MCPClientManager {
             // onRedirect 콜백: 인증 URL을 캐치하고 실제 리디렉션하지 않음
             (authUrl: URL) => {
               console.log("OAuth authentication required", authUrl.toString());
+              // state 파라미터에 서버 정보를 Base64로 인코딩하여 추가
+              const stateData = { serverName, timestamp: Date.now() };
+              const encodedState = Buffer.from(JSON.stringify(stateData)).toString('base64');
+              authUrl.searchParams.set("state", encodedState);
               capturedAuthUrl = authUrl.toString();
               // 실제 리디렉션하지 않고 URL만 저장
               throw new Error("OAUTH_REQUIRED");
@@ -202,6 +206,20 @@ export class MCPClientManager {
 
   isReady(): boolean {
     return this.isInitialized && this.client !== null;
+  }
+
+  async handleOAuthCallback(serverName: string, code: string): Promise<boolean> {
+    try {
+      // TODO: 특정 서버의 FileSystemOAuthClientProvider를 찾아서 토큰 교환
+      // 현재는 MCP SDK의 auth() 함수를 직접 호출하는 방법을 구현해야 함
+      console.log(`Handling OAuth callback for server: ${serverName} with code: ${code.substring(0, 10)}...`);
+      
+      // 임시로 성공 반환
+      return true;
+    } catch (error) {
+      console.error(`OAuth callback failed for server ${serverName}:`, error);
+      return false;
+    }
   }
 
   async getAllServerStatuses(

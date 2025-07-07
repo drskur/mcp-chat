@@ -19,6 +19,7 @@ export class MCPClientManager {
   private tools: StructuredToolInterface[] = [];
   private isInitialized = false;
   private initPromise: Promise<void> | null = null;
+  private serverStatusCache: Record<string, { success: boolean; error?: string }> | null = null;
 
   private constructor() {}
 
@@ -172,6 +173,7 @@ export class MCPClientManager {
     this.tools = [];
     this.isInitialized = false;
     this.initPromise = null;
+    this.serverStatusCache = null; // 캐시 클리어
 
     await this.initialize();
   }
@@ -192,12 +194,23 @@ export class MCPClientManager {
 
   async getAllServerStatuses(
     servers: Record<string, Connection>,
+    forceRefresh = false,
   ): Promise<Record<string, { success: boolean; error?: string }>> {
+    // 캐시가 있고 강제 새로고침이 아니면 캐시 반환
+    if (this.serverStatusCache && !forceRefresh) {
+      console.log("Using cached server statuses");
+      return this.serverStatusCache;
+    }
+    
+    console.log("Checking server statuses...");
     const statuses: Record<string, { success: boolean; error?: string }> = {};
     
     for (const [name, connection] of Object.entries(servers)) {
       statuses[name] = await this.checkWorking(name, connection);
     }
+    
+    // 캐시 저장
+    this.serverStatusCache = statuses;
     
     return statuses;
   }

@@ -34,7 +34,7 @@ export const getMCPServerStatusQuery = query(async () => {
     
     // 모든 서버의 상태 확인
     const manager = MCPClientManager.getInstance();
-    const serverStatuses = await manager.getAllServerStatuses(connections);
+    const serverStatuses = await manager.getAllServerStatuses(connections, false);
     
     // 도구 목록 가져오기
     const tools = await manager.getTools();
@@ -88,5 +88,65 @@ export const setMCPConfigAction = action(async (v: Record<string, unknown>) => {
   await refreshWorkflowGraph();
 
   return revalidate(["mcpServerStatus", "mcpServerConfig"]);
+});
+
+export const refreshMCPServerStatusAction = action(async () => {
+  "use server";
+
+  try {
+    const config = getServerConfig();
+    const mcpServers = config.get("mcpServers") ?? {};
+    
+    if (Object.keys(mcpServers).length === 0) {
+      return [];
+    }
+
+    // 기본값 적용 후 Connection 타입으로 변환
+    const connections = applyMCPDefaults(mcpServers);
+    
+    // 강제로 모든 서버의 상태 확인
+    const manager = MCPClientManager.getInstance();
+    const serverStatuses = await manager.getAllServerStatuses(connections, true);
+    
+    // 도구 목록 가져오기
+    const tools = await manager.getTools();
+    
+    // 서버별로 상태 정보 구성
+    const servers: MCPServerStatus[] = [];
+    
+    for (const [serverName, connection] of Object.entries(connections)) {
+      const status = serverStatuses[serverName];
+      const serverTools: MCPToolStatus[] = [];
+      
+      // 연결 성공한 서버의 도구만 추가
+      if (status.success) {
+        for (const tool of tools) {
+          const [sn, tn] = tool.name.split("__");
+          if (sn === serverName) {
+            serverTools.push({
+              name: tn,
+              description: tool.description,
+            });
+          }
+        }
+      }
+      
+      servers.push({
+        name: serverName,
+        status: status.success ? "online" : "offline",
+        tools: serverTools,
+        collapse: true,
+        error: status.error,
+      });
+    }
+
+    // 캐시 갱신을 위해 revalidate
+    await revalidate(["mcpServerStatus"]);
+    
+    return servers;
+  } catch (error) {
+    console.error("Failed to refresh MCP server status:", error);
+    return [];
+  }
 });
 

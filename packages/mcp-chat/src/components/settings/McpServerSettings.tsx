@@ -1,7 +1,7 @@
 import {createAsync, useAction} from "@solidjs/router";
-import {FileText} from "lucide-solid";
+import {FileText, RefreshCw} from "lucide-solid";
 import {type Component, createSignal, For, Show} from "solid-js";
-import {getMCPServerConfigQuery, getMCPServerStatusQuery, setMCPConfigAction} from "@/actions/mcp";
+import {getMCPServerConfigQuery, getMCPServerStatusQuery, setMCPConfigAction, refreshMCPServerStatusAction} from "@/actions/mcp";
 import {Button} from "@/components/ui/button";
 import McpServerCard from "./McpServerCard";
 import McpServerJsonEditor from "./McpServerJsonEditor";
@@ -10,8 +10,10 @@ const McpServerSettings: Component = () => {
     const serverStatus = createAsync(() => getMCPServerStatusQuery());
     const mcpServerConfig = createAsync(() => getMCPServerConfigQuery());
     const setMCPConfig = useAction(setMCPConfigAction);
+    const refreshServerStatus = useAction(refreshMCPServerStatusAction);
 
     const [showJsonEditor, setShowJsonEditor] = createSignal(false);
+    const [isRefreshing, setIsRefreshing] = createSignal(false);
 
 
     const openJsonEditor = () => {
@@ -20,6 +22,15 @@ const McpServerSettings: Component = () => {
 
     const handleMCPConfig = async (config: Record<string, unknown>) => {
         await setMCPConfig(config);
+    }
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await refreshServerStatus();
+        } finally {
+            setIsRefreshing(false);
+        }
     }
 
     return (
@@ -31,7 +42,11 @@ const McpServerSettings: Component = () => {
                 </p>
 
                 <div class="space-y-4">
-                    <div class="flex justify-end">
+                    <div class="flex justify-end gap-2">
+                        <Button onClick={handleRefresh} variant="outline" disabled={isRefreshing()}>
+                            <RefreshCw class={`h-4 w-4 mr-2 ${isRefreshing() ? "animate-spin" : ""}`}/>
+                            새로고침
+                        </Button>
                         <Button onClick={openJsonEditor} variant="outline">
                             <FileText class="h-4 w-4 mr-2"/>
                             JSON 편집

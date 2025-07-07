@@ -57,7 +57,6 @@ export async function GET(event: APIEvent) {
 
       // 시간 검증 (10분 이내)
       const maxAge = 10 * 60 * 1000; // 10분
-      console.log(timestamp);
       if (Date.now() - timestamp > maxAge) {
         console.error("OAuth state expired");
         return new Response(null, {
@@ -101,18 +100,18 @@ export async function GET(event: APIEvent) {
     }
 
     // MCP 서버 상태 새로고침
+    console.log("Refreshing MCP connections after OAuth success...");
     await mcpManager.refreshConnections();
 
-    // 캐시 무효화
-    await revalidate(["mcpServerStatus"]);
+    // 캐시 무효화 및 재검증
+    console.log("Revalidating MCP server status...");
+    await revalidate(["mcpServerStatus", "mcpServerConfig"]);
 
-    // 성공 시 설정 페이지의 MCP 서버 섹션으로 리디렉션
+    // 성공 시 설정 페이지의 MCP 서버 섹션으로 리디렉션 (상태 파라미터 없이)
     return new Response(null, {
       status: 302,
       headers: {
-        Location:
-          "/settings/mcp-servers?auth=success&message=" +
-          encodeURIComponent("인증이 완료되었습니다."),
+        Location: "/settings/mcp-servers",
       },
     });
   } catch (err) {

@@ -10,6 +10,7 @@ interface OAuthServerData {
   tokens?: OAuthTokens;
   codeVerifier?: string;
   clientInformation?: OAuthClientInformationFull;
+  authUrl?: string;
 }
 
 export class FileSystemOAuthClientProvider implements OAuthClientProvider {
@@ -69,7 +70,23 @@ export class FileSystemOAuthClientProvider implements OAuthClientProvider {
   }
 
   async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
+    // authUrl을 저장
+    const serverData = this.getServerData();
+    serverData.authUrl = authorizationUrl.toString();
+    this.setServerData(serverData);
+    
     await this._onRedirect(authorizationUrl);
+  }
+
+  async getAuthUrl(): Promise<string | undefined> {
+    const serverData = this.getServerData();
+    return serverData.authUrl;
+  }
+
+  async clearAuthUrl(): Promise<void> {
+    const serverData = this.getServerData();
+    delete serverData.authUrl;
+    this.setServerData(serverData);
   }
 
   async saveCodeVerifier(codeVerifier: string): Promise<void> {

@@ -1,4 +1,4 @@
-import { action, query, revalidate, redirect } from "@solidjs/router";
+import { action, query, redirect, revalidate } from "@solidjs/router";
 import { getServerConfig } from "@/lib/config";
 import { refreshWorkflowGraph } from "@/lib/graph/workflow";
 import { getMCPManager, MCPClientManager } from "@/lib/mcp";
@@ -23,7 +23,7 @@ export const getMCPServerStatusQuery = query(async () => {
   try {
     const config = getServerConfig();
     const mcpServers = config.get("mcpServers") ?? {};
-    
+
     // 서버가 없으면 빈 배열 반환
     if (Object.keys(mcpServers).length === 0) {
       return [];
@@ -31,21 +31,27 @@ export const getMCPServerStatusQuery = query(async () => {
 
     // 기본값 적용 후 Connection 타입으로 변환
     const connections = applyMCPDefaults(mcpServers);
-    
+
     // 모든 서버의 상태 확인
     const manager = MCPClientManager.getInstance();
-    const serverStatuses = await manager.getAllServerStatuses(connections, false);
-    
+    const serverStatuses = await manager.getAllServerStatuses(
+      connections,
+      false,
+    );
+
     // 도구 목록 가져오기
     const tools = await manager.getTools();
-    
+
     // 서버별로 상태 정보 구성
     const servers: MCPServerStatus[] = [];
-    
+
     for (const [serverName, connection] of Object.entries(connections)) {
-      const status = serverStatuses[serverName];
+      const status = serverStatuses[serverName] ?? { 
+        success: false, 
+        error: "Status not available" 
+      };
       const serverTools: MCPToolStatus[] = [];
-      
+
       // 연결 성공한 서버의 도구만 추가
       if (status.success) {
         for (const tool of tools) {
@@ -58,7 +64,7 @@ export const getMCPServerStatusQuery = query(async () => {
           }
         }
       }
-      
+
       servers.push({
         name: serverName,
         tools: serverTools,
@@ -78,17 +84,17 @@ export const setMCPConfigAction = action(async (v: Record<string, unknown>) => {
   "use server";
 
   const config = getServerConfig();
-  
+
   // 현재 OAuth 데이터에서 새 설정에 없는 서버들 삭제
   const currentOAuthData = config.getAllOAuthData();
   const newServerNames = new Set(Object.keys(v));
-  
+
   for (const serverName of Object.keys(currentOAuthData)) {
     if (!newServerNames.has(serverName)) {
       config.deleteOAuthServerData(serverName);
     }
   }
-  
+
   await config.setMCPServerConfig(v);
 
   const mcpManager = getMCPManager();
@@ -106,7 +112,7 @@ export const refreshMCPServerStatusAction = action(async () => {
   try {
     const config = getServerConfig();
     const mcpServers = config.get("mcpServers") ?? {};
-    
+
     if (Object.keys(mcpServers).length === 0) {
       await revalidate(["mcpServerStatus"]);
       return [];
@@ -114,21 +120,27 @@ export const refreshMCPServerStatusAction = action(async () => {
 
     // 기본값 적용 후 Connection 타입으로 변환
     const connections = applyMCPDefaults(mcpServers);
-    
+
     // 강제로 모든 서버의 상태 확인
     const manager = MCPClientManager.getInstance();
-    const serverStatuses = await manager.getAllServerStatuses(connections, true);
-    
+    const serverStatuses = await manager.getAllServerStatuses(
+      connections,
+      true,
+    );
+
     // 도구 목록 가져오기
     const tools = await manager.getTools();
-    
+
     // 서버별로 상태 정보 구성
     const servers: MCPServerStatus[] = [];
-    
+
     for (const [serverName, connection] of Object.entries(connections)) {
-      const status = serverStatuses[serverName];
+      const status = serverStatuses[serverName] ?? { 
+        success: false, 
+        error: "Status not available" 
+      };
       const serverTools: MCPToolStatus[] = [];
-      
+
       // 연결 성공한 서버의 도구만 추가
       if (status.success) {
         for (const tool of tools) {
@@ -141,7 +153,7 @@ export const refreshMCPServerStatusAction = action(async () => {
           }
         }
       }
-      
+
       servers.push({
         name: serverName,
         tools: serverTools,
@@ -152,7 +164,7 @@ export const refreshMCPServerStatusAction = action(async () => {
 
     // 캐시 갱신을 위해 revalidate
     await revalidate(["mcpServerStatus"]);
-    
+
     return servers;
   } catch (error) {
     console.error("Failed to refresh MCP server status:", error);
@@ -160,4 +172,3 @@ export const refreshMCPServerStatusAction = action(async () => {
     return [];
   }
 });
-

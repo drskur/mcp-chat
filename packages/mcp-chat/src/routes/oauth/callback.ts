@@ -1,6 +1,6 @@
+import { revalidate } from "@solidjs/router";
 import type { APIEvent } from "@solidjs/start/server";
 import { getMCPManager } from "@/lib/mcp";
-import { revalidate } from "@solidjs/router";
 
 export async function GET(event: APIEvent) {
   const url = new URL(event.request.url);

@@ -1,14 +1,14 @@
-import type {PolymorphicProps} from "@kobalte/core/polymorphic";
+import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import type {
   SliderFillProps,
   SliderRootProps,
   SliderThumbProps,
   SliderTrackProps,
 } from "@kobalte/core/slider";
-import {Slider as SliderPrimitive} from "@kobalte/core/slider";
-import type {ParentProps, ValidComponent} from "solid-js";
-import {splitProps} from "solid-js";
-import {cn} from "@/lib/utils";
+import { Slider as SliderPrimitive } from "@kobalte/core/slider";
+import type { ParentProps, ValidComponent } from "solid-js";
+import { splitProps } from "solid-js";
+import { cn } from "@/lib/utils";
 
 type sliderRootProps<T extends ValidComponent = "div"> = SliderRootProps<T> & {
   class?: string;
@@ -30,9 +30,10 @@ export const Slider = <T extends ValidComponent = "div">(
   );
 };
 
-type sliderTrackProps<T extends ValidComponent = "div"> = SliderTrackProps<T> & {
-  class?: string;
-};
+type sliderTrackProps<T extends ValidComponent = "div"> =
+  SliderTrackProps<T> & {
+    class?: string;
+  };
 
 export const SliderTrack = <T extends ValidComponent = "div">(
   props: PolymorphicProps<T, sliderTrackProps<T>>,
@@ -68,13 +69,16 @@ export const SliderFill = <T extends ValidComponent = "div">(
 };
 
 type sliderThumbProps<T extends ValidComponent = "span"> = ParentProps<
-  SliderThumbProps<T> & {class?: string}
+  SliderThumbProps<T> & { class?: string }
 >;
 
 export const SliderThumb = <T extends ValidComponent = "span">(
   props: PolymorphicProps<T, sliderThumbProps<T>>,
 ) => {
-  const [local, rest] = splitProps(props as sliderThumbProps, ["class", "children"]);
+  const [local, rest] = splitProps(props as sliderThumbProps, [
+    "class",
+    "children",
+  ]);
 
   return (
     <SliderPrimitive.Thumb

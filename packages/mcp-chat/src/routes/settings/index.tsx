@@ -1,18 +1,18 @@
-import {onMount} from "solid-js";
-import {useTitleBar} from "@/components/layout/TitleBar";
-import GeneralSettings from "@/components/settings/GeneralSettings";
+import { onMount } from "solid-js";
 import SettingsLayout from "@/components/layout/SettingsLayout";
+import { useTitleBar } from "@/components/layout/TitleBar";
+import GeneralSettings from "@/components/settings/GeneralSettings";
 
 export default function Settings() {
-    const {setTitle} = useTitleBar();
+  const { setTitle } = useTitleBar();
 
-    onMount(() => {
-        setTitle("설정");
-    });
+  onMount(() => {
+    setTitle("설정");
+  });
 
-    return (
-        <SettingsLayout>
-            <GeneralSettings />
-        </SettingsLayout>
-    );
+  return (
+    <SettingsLayout>
+      <GeneralSettings />
+    </SettingsLayout>
+  );
 }

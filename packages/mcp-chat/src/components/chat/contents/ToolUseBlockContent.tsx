@@ -10,7 +10,6 @@ interface ToolUseBlockProps {
 export const ToolUseBlockContent: Component<ToolUseBlockProps> = (props) => {
   const [isCollapsed, setIsCollapsed] = createSignal(props.block.collapse);
 
-
   return (
     <div class="border rounded-md mt-2 border-border bg-muted/50">
       <div class="px-3 py-2 flex items-center justify-between">

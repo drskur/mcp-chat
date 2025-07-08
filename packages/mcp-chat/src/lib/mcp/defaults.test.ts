@@ -1,5 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { applyMCPDefaults, applySingleMCPDefaults, MCP_DEFAULTS } from "./defaults";
+import { describe, expect, it } from "vitest";
+import {
+  applyMCPDefaults,
+  applySingleMCPDefaults,
+  MCP_DEFAULTS,
+} from "./defaults";
 
 describe("MCP Defaults", () => {
   describe("MCP_DEFAULTS", () => {
@@ -46,7 +50,7 @@ describe("MCP Defaults", () => {
         },
         "sse-server": {
           url: "https://api.example.com/mcp",
-          headers: { "Authorization": "Bearer token" },
+          headers: { Authorization: "Bearer token" },
         },
       };
 
@@ -59,7 +63,7 @@ describe("MCP Defaults", () => {
 
       expect(result["sse-server"]).toEqual({
         url: "https://api.example.com/mcp",
-        headers: { "Authorization": "Bearer token" },
+        headers: { Authorization: "Bearer token" },
         transport: "http",
       });
     });
@@ -145,14 +149,14 @@ describe("MCP Defaults", () => {
     it("should apply http transport for url-based config", () => {
       const config = {
         url: "http://localhost:3000",
-        headers: { "Authorization": "Bearer token" },
+        headers: { Authorization: "Bearer token" },
       };
 
       const result = applySingleMCPDefaults(config);
 
       expect(result).toEqual({
         url: "http://localhost:3000",
-        headers: { "Authorization": "Bearer token" },
+        headers: { Authorization: "Bearer token" },
         transport: "http",
       });
     });
@@ -187,10 +191,18 @@ describe("MCP Defaults", () => {
     });
 
     it("should throw error for invalid input", () => {
-      expect(() => applySingleMCPDefaults(null)).toThrow("Invalid MCP server configuration");
-      expect(() => applySingleMCPDefaults("not-an-object")).toThrow("Invalid MCP server configuration");
-      expect(() => applySingleMCPDefaults(123)).toThrow("Invalid MCP server configuration");
-      expect(() => applySingleMCPDefaults(undefined)).toThrow("Invalid MCP server configuration");
+      expect(() => applySingleMCPDefaults(null)).toThrow(
+        "Invalid MCP server configuration",
+      );
+      expect(() => applySingleMCPDefaults("not-an-object")).toThrow(
+        "Invalid MCP server configuration",
+      );
+      expect(() => applySingleMCPDefaults(123)).toThrow(
+        "Invalid MCP server configuration",
+      );
+      expect(() => applySingleMCPDefaults(undefined)).toThrow(
+        "Invalid MCP server configuration",
+      );
     });
 
     it("should handle complex configurations", () => {

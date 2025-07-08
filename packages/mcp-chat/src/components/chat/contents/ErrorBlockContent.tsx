@@ -13,7 +13,9 @@ export const ErrorBlockContent: Component<ErrorBlockProps> = (props) => {
     <Switch>
       <Match when={isUserAbort}>
         <div class="border border-destructive/20 bg-destructive/10 p-3 rounded-md mt-4">
-          <div class="whitespace-pre-wrap text-foreground">사용자가 요청을 취소했습니다.</div>
+          <div class="whitespace-pre-wrap text-foreground">
+            사용자가 요청을 취소했습니다.
+          </div>
         </div>
       </Match>
       <Match when={true}>

@@ -8,12 +8,11 @@ import { ThemeProvider } from "@/components/layout/theme";
 import "./app.css";
 
 export default function App() {
-
   return (
     <ThemeProvider>
       <TitleBarProvider>
         <Router
-          root={props => (
+          root={(props) => (
             <div class="flex h-screen overflow-hidden">
               {/* Sidebar */}
               <Sidebar />

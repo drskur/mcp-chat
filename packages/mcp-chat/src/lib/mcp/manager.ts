@@ -349,7 +349,7 @@ export class MCPClientManager {
           authorizationCode: code.substring(0, 15) + "...",
           codeVerifier: codeVerifier.substring(0, 15) + "...",
           redirectUri: oauthProvider.redirectUrl,
-          clientId: clientInfo.client_id?.substring(0, 15) + "...",
+          clientId: clientInfo?.client_id?.substring(0, 15) + "...",
           serverUrl,
         });
 
@@ -374,6 +374,16 @@ export class MCPClientManager {
               expiresIn: savedTokens.expires_in,
             } : 'No tokens found after auth'
           );
+          
+          // OAuth 인증 성공 시 해당 서버의 캐시된 상태를 무효화
+          if (this.serverStatusCache && this.serverStatusCache[serverName]) {
+            delete this.serverStatusCache[serverName];
+            console.log(`Cleared cached status for server: ${serverName}`);
+          }
+          
+          // authUrl 클리어
+          await oauthProvider.clearAuthUrl();
+          
           return true;
         } else {
           console.error(

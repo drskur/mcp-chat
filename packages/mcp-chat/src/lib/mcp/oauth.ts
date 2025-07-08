@@ -4,8 +4,35 @@ import type {
   OAuthClientMetadata,
   OAuthTokens,
 } from "@modelcontextprotocol/sdk/shared/auth.js";
-import { getServerConfig } from "@/lib/config";
 import type { OAuthServerData } from "@/lib/config";
+import { getServerConfig } from "@/lib/config";
+
+// OAuth Client 메타데이터 상수
+export const OAUTH_CLIENT_METADATA: OAuthClientMetadata = {
+  client_uri: "http://localhost:3000",
+  redirect_uris: ["http://localhost:3000/oauth/callback"],
+  response_types: ["code"],
+  grant_types: ["authorization_code", "refresh_token"],
+  scope: "profile email",
+} as const;
+
+export const OAUTH_REDIRECT_URL = "http://localhost:3000/oauth/callback";
+
+// OAuth provider 팩토리 함수
+export function createOAuthProvider(
+  serverName: string,
+  onRedirect?: (url: URL) => void | Promise<void>,
+): FileSystemOAuthClientProvider {
+  return new FileSystemOAuthClientProvider(
+    serverName,
+    OAUTH_REDIRECT_URL,
+    {
+      client_name: serverName,
+      ...OAUTH_CLIENT_METADATA,
+    },
+    onRedirect ?? (() => {}),
+  );
+}
 
 export class FileSystemOAuthClientProvider implements OAuthClientProvider {
   private readonly configManager = getServerConfig();
@@ -44,7 +71,9 @@ export class FileSystemOAuthClientProvider implements OAuthClientProvider {
     this.setServerData(serverData);
   }
 
-  saveClientInformation(clientInformation: OAuthClientInformationFull): void | Promise<void> {
+  saveClientInformation(
+    clientInformation: OAuthClientInformationFull,
+  ): void | Promise<void> {
     const serverData = this.getServerData();
     serverData.clientInformation = clientInformation;
     this.setServerData(serverData);
@@ -63,7 +92,7 @@ export class FileSystemOAuthClientProvider implements OAuthClientProvider {
     const serverData = this.getServerData();
     serverData.authUrl = authorizationUrl.toString();
     this.setServerData(serverData);
-    
+
     await this._onRedirect(authorizationUrl);
   }
 

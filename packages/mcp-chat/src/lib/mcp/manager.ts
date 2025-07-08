@@ -1,22 +1,19 @@
 import type { StructuredToolInterface } from "@langchain/core/tools";
 import {
   type ClientConfig,
-  Connection,
+  type Connection,
   MultiServerMCPClient,
 } from "@langchain/mcp-adapters";
-import { getServerConfig } from "@/lib/config";
-import { applyMCPDefaults } from "@/lib/mcp/defaults";
+import { auth } from "@modelcontextprotocol/sdk/client/auth.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { FileSystemOAuthClientProvider } from "@/lib/mcp/oauth";
+import { getServerConfig } from "@/lib/config";
+import { applyMCPDefaults } from "@/lib/mcp/defaults";
 import {
-  auth,
-  exchangeAuthorization,
-  discoverOAuthMetadata,
-} from "@modelcontextprotocol/sdk/client/auth.js";
-import { redirect } from "@solidjs/router";
+  createOAuthProvider,
+  FileSystemOAuthClientProvider,
+} from "@/lib/mcp/oauth";
 import type { MCPServerConnectionStatus } from "@/types/mcp";
 
 export class MCPClientManager {
@@ -96,17 +93,8 @@ export class MCPClientManager {
 
         // OAuth Provider 인스턴스 생성 또는 재사용
         if (!this.oauthProviders[serverName]) {
-          this.oauthProviders[serverName] = new FileSystemOAuthClientProvider(
+          this.oauthProviders[serverName] = createOAuthProvider(
             serverName,
-            "http://localhost:3000/oauth/callback",
-            {
-              client_name: serverName,
-              client_uri: "http://localhost:3000",
-              redirect_uris: ["http://localhost:3000/oauth/callback"],
-              response_types: ["code"],
-              grant_types: ["authorization_code", "refresh_token"],
-              scope: "profile email",
-            },
             // onRedirect 콜백: 인증 URL을 캐치하고 실제 리디렉션하지 않음
             (authUrl: URL) => {
               console.log("OAuth authentication required", authUrl.toString());
@@ -138,16 +126,16 @@ export class MCPClientManager {
         try {
           await client.connect(transport);
         } catch (err) {
-          if (
-            err instanceof Error &&
-            err.message === "OAUTH_REQUIRED"
-          ) {
+          if (err instanceof Error && err.message === "OAUTH_REQUIRED") {
             // 저장된 authUrl 또는 새로 캡처된 authUrl 사용
-            const storedAuthUrl = await this.oauthProviders[serverName].getAuthUrl();
+            const storedAuthUrl =
+              await this.oauthProviders[serverName].getAuthUrl();
             const authUrlToUse = storedAuthUrl || capturedAuthUrl;
-            
+
             if (authUrlToUse) {
-              console.log(`Using ${storedAuthUrl ? 'stored' : 'captured'} OAuth URL for ${serverName}`);
+              console.log(
+                `Using ${storedAuthUrl ? "stored" : "captured"} OAuth URL for ${serverName}`,
+              );
               return {
                 success: false,
                 isPending: true,
@@ -201,9 +189,31 @@ export class MCPClientManager {
       // 기본값 적용 후 Connection 타입으로 변환
       const connections = applyMCPDefaults(mcpServers);
 
+      for (const [serverName, connection] of Object.entries(connections)) {
+        if ("url" in connection) {
+          // 서버 URL 캐시에 저장
+          this.serverUrls[serverName] = connection.url;
+
+          // OAuth Provider 인스턴스 생성 또는 재사용
+          if (!this.oauthProviders[serverName]) {
+            this.oauthProviders[serverName] = createOAuthProvider(serverName);
+          }
+
+          // 이미 OAuth 토큰이 있거나, 서버 상태 캐시에서 OAuth가 필요하다고 표시된 경우에만 추가
+          const cachedStatus = this.serverStatusCache?.[serverName];
+          const hasTokens = await this.oauthProviders[serverName].tokens();
+
+          // OAuth가 필요한 것으로 알려진 서버이거나 이미 토큰이 있는 경우
+          if (cachedStatus?.isPending || hasTokens) {
+            (connection as any).authProvider = this.oauthProviders[serverName];
+          }
+        }
+      }
+
+      // 모든 서버를 포함하되, OAuth provider는 필요한 경우에만 첨부
       const clientConfig: ClientConfig = {
-        mcpServers: await this.findWorkingConnections(connections),
-        throwOnLoadError: true,
+        mcpServers: connections,
+        throwOnLoadError: false, // 개별 서버 오류 시에도 다른 서버 도구 사용 가능
         prefixToolNameWithServerName: true,
         additionalToolNamePrefix: "",
         useStandardContentBlocks: true,
@@ -212,7 +222,13 @@ export class MCPClientManager {
       this.client = new MultiServerMCPClient(clientConfig);
 
       // 연결 초기화 및 도구 로드
-      await this.client.initializeConnections();
+      try {
+        await this.client.initializeConnections();
+      } catch (initError) {
+        console.error("Failed to initialize connections:", initError);
+        // throwOnLoadError가 false이므로 계속 진행
+      }
+
       this.tools = await this.client.getTools();
 
       this.isInitialized = true;
@@ -220,8 +236,8 @@ export class MCPClientManager {
         `MCP client initialized with ${this.tools.length} tools from ${Object.keys(connections).length} servers`,
       );
     } catch (error) {
-      console.log(`MCP client initialized with 0 tools`);
-      console.error(error);
+      console.log(`MCP client initialization failed`);
+      console.error("Full error details:", error);
       this.isInitialized = true; // 실패해도 초기화 완료로 표시
       this.tools = [];
     }
@@ -239,7 +255,7 @@ export class MCPClientManager {
 
   async refreshConnections(): Promise<void> {
     console.log("MCPClientManager: Starting connection refresh");
-    
+
     if (this.client) {
       await this.client.close();
     }
@@ -252,8 +268,10 @@ export class MCPClientManager {
     // OAuth Provider는 토큰 정보를 유지하므로 삭제하지 않음
 
     await this.initialize();
-    
-    console.log(`MCPClientManager: Refresh complete, tools count: ${this.tools.length}`);
+
+    console.log(
+      `MCPClientManager: Refresh complete, tools count: ${this.tools.length}`,
+    );
   }
 
   async close(): Promise<void> {
@@ -284,28 +302,19 @@ export class MCPClientManager {
       // 해당 서버의 OAuth Provider를 찾기 (없으면 생성)
       let oauthProvider = this.oauthProviders[serverName];
       if (!oauthProvider) {
-        console.log(`OAuth provider not found for server: ${serverName}, creating new one`);
-        oauthProvider = new FileSystemOAuthClientProvider(
-          serverName,
-          "http://localhost:3000/oauth/callback",
-          {
-            client_name: serverName,
-            client_uri: "http://localhost:3000",
-            redirect_uris: ["http://localhost:3000/oauth/callback"],
-            response_types: ["code"],
-            grant_types: ["authorization_code", "refresh_token"],
-            scope: "profile email",
-          },
-          // onRedirect는 callback에서 사용되지 않으므로 빈 함수
-          () => {},
+        console.log(
+          `OAuth provider not found for server: ${serverName}, creating new one`,
         );
+        oauthProvider = createOAuthProvider(serverName);
         this.oauthProviders[serverName] = oauthProvider;
       }
 
       // 해당 서버의 URL을 찾기 (없으면 설정에서 가져오기)
       let serverUrl = this.serverUrls[serverName];
       if (!serverUrl) {
-        console.log(`Server URL not found in cache for server: ${serverName}, checking config`);
+        console.log(
+          `Server URL not found in cache for server: ${serverName}, checking config`,
+        );
         const config = getServerConfig();
         const mcpServers = config.get("mcpServers") ?? {};
         const serverConfig = mcpServers[serverName];
@@ -318,17 +327,6 @@ export class MCPClientManager {
           return false;
         }
       }
-
-      // 디버깅: OAuth Provider 상태 확인
-      const codeVerifier = await oauthProvider.codeVerifier();
-      const clientInfo = await oauthProvider.clientInformation();
-      console.log(`OAuth debug for ${serverName}:`, {
-        serverUrl,
-        redirectUrl: oauthProvider.redirectUrl,
-        codeVerifierLength: codeVerifier?.length ?? 0,
-        hasClientInfo: !!clientInfo,
-        clientId: clientInfo?.client_id?.substring(0, 10) + "...",
-      });
 
       // 토큰 교환을 위한 세부 정보 수집
       console.log(
@@ -346,20 +344,17 @@ export class MCPClientManager {
         }
 
         console.log(`Token exchange details for ${serverName}:`, {
-          authorizationCode: code.substring(0, 15) + "...",
-          codeVerifier: codeVerifier.substring(0, 15) + "...",
+          authorizationCode: `${code.substring(0, 15)}...`,
+          codeVerifier: `${codeVerifier.substring(0, 15)}...`,
           redirectUri: oauthProvider.redirectUrl,
-          clientId: clientInfo?.client_id?.substring(0, 15) + "...",
+          clientId: `${clientInfo?.client_id?.substring(0, 15)}...`,
           serverUrl,
         });
 
-        // 원래 auth 함수 사용
-        console.log(`Using original auth function for ${serverName}`);
-        
         const authResult = await auth(oauthProvider, {
           serverUrl,
           authorizationCode: code,
-          scope: "profile email"
+          scope: "profile email",
         });
 
         if (authResult) {
@@ -367,23 +362,25 @@ export class MCPClientManager {
           const savedTokens = await oauthProvider.tokens();
           console.log(
             `OAuth authentication successful for server: ${serverName}`,
-            savedTokens ? {
-              tokenType: savedTokens.token_type,
-              hasAccessToken: !!savedTokens.access_token,
-              hasRefreshToken: !!savedTokens.refresh_token,
-              expiresIn: savedTokens.expires_in,
-            } : 'No tokens found after auth'
+            savedTokens
+              ? {
+                  tokenType: savedTokens.token_type,
+                  hasAccessToken: !!savedTokens.access_token,
+                  hasRefreshToken: !!savedTokens.refresh_token,
+                  expiresIn: savedTokens.expires_in,
+                }
+              : "No tokens found after auth",
           );
-          
+
           // OAuth 인증 성공 시 해당 서버의 캐시된 상태를 무효화
-          if (this.serverStatusCache && this.serverStatusCache[serverName]) {
+          if (this.serverStatusCache?.[serverName]) {
             delete this.serverStatusCache[serverName];
             console.log(`Cleared cached status for server: ${serverName}`);
           }
-          
+
           // authUrl 클리어
           await oauthProvider.clearAuthUrl();
-          
+
           return true;
         } else {
           console.error(

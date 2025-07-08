@@ -88,6 +88,10 @@ export async function GET(event: APIEvent) {
     const mcpManager = getMCPManager();
     const success = await mcpManager.handleOAuthCallback(serverName, code);
 
+    // 캐시 무효화 및 재검증
+    console.log("Revalidating MCP server status...");
+    await revalidate(["mcpServerStatus", "mcpServerConfig"]);
+
     if (!success) {
       console.error("OAuth token exchange failed");
       return new Response(null, {
@@ -107,10 +111,6 @@ export async function GET(event: APIEvent) {
     // Workflow 그래프 새로고침 (새로운 도구 반영)
     console.log("Refreshing workflow graph to include new tools...");
     await refreshWorkflowGraph();
-
-    // 캐시 무효화 및 재검증
-    console.log("Revalidating MCP server status...");
-    await revalidate(["mcpServerStatus", "mcpServerConfig"]);
 
     // 성공 시 설정 페이지의 MCP 서버 섹션으로 리디렉션 (상태 파라미터 없이)
     return new Response(null, {

@@ -7,16 +7,17 @@ import type {
 import type { OAuthServerData } from "@/lib/config";
 import { getServerConfig } from "@/lib/config";
 
+const DOMAIN_NAME = process.env.DOMAIN_NAME ?? "http://localhost:3000";
+export const OAUTH_REDIRECT_URL = `${DOMAIN_NAME}/oauth/callback`;
+
 // OAuth Client 메타데이터 상수
 export const OAUTH_CLIENT_METADATA: OAuthClientMetadata = {
-  client_uri: "http://localhost:3000",
-  redirect_uris: ["http://localhost:3000/oauth/callback"],
+  client_uri: DOMAIN_NAME,
+  redirect_uris: [OAUTH_REDIRECT_URL],
   response_types: ["code"],
   grant_types: ["authorization_code", "refresh_token"],
   scope: "profile email",
 } as const;
-
-export const OAUTH_REDIRECT_URL = "http://localhost:3000/oauth/callback";
 
 // OAuth provider 팩토리 함수
 export function createOAuthProvider(

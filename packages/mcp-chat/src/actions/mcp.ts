@@ -172,3 +172,73 @@ export const refreshMCPServerStatusAction = action(async () => {
     return [];
   }
 });
+
+export const startOAuthFlowAction = action(async (serverName: string) => {
+  "use server";
+
+  try {
+    const config = getServerConfig();
+    const mcpServers = config.get("mcpServers") ?? {};
+    const serverConfig = mcpServers[serverName];
+
+    if (!serverConfig || !("url" in serverConfig)) {
+      throw new Error(`Server ${serverName} not found or not configured`);
+    }
+
+    const manager = getMCPManager();
+    const client = await manager.getClient();
+
+    if (!client) {
+      throw new Error("MCP client not available");
+    }
+
+    // OAuth Provider 가져오기 또는 생성
+    let oauthProvider = client.getOAuthProvider(serverName);
+    if (!oauthProvider) {
+      const { createOAuthProvider } = await import("@/lib/mcp/oauth");
+      oauthProvider = createOAuthProvider(serverName);
+      client.setOAuthProvider(serverName, oauthProvider);
+      client.setServerUrl(serverName, serverConfig.url);
+    }
+
+    // 이미 유효한 토큰이 있는지 확인
+    const existingTokens = await oauthProvider.tokens();
+    if (existingTokens?.access_token) {
+      console.log(`Server ${serverName} already has valid tokens, redirecting to settings`);
+      return redirect("/settings/mcp-servers");
+    }
+
+    // MCP SDK를 통해 OAuth 인증 흐름 시작
+    const { auth } = await import("@modelcontextprotocol/sdk/client/auth.js");
+    
+    try {
+      await auth(oauthProvider, {
+        serverUrl: serverConfig.url,
+        scope: "profile email",
+      });
+    } catch (error) {
+      // OAuth 인증 흐름 시작 시 발생하는 에러는 정상적인 리다이렉션 과정
+      console.log(`OAuth flow started for server: ${serverName}`);
+    }
+
+    // 저장된 authUrl 반환
+    const authUrl = await oauthProvider.getAuthUrl();
+    if (!authUrl) {
+      throw new Error("Failed to generate OAuth authorization URL");
+    }
+
+    // State 파라미터 추가
+    const authUrlObj = new URL(authUrl);
+    const stateData = {
+      serverName: serverName,
+      timestamp: Date.now(),
+    };
+    const encodedState = Buffer.from(JSON.stringify(stateData)).toString("base64");
+    authUrlObj.searchParams.set("state", encodedState);
+
+    return redirect(authUrlObj.toString());
+  } catch (error) {
+    console.error(`Failed to start OAuth flow for server ${serverName}:`, error);
+    throw error;
+  }
+});

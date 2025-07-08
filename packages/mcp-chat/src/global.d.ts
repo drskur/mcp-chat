@@ -6,6 +6,7 @@ declare global {
       readonly NODE_ENV: "development" | "production" | "test";
       readonly AWS_REGION: string;
       readonly BEDROCK_MODEL: string;
+      readonly DOMAIN_NAME: string;
     }
   }
 }

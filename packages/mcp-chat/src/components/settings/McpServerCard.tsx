@@ -1,6 +1,8 @@
 import { Buffer } from "buffer";
 import { ChevronDown, ChevronUp, ExternalLink, Wrench } from "lucide-solid";
 import { type Component, createSignal, For, Show } from "solid-js";
+import { useAction } from "@solidjs/router";
+import { startOAuthFlowAction } from "@/actions/mcp";
 import type { MCPServerStatus } from "@/types/mcp";
 
 interface McpServerCardProps {
@@ -11,6 +13,8 @@ const McpServerCard: Component<McpServerCardProps> = (props) => {
   const [isCollapsed, setIsCollapsed] = createSignal(
     props.server.collapse ?? false,
   );
+  
+  const startOAuthFlow = useAction(startOAuthFlowAction);
 
   return (
     <div class="rounded-lg border border-border p-4">
@@ -49,17 +53,7 @@ const McpServerCard: Component<McpServerCardProps> = (props) => {
             >
               <button
                 onClick={() => {
-                  // 버튼 클릭 시점에 새로운 timestamp로 state 업데이트
-                  const authUrl = new URL(props.server.connectionStatus.authUrl!);
-                  const stateData = {
-                    serverName: props.server.name,
-                    timestamp: Date.now(),
-                  };
-                  const encodedState = Buffer.from(
-                    JSON.stringify(stateData),
-                  ).toString("base64");
-                  authUrl.searchParams.set("state", encodedState);
-                  window.open(authUrl.toString(), "_blank");
+                  startOAuthFlow(props.server.name);
                 }}
                 class="inline-flex items-center gap-1 px-3 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-md hover:bg-yellow-200 dark:hover:bg-yellow-900/30 transition-colors"
               >

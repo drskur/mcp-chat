@@ -26,4 +26,6 @@ gitignore
 # System Files
 .DS_Store
 Thumbs.db
-~/.bun/
+
+# Bun cache directory
+~

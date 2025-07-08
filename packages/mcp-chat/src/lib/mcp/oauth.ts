@@ -4,29 +4,18 @@ import type {
   OAuthClientMetadata,
   OAuthTokens,
 } from "@modelcontextprotocol/sdk/shared/auth.js";
-import Conf from "conf";
-
-interface OAuthServerData {
-  tokens?: OAuthTokens;
-  codeVerifier?: string;
-  clientInformation?: OAuthClientInformationFull;
-  authUrl?: string;
-}
+import { getServerConfig } from "@/lib/config";
+import type { OAuthServerData } from "@/lib/config";
 
 export class FileSystemOAuthClientProvider implements OAuthClientProvider {
-  private readonly store: Conf;
+  private readonly configManager = getServerConfig();
 
   constructor(
     private readonly _serverName: string,
     private readonly _redirectUrl: string,
     private readonly _clientMetadata: OAuthClientMetadata,
     private readonly _onRedirect: (url: URL) => void | Promise<void>,
-  ) {
-    this.store = new Conf({
-      projectName: "mcp-chat",
-      configName: "oauth-tokens",
-    });
-  }
+  ) {}
 
   get redirectUrl(): string | URL {
     return this._redirectUrl;
@@ -37,11 +26,11 @@ export class FileSystemOAuthClientProvider implements OAuthClientProvider {
   }
 
   private getServerData(): OAuthServerData {
-    return this.store.get(this._serverName, {}) as OAuthServerData;
+    return this.configManager.getOAuthServerData(this._serverName);
   }
 
   private setServerData(data: OAuthServerData): void {
-    this.store.set(this._serverName, data);
+    this.configManager.setOAuthServerData(this._serverName, data);
   }
 
   async tokens(): Promise<OAuthTokens | undefined> {

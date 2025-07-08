@@ -1,6 +1,10 @@
 import Conf from "conf";
 import {z} from "zod";
 import {AnthropicModel} from "@/types/config";
+import type {
+  OAuthClientInformationFull,
+  OAuthTokens,
+} from "@modelcontextprotocol/sdk/shared/auth.js";
 
 const GeneralConfigSchema = z.object({
     language: z.enum(["ko", "en"]).default("ko"),
@@ -31,6 +35,14 @@ export type GeneralConfig = z.infer<typeof GeneralConfigSchema>;
 export type MCPServerConfig = z.infer<typeof MCPServerConfigSchema>;
 export type ModelConfig = z.infer<typeof ModelConfigSchema>;
 
+// OAuth 데이터 인터페이스
+export interface OAuthServerData {
+  tokens?: OAuthTokens;
+  codeVerifier?: string;
+  clientInformation?: OAuthClientInformationFull;
+  authUrl?: string;
+}
+
 // Default configuration
 const defaultConfig: Config = {
     general: {
@@ -49,11 +61,20 @@ const defaultConfig: Config = {
 
 class ConfigManager {
     private conf: Conf<Config>;
+    private oauthStore: Conf<Record<string, OAuthServerData>>;
 
     constructor() {
         this.conf = new Conf<Config>({
             projectName: "mcp-chat",
             defaults: defaultConfig,
+            serialize: (value) => JSON.stringify(value, null, 2),
+        });
+        
+        // OAuth 토큰 저장소 - 별도 파일로 관리
+        this.oauthStore = new Conf<Record<string, OAuthServerData>>({
+            projectName: "mcp-chat",
+            configName: "oauth-tokens",
+            defaults: {},
             serialize: (value) => JSON.stringify(value, null, 2),
         });
     }
@@ -79,6 +100,23 @@ class ConfigManager {
 
     async setMCPServerConfig<K extends keyof MCPServerConfig>(value: MCPServerConfig[K]): Promise<void> {
         this.conf.set("mcpServers", value);
+    }
+
+    // OAuth 관련 메서드들
+    getOAuthServerData(serverName: string): OAuthServerData {
+        return this.oauthStore.get(serverName, {});
+    }
+
+    setOAuthServerData(serverName: string, data: OAuthServerData): void {
+        this.oauthStore.set(serverName, data);
+    }
+
+    deleteOAuthServerData(serverName: string): void {
+        this.oauthStore.delete(serverName);
+    }
+
+    getAllOAuthData(): Record<string, OAuthServerData> {
+        return this.oauthStore.store;
     }
 
 }

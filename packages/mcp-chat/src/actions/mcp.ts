@@ -78,6 +78,17 @@ export const setMCPConfigAction = action(async (v: Record<string, unknown>) => {
   "use server";
 
   const config = getServerConfig();
+  
+  // 현재 OAuth 데이터에서 새 설정에 없는 서버들 삭제
+  const currentOAuthData = config.getAllOAuthData();
+  const newServerNames = new Set(Object.keys(v));
+  
+  for (const serverName of Object.keys(currentOAuthData)) {
+    if (!newServerNames.has(serverName)) {
+      config.deleteOAuthServerData(serverName);
+    }
+  }
+  
   await config.setMCPServerConfig(v);
 
   const mcpManager = getMCPManager();
@@ -97,6 +108,7 @@ export const refreshMCPServerStatusAction = action(async () => {
     const mcpServers = config.get("mcpServers") ?? {};
     
     if (Object.keys(mcpServers).length === 0) {
+      await revalidate(["mcpServerStatus"]);
       return [];
     }
 
@@ -144,6 +156,7 @@ export const refreshMCPServerStatusAction = action(async () => {
     return servers;
   } catch (error) {
     console.error("Failed to refresh MCP server status:", error);
+    await revalidate(["mcpServerStatus"]);
     return [];
   }
 });

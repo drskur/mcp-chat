@@ -413,11 +413,9 @@ export class MCPClientManager {
   ): Promise<Record<string, MCPServerConnectionStatus>> {
     // 캐시가 있고 강제 새로고침이 아니면 캐시 반환
     if (this.serverStatusCache && !forceRefresh) {
-      console.log("Using cached server statuses");
       return this.serverStatusCache;
     }
 
-    console.log("Checking server statuses...");
     const statuses: Record<string, MCPServerConnectionStatus> = {};
 
     for (const [name, connection] of Object.entries(servers)) {

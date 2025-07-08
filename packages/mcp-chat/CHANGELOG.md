@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.5] - 2025-07-08
+
+### Added
+
+- **OAuth authentication support for HTTP MCP servers** - Full OAuth 2.0 flow implementation with automatic token management
+- **One-click OAuth integration** - Direct authentication from server settings with visual status indicators
+- ResilientMultiServerMCPClient for improved MCP server fault tolerance
+- Enhanced OAuth authentication error detection (unauthorized, 401, authentication patterns)
+- Better client initialization timing in server status checks
+
+### Changed
+
+- **OAuth integration button moved to status row** for immediate access and improved UX
+- **Authentication status message** changed from Korean "인증 필요" to English "auth required" for consistency
+- MCP server architecture to handle individual server failures independently
+- Server error handling to prevent single server failures from affecting all servers
+
+### Fixed
+
+- **OAuth authentication button visibility** issues for servers requiring authentication
+- "Client not initialized" errors in server status checks
+- Individual server failure impact on other functional servers
+
 ## [0.1.4] - 2025-06-27
 
 ### Added

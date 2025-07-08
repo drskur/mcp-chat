@@ -29,9 +29,7 @@ export const getMCPServerStatusQuery = query(async () => {
     }
 
     const manager = MCPClientManager.getInstance();
-    const status = await manager.getAllServerStatuses()
-    console.log(status);
-    return status;
+    return await manager.getAllServerStatuses()
 }, "mcpServerStatus");
 
 export const setMCPConfigAction = action(async (v: Record<string, unknown>) => {
@@ -39,7 +37,6 @@ export const setMCPConfigAction = action(async (v: Record<string, unknown>) => {
 
     const config = getServerConfig();
 
-    // 현재 OAuth 데이터에서 새 설정에 없는 서버들 삭제
     const currentOAuthData = config.getAllOAuthData();
     const newServerNames = new Set(Object.keys(v));
 
@@ -51,11 +48,11 @@ export const setMCPConfigAction = action(async (v: Record<string, unknown>) => {
 
     await config.setMCPServerConfig(v);
 
-    const mcpManager = getMCPManager();
-    await mcpManager.refreshConnections();
+    // const mcpManager = getMCPManager();
+    // await mcpManager.refreshConnections();
 
     // MCP 툴이 변경되었으므로 워크플로 그래프를 새로고침
-    await refreshWorkflowGraph();
+    // await refreshWorkflowGraph();
 
     return revalidate(["mcpServerStatus", "mcpServerConfig"]);
 });
@@ -63,68 +60,11 @@ export const setMCPConfigAction = action(async (v: Record<string, unknown>) => {
 export const refreshMCPServerStatusAction = action(async () => {
     "use server";
 
-    console.log("refreshMCPServerStatusAction: Starting refresh");
+    const manager = MCPClientManager.getInstance();
+    await manager.refreshConnections();
+    await refreshWorkflowGraph();
 
-    try {
-        const config = getServerConfig();
-        const mcpServers = config.get("mcpServers") ?? {};
-
-        if (Object.keys(mcpServers).length === 0) {
-            await revalidate(["mcpServerStatus"]);
-            return [];
-        }
-
-        // 강제로 모든 서버의 상태 확인
-        console.log("refreshMCPServerStatusAction: Force checking all server statuses");
-        const manager = MCPClientManager.getInstance();
-        const serverStatuses = await manager.getAllServerStatuses();
-
-        // 도구 목록 가져오기
-        const tools = await manager.getTools();
-
-        // 서버별로 상태 정보 구성
-        const servers: MCPServerStatus[] = [];
-
-        for (const [serverName, connection] of Object.entries(mcpServers)) {
-            const status = serverStatuses[serverName] ?? {
-                success: false,
-                error: "Status not available"
-            };
-            const serverTools: MCPToolStatus[] = [];
-
-            // 연결 성공한 서버의 도구만 추가
-            if (status.success) {
-                for (const tool of tools) {
-                    const [sn, tn] = tool.name.split("__");
-                    if (sn === serverName) {
-                        serverTools.push({
-                            name: tn,
-                            description: tool.description,
-                        });
-                    }
-                }
-            }
-
-            servers.push({
-                name: serverName,
-                tools: serverTools,
-                collapse: true,
-                connectionStatus: status,
-            });
-        }
-
-        // 캐시 갱신을 위해 revalidate
-        console.log("refreshMCPServerStatusAction: Revalidating cache");
-        await revalidate(["mcpServerStatus"]);
-
-        console.log("refreshMCPServerStatusAction: Completed, returning", servers.length, "servers");
-
-        return servers;
-    } catch (error) {
-        console.error("Failed to refresh MCP server status:", error);
-        await revalidate(["mcpServerStatus"]);
-        return [];
-    }
+    return revalidate(["mcpServerStatus"]);
 });
 
 export const startOAuthFlowAction = action(async (serverName: string) => {

@@ -1,5 +1,6 @@
 import { revalidate } from "@solidjs/router";
 import type { APIEvent } from "@solidjs/start/server";
+import { refreshWorkflowGraph } from "@/lib/graph/workflow";
 import { getMCPManager } from "@/lib/mcp";
 
 export async function GET(event: APIEvent) {
@@ -102,6 +103,10 @@ export async function GET(event: APIEvent) {
     // MCP 서버 상태 새로고침
     console.log("Refreshing MCP connections after OAuth success...");
     await mcpManager.refreshConnections();
+
+    // Workflow 그래프 새로고침 (새로운 도구 반영)
+    console.log("Refreshing workflow graph to include new tools...");
+    await refreshWorkflowGraph();
 
     // 캐시 무효화 및 재검증
     console.log("Revalidating MCP server status...");

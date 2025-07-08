@@ -108,6 +108,8 @@ export const setMCPConfigAction = action(async (v: Record<string, unknown>) => {
 
 export const refreshMCPServerStatusAction = action(async () => {
   "use server";
+  
+  console.log("refreshMCPServerStatusAction: Starting refresh");
 
   try {
     const config = getServerConfig();
@@ -122,10 +124,11 @@ export const refreshMCPServerStatusAction = action(async () => {
     const connections = applyMCPDefaults(mcpServers);
 
     // 강제로 모든 서버의 상태 확인
+    console.log("refreshMCPServerStatusAction: Force checking all server statuses");
     const manager = MCPClientManager.getInstance();
     const serverStatuses = await manager.getAllServerStatuses(
       connections,
-      true,
+      true, // forceRefresh = true
     );
 
     // 도구 목록 가져오기
@@ -163,7 +166,10 @@ export const refreshMCPServerStatusAction = action(async () => {
     }
 
     // 캐시 갱신을 위해 revalidate
+    console.log("refreshMCPServerStatusAction: Revalidating cache");
     await revalidate(["mcpServerStatus"]);
+    
+    console.log("refreshMCPServerStatusAction: Completed, returning", servers.length, "servers");
 
     return servers;
   } catch (error) {

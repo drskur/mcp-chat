@@ -210,6 +210,8 @@ export class MCPClientManager {
     servers: Record<string, Connection>,
     forceRefresh = false,
   ): Promise<Record<string, MCPServerConnectionStatus>> {
+    console.log("MCPClientManager.getAllServerStatuses: forceRefresh=", forceRefresh);
+    
     // 클라이언트 초기화 보장
     await this.initialize();
     
@@ -238,10 +240,12 @@ export class MCPClientManager {
     for (const [name, connection] of Object.entries(servers)) {
       if (clientStatuses[name] && !forceRefresh) {
         // 캐시된 상태가 있고 강제 새로고침이 아닌 경우
+        console.log(`MCPClientManager: Using cached status for ${name}`);
         statuses[name] = clientStatuses[name];
       } else {
         // 캐시된 상태가 없거나 강제 새로고침인 경우 개별 확인
-        statuses[name] = await this.client.checkWorking(name, connection);
+        console.log(`MCPClientManager: Force checking status for ${name}`);
+        statuses[name] = await this.client.checkWorking(name, connection, forceRefresh);
       }
     }
 

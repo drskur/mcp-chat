@@ -31,14 +31,19 @@ export class ResilientMultiServerMCPClient {
   async checkWorking(
     serverName: string,
     connection: Connection,
+    forceRefresh = false,
   ): Promise<MCPServerConnectionStatus> {
-    // 이미 성공적으로 초기화된 서버라면 성공 상태 반환
-    if (this.serverClients[serverName]) {
+    console.log(`checkWorking: ${serverName}, forceRefresh=${forceRefresh}`);
+    
+    // forceRefresh가 아니고 이미 성공적으로 초기화된 서버라면 성공 상태 반환
+    if (!forceRefresh && this.serverClients[serverName]) {
+      console.log(`checkWorking: ${serverName} - returning cached client success`);
       return { success: true };
     }
 
-    // 캐시된 상태가 있으면 반환
-    if (this.serverStatuses[serverName]) {
+    // forceRefresh가 아니고 캐시된 상태가 있으면 반환
+    if (!forceRefresh && this.serverStatuses[serverName]) {
+      console.log(`checkWorking: ${serverName} - returning cached status`);
       return this.serverStatuses[serverName];
     }
 
@@ -284,13 +289,14 @@ export class ResilientMultiServerMCPClient {
           tools: retryResult.tools,
         };
       } else {
-        // 토큰이 있어도 연결 실패하면 토큰 문제일 수 있으므로 재인증 필요
-        const authUrl = await this.getAuthUrlForServer(serverName);
+        // 토큰이 있지만 연결 실패 - 토큰은 유효하므로 재인증 불필요
+        console.error(
+          `Server ${serverName} failed to connect with valid tokens. This may be a server issue, not an auth issue.`,
+        );
         return {
           status: {
             success: false,
-            isPending: true,
-            authUrl: authUrl,
+            error: "Connection failed with valid tokens",
           },
           success: false,
         };

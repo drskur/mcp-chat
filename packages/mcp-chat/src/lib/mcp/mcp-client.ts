@@ -13,9 +13,10 @@ export class McpClient {
     private _transports: Record<string, Transport> = {};
     private _serverClients: Record<string, Client | null> = {};
     private _oauthCallback: Record<string, OauthCallback> = {};
+    private readonly _config: ClientConfig;
 
-    constructor(private readonly config: ClientConfig) {
-
+    constructor(config: ClientConfig) {
+        this._config = config;
     }
 
     createTransport(serverName: string, conn: Connection): Transport {
@@ -34,7 +35,7 @@ export class McpClient {
         }
     }
 
-    async createClient(serverName: string, conn: Connection): Promise<Client> {
+    async createClient(serverName: string, conn: Connection): Promise<Client | null> {
         const client = new Client({
             name: serverName,
             version: "1.0.0"
@@ -45,16 +46,22 @@ export class McpClient {
         try {
             await client.connect(transport);
             this._serverClients[serverName] = client;
+            return client;
         } catch (err) {
             console.warn("MCP Client Connect Failed:", err);
             this._serverClients[serverName] = null;
+            return null;
         }
-
-        return client;
     }
 
     async initializeConnections(): Promise<void> {
-        const {mcpServers} = this.config;
+        // 기존 연결이 있다면 먼저 정리
+        if (Object.keys(this._serverClients).length > 0 ||
+            Object.keys(this._transports).length > 0) {
+            await this.close();
+        }
+
+        const {mcpServers} = this._config;
         for (const [k, conn] of Object.entries(mcpServers)) {
             this._serverClients[k] = await this.createClient(k, conn);
         }
@@ -141,6 +148,10 @@ export class McpClient {
         return output;
     }
 
+    async refreshConnections(): Promise<void> {
+        await this.initializeConnections();
+    }
+
     async close(): Promise<void> {
         for (const [_k, client] of Object.entries(this._serverClients)) {
             await client?.close();
@@ -148,5 +159,8 @@ export class McpClient {
         for (const [_k, transport] of Object.entries(this._transports)) {
             await transport.close();
         }
+
+        this._serverClients = {};
+        this._transports = {};
     }
 }

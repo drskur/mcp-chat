@@ -2,7 +2,6 @@ import {action, query, redirect, revalidate} from "@solidjs/router";
 import {getServerConfig} from "@/lib/config";
 import {refreshWorkflowGraph} from "@/lib/graph/workflow";
 import {getMCPManager, MCPClientManager} from "@/lib/mcp";
-import type {MCPServerStatus, MCPToolStatus} from "@/types/mcp";
 import {auth} from "@modelcontextprotocol/sdk/client/auth.js";
 
 export const getMCPServerConfigQuery = query(async () => {
@@ -28,12 +27,14 @@ export const getMCPServerStatusQuery = query(async () => {
         return [];
     }
 
-    const manager = MCPClientManager.getInstance();
+    const manager = await MCPClientManager.getInstance();
     return await manager.getAllServerStatuses()
 }, "mcpServerStatus");
 
 export const setMCPConfigAction = action(async (v: Record<string, unknown>) => {
     "use server";
+
+    console.log("setMCPConfigAction called with servers:", Object.keys(v));
 
     const config = getServerConfig();
 
@@ -45,32 +46,33 @@ export const setMCPConfigAction = action(async (v: Record<string, unknown>) => {
             config.deleteOAuthServerData(serverName);
         }
     }
+    config.setMCPServerConfig(v);
 
-    await config.setMCPServerConfig(v);
+    // 설정이 실제로 저장되었는지 확인
+    const savedConfig = config.get("mcpServers");
+    console.log("Saved MCP config:", Object.keys(savedConfig));
 
-    // const mcpManager = getMCPManager();
-    // await mcpManager.refreshConnections();
+    const mcpManager = await getMCPManager();
+    await mcpManager.refreshConnections();
+    await refreshWorkflowGraph();
 
-    // MCP 툴이 변경되었으므로 워크플로 그래프를 새로고침
-    // await refreshWorkflowGraph();
-
-    return revalidate(["mcpServerStatus", "mcpServerConfig"]);
+    return revalidate(["mcpServerConfig", "mcpServerStatus"]);
 });
 
 export const refreshMCPServerStatusAction = action(async () => {
     "use server";
 
-    const manager = MCPClientManager.getInstance();
+    const manager = await MCPClientManager.getInstance();
     await manager.refreshConnections();
     await refreshWorkflowGraph();
 
-    return revalidate(["mcpServerStatus"]);
+    return revalidate(["mcpServerStatus", "mcpServerConfig"]);
 });
 
 export const startOAuthFlowAction = action(async (serverName: string) => {
     "use server";
 
-    const manager = getMCPManager();
+    const manager = await getMCPManager();
     const client = await manager.getClient();
     if (!client) {
         throw new Error("MCP client not available");

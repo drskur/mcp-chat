@@ -61,10 +61,11 @@ const defaultConfig: Config = {
 };
 
 class ConfigManager {
+  private static instance: ConfigManager;
   private conf: Conf<Config>;
   private oauthStore: Conf<Record<string, OAuthServerData>>;
 
-  constructor() {
+  private constructor() {
     this.conf = new Conf<Config>({
       projectName: "mcp-chat",
       defaults: defaultConfig,
@@ -80,6 +81,13 @@ class ConfigManager {
     });
   }
 
+  static getInstance(): ConfigManager {
+    if (!ConfigManager.instance) {
+      ConfigManager.instance = new ConfigManager();
+    }
+    return ConfigManager.instance;
+  }
+
   // Get all configuration
   getAll(): Config {
     return this.conf.store;
@@ -91,20 +99,20 @@ class ConfigManager {
   }
 
   // Set specific configuration section
-  async set<K extends keyof Config>(key: K, value: Config[K]): Promise<void> {
+  set<K extends keyof Config>(key: K, value: Config[K]) {
     this.conf.set(key, value);
   }
 
-  async setModelConfigItem<K extends keyof ModelConfig>(
+  setModelConfigItem<K extends keyof ModelConfig>(
     key: K,
     value: ModelConfig[K],
-  ): Promise<void> {
+  ): void {
     this.conf.set(`model.${key}`, value);
   }
 
-  async setMCPServerConfig<K extends keyof MCPServerConfig>(
+  setMCPServerConfig<K extends keyof MCPServerConfig>(
     value: MCPServerConfig[K],
-  ): Promise<void> {
+  ): void {
     this.conf.set("mcpServers", value);
   }
 
@@ -128,5 +136,5 @@ class ConfigManager {
 
 // Export factory function for server-side usage
 export function getServerConfig() {
-  return new ConfigManager();
+  return ConfigManager.getInstance();
 }

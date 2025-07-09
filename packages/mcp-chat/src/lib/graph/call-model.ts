@@ -17,8 +17,9 @@ export async function callModel(state: typeof StateAnnotation.State) {
     temperature: modelConfig.temperature,
     maxTokens: modelConfig.maxTokens,
   });
-
-  const tools = await getMCPManager().getTools();
+  const manager = await getMCPManager();
+  const tools = await manager.getTools();
+  console.log("callModel", tools.map(t => t.name));
 
   const systemMessage = new SystemMessage({
     content: `${modelConfig.systemPrompt}\n\n${currentDatePrompt()}`,

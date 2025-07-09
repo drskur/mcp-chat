@@ -30,7 +30,8 @@ class WorkflowSingleton {
   }
 
   private async _initialize(): Promise<void> {
-    const tools = await getMCPManager().getTools();
+    const manager = await getMCPManager();
+    const tools = await manager.getTools();
     const workflow = new StateGraph(StateAnnotation)
       .addNode("agent", callModel)
       .addNode("tools", new ToolNode(tools))
@@ -42,6 +43,7 @@ class WorkflowSingleton {
     this.graph = workflow.compile({
       checkpointer: this.checkpointer,
     });
+    console.log("LangGraph compile completed");
   }
 
   public static getInstance(): WorkflowSingleton {

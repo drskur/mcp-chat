@@ -22,8 +22,9 @@ export class McpClient {
 
     createTransport(serverName: string, conn: Connection): Transport {
         if ("command" in conn) {
-            const {command, args} = conn;
-            return new StdioClientTransport({command, args});
+            const {command, args, env} = conn;
+            const newEnv = {"PATH": process.env.PATH ?? "", ...env};
+            return new StdioClientTransport({command, args, env: newEnv});
         } else if ("url" in conn) {
             const {url} = conn;
             const authProvider = createOAuthProvider(serverName);
@@ -92,11 +93,11 @@ export class McpClient {
     }
 
     getAllOauthCallbacks(): Record<string, OauthCallback> {
-        return { ...this._oauthCallback };
+        return {...this._oauthCallback};
     }
 
     restoreOauthCallbacks(callbacks: Record<string, OauthCallback>): void {
-        this._oauthCallback = { ...this._oauthCallback, ...callbacks };
+        this._oauthCallback = {...this._oauthCallback, ...callbacks};
     }
 
     async getConnectionStatus(): Promise<MCPServerStatus[]> {
@@ -129,7 +130,7 @@ export class McpClient {
                         }
                     });
                 } else {
-                    if (connectionError.includes("401") || connectionError.toLowerCase().includes("unauthorized")) {
+                    if (connectionError && (connectionError.includes("401") || connectionError.toLowerCase().includes("unauthorized"))) {
                         output.push({
                             name: serverName,
                             tools: [],
@@ -147,13 +148,13 @@ export class McpClient {
                             collapse: true,
                             connectionStatus: {
                                 success: false,
-                                error: connectionError
+                                error: connectionError ?? "Connection failed"
                             }
                         });
                     }
                 }
             } catch (err: any) {
-                if (connectionError.includes("401") && oauthCallback) {
+                if (connectionError && connectionError.includes("401") && oauthCallback) {
                     output.push({
                         name: serverName,
                         tools: [],

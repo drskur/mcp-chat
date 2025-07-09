@@ -85,7 +85,6 @@ export class FileSystemOAuthClientProvider implements OAuthClientProvider {
     | undefined
     | Promise<OAuthClientInformationFull | undefined> {
     const serverData = this.getServerData();
-    console.log("load clientInformation", serverData.clientInformation);
     return serverData.clientInformation;
   }
 
@@ -106,13 +105,11 @@ export class FileSystemOAuthClientProvider implements OAuthClientProvider {
   async saveCodeVerifier(codeVerifier: string): Promise<void> {
     const serverData = this.getServerData();
     serverData.codeVerifier = codeVerifier;
-    console.log("save codeVerifier", codeVerifier);
     this.setServerData(serverData);
   }
 
   async codeVerifier(): Promise<string> {
     const serverData = this.getServerData();
-    console.log("load codeVerifier", serverData.codeVerifier);
     return serverData.codeVerifier ?? "";
   }
 

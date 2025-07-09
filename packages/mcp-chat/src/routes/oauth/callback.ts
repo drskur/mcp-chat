@@ -1,6 +1,5 @@
 import {redirect} from "@solidjs/router";
 import type {APIEvent} from "@solidjs/start/server";
-import {refreshWorkflowGraph} from "@/lib/graph/workflow";
 import {getMCPManager} from "@/lib/mcp";
 
 export async function GET(event: APIEvent) {
@@ -59,14 +58,10 @@ export async function GET(event: APIEvent) {
             return redirect("/settings/mcp-servers?auth=error&message=" + encodeURIComponent("토큰 교환에 실패했습니다."));
         }
 
-        // 연결 새로고침을 먼저 수행
-        console.log("Refreshing connections after OAuth...");
-        await mcpManager.refreshConnections();
 
-        // 워크플로우 그래프 새로고침
-        await refreshWorkflowGraph();
-
-        return redirect("/settings/mcp-servers");
+        // OAuth 성공 후 클라이언트에서 상태 업데이트를 위한 파라미터 추가
+        console.log(`Redirecting to settings with auth=success&server=${serverName}`);
+        return redirect("/settings/mcp-servers?auth=success&server=" + encodeURIComponent(serverName));
 
     } catch (err) {
         console.error("OAuth callback processing error:", err);

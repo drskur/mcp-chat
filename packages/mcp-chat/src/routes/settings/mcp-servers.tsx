@@ -47,12 +47,37 @@ export default function McpServersSettings() {
   };
 
   onMount(async () => {
+    console.log('=== MCP Settings Page - onMount started ===');
+    console.log('Current URL:', window.location.href);
+    console.log('Search params:', window.location.search);
+
     setTitle("설정");
     setIsLoading(true);
+
     try {
-      await Promise.all([loadServerStatus(), loadServerConfig()]);
+      // OAuth 성공 파라미터 확인
+      const urlParams = new URLSearchParams(window.location.search);
+      const authResult = urlParams.get('auth');
+      const serverName = urlParams.get('server');
+
+      console.log('Page loaded, URL params:', { auth: authResult, server: serverName });
+
+      if (authResult === 'success' && serverName) {
+        console.log(`🎉 OAuth success detected for server: ${serverName}, refreshing status`);
+        // OAuth 성공 후 서버 상태 캐시 무효화 및 새로고침
+        await handleRefresh()
+
+        // URL 파라미터 정리 (브라우저 히스토리에서 제거)
+        window.history.replaceState({}, '', '/settings/mcp-servers');
+        console.log('✅ URL params cleaned up and server status refreshed');
+      } else {
+        console.log('Regular page load, loading initial data');
+        // 일반적인 페이지 로드
+        await Promise.all([loadServerStatus(), loadServerConfig()]);
+      }
     } finally {
       setIsLoading(false);
+      console.log('=== MCP Settings Page - onMount completed ===');
     }
   });
 

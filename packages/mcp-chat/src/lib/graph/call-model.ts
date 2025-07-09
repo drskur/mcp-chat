@@ -19,7 +19,6 @@ export async function callModel(state: typeof StateAnnotation.State) {
   });
   const manager = await getMCPManager();
   const tools = await manager.getTools();
-  console.log("callModel", tools.map(t => t.name));
 
   const systemMessage = new SystemMessage({
     content: `${modelConfig.systemPrompt}\n\n${currentDatePrompt()}`,

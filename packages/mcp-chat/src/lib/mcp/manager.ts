@@ -14,12 +14,10 @@ export class MCPClientManager {
 
     static async getInstance(): Promise<MCPClientManager> {
         if (!MCPClientManager.instance) {
-            console.log("Create new MCPClientManager - stack trace:", new Error().stack);
             MCPClientManager.instance = new MCPClientManager();
             await MCPClientManager.instance._initialize();
-        } else {
-            console.log("Using existing MCPClientManager instance");
         }
+
         return MCPClientManager.instance;
     }
 
@@ -126,24 +124,24 @@ export class MCPClientManager {
         let oauthCallback = this.client.getOauthCallback(serverName);
         if (!oauthCallback) {
             console.log(`No OAuth callback found for server: ${serverName}, creating new one`);
-            
+
             // 서버 설정에서 URL 가져오기
             const config = getServerConfig();
             const mcpServers = config.get("mcpServers");
             const serverConfig = mcpServers[serverName];
-            
+
             if (!serverConfig || !("url" in serverConfig)) {
                 console.error(`Server ${serverName} not found in config or not URL type`);
                 return false;
             }
-            
+
             // 새로운 OAuth provider 생성
             const authProvider = createOAuthProvider(serverName);
             oauthCallback = {
                 authProvider,
                 serverUrl: serverConfig.url
             };
-            
+
             // McpClient에 OAuth 콜백 정보 설정
             this.client.restoreOauthCallbacks({
                 [serverName]: oauthCallback

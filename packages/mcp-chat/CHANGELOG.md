@@ -2,72 +2,78 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.9] - 2025-07-09
+
+### Fixed
+
+- OAuth flow stability and codeVerifier regeneration issues
+- MCP client error handling and connection management
+- Server status display for OAuth-authenticated servers
+
+### Changed
+
+- Improved OAuth state persistence and UI updates
+- Refactored MCP client architecture for better reliability
+- Enhanced performance by removing duplicate operations
+
 ## [0.1.5] - 2025-07-08
 
 ### Added
 
-- **OAuth authentication support for HTTP MCP servers** - Full OAuth 2.0 flow implementation with automatic token management
-- **One-click OAuth integration** - Direct authentication from server settings with visual status indicators
-- ResilientMultiServerMCPClient for improved MCP server fault tolerance
-- Enhanced OAuth authentication error detection (unauthorized, 401, authentication patterns)
-- Better client initialization timing in server status checks
+- OAuth authentication support for HTTP MCP servers
+- One-click OAuth integration with status indicators
+- ResilientMultiServerMCPClient for fault tolerance
 
 ### Changed
 
-- **OAuth integration button moved to status row** for immediate access and improved UX
-- **Authentication status message** changed from Korean "인증 필요" to English "auth required" for consistency
-- MCP server architecture to handle individual server failures independently
-- Server error handling to prevent single server failures from affecting all servers
+- OAuth button placement and status messages
+- Server error handling improvements
 
 ### Fixed
 
-- **OAuth authentication button visibility** issues for servers requiring authentication
-- "Client not initialized" errors in server status checks
-- Individual server failure impact on other functional servers
+- OAuth button visibility issues
+- Client initialization errors
 
 ## [0.1.4] - 2025-06-27
 
 ### Added
 
-- Current date context to model prompts for time-aware AI responses
-- `currentDatePrompt` function to provide temporal context in ISO format
+- Current date context to model prompts
 
 ### Changed
 
-- Model configuration to use dynamic system prompts with date/time context
-- Updated model IDs to use cross-region prefix format for better AWS region support
+- Model configuration for dynamic system prompts
+- Model IDs to cross-region format
 
 ### Removed
 
-- Debug console.log statements from workflow
-- Unused `getToolCount` method from MCP manager
+- Debug statements and unused methods
 
 ## [0.1.3] - 2025-06-26
 
 ### Added
 
-- MCP defaults system with intelligent transport detection
-- App version display on general settings page
+- MCP defaults system and version display
 
 ### Changed
 
-- Enhanced Loading component with customizable text and theme styling
+- Loading component enhancements
 
 ## [0.1.2] - 2025-06-26
 
 ### Added
 
-- Loading screen during MCP server configuration save
-- Tool use block arguments update functionality in approval dialog
+- Loading screen for configuration saves
+- Tool argument editing in approval dialog
 
 ### Changed
 
-- Updated Dockerfile to use Bun for better performance
-- Improved MCP workflow management
+- Dockerfile to use Bun
+- MCP workflow improvements
 
 ### Fixed
 
-- Tool approval dialog argument editing issues
+- Tool approval dialog issues
 
 ## [0.1.1] - 2025-06-25
 
@@ -78,13 +84,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Improved dialog UX and animations
-- Enhanced message history management
+- Dialog UX improvements
+- Message history management
 
 ### Fixed
 
-- SolidJS component lifecycle issues
-- Tool call validation errors
+- Component lifecycle and validation issues
 
 ## [0.1.0] - 2025-06-24
 
@@ -93,15 +98,14 @@ All notable changes to this project will be documented in this file.
 - Initial MCP client chat application
 - Real-time streaming with AWS Bedrock
 - Tool execution approval system
-- Settings page and theme switching
-- Auto-scroll and JSON editor features
+- Settings page with theme support
 
 ### Changed
 
-- Refactored chat actions architecture
-- Improved MCP tools initialization
+- Chat actions architecture
+- MCP tools initialization
 
 ### Fixed
 
-- Settings page rendering issues
-- General error handling improvements
+- Settings page rendering
+- Error handling

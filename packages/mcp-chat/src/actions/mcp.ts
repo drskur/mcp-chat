@@ -73,30 +73,7 @@ export const startOAuthFlowAction = action(async (serverName: string) => {
     "use server";
 
     const manager = await getMCPManager();
-    const client = await manager.getClient();
-    if (!client) {
-        throw new Error("MCP client not available");
-    }
+    const redirectUrl = await manager.startOauthAuthorization(serverName)
 
-    const {authProvider, serverUrl} = client.getOauthCallback(serverName);
-    await auth(authProvider, {
-        serverUrl,
-        scope: "profile email",
-    });
-
-    const authUrl = await authProvider.getAuthUrl();
-    if (!authUrl) {
-        throw new Error("Failed to generate OAuth authorization URL");
-    }
-
-    const authUrlObj = new URL(authUrl);
-    const stateData = {
-        serverName,
-        timestamp: Date.now(),
-    };
-
-    const encodedState = Buffer.from(JSON.stringify(stateData)).toString("base64");
-    authUrlObj.searchParams.set("state", encodedState);
-
-    return redirect(authUrlObj.toString());
+    return redirect(redirectUrl);
 });

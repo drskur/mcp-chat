@@ -1,4 +1,4 @@
-import {revalidate, redirect} from "@solidjs/router";
+import {redirect} from "@solidjs/router";
 import type {APIEvent} from "@solidjs/start/server";
 import {refreshWorkflowGraph} from "@/lib/graph/workflow";
 import {getMCPManager} from "@/lib/mcp";
@@ -56,14 +56,7 @@ export async function GET(event: APIEvent) {
 
         if (!success) {
             console.error("OAuth token exchange failed");
-            return new Response(null, {
-                status: 302,
-                headers: {
-                    Location:
-                        "/settings/mcp-servers?auth=error&message=" +
-                        encodeURIComponent("토큰 교환에 실패했습니다."),
-                },
-            });
+            return redirect("/settings/mcp-servers?auth=error&message=" + encodeURIComponent("토큰 교환에 실패했습니다."));
         }
 
         // 연결 새로고침을 먼저 수행
@@ -80,13 +73,6 @@ export async function GET(event: APIEvent) {
         const errorMessage =
             err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.";
 
-        return new Response(null, {
-            status: 302,
-            headers: {
-                Location:
-                    "/settings#mcp-servers?auth=error&message=" +
-                    encodeURIComponent(errorMessage),
-            },
-        });
+        return redirect("/settings/mcp-servers?auth=error&message=" + encodeURIComponent(errorMessage));
     }
 }

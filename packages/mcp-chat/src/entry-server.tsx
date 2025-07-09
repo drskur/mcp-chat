@@ -1,5 +1,13 @@
 // @refresh reload
 import { createHandler, StartServer } from "@solidjs/start/server";
+import { getMCPManager } from "@/lib/mcp";
+
+// 서버 시작 시 MCPClientManager 전역 초기화
+getMCPManager().then(() => {
+  console.log("MCPClientManager globally initialized in entry-server");
+}).catch(error => {
+  console.error("Failed to initialize MCPClientManager in entry-server:", error);
+});
 
 export default createHandler(() => {
   return (

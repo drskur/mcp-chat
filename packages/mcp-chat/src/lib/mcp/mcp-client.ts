@@ -2,7 +2,7 @@ import type {DynamicStructuredTool} from "@langchain/core/tools";
 import {type ClientConfig, type Connection, loadMcpTools} from "@langchain/mcp-adapters";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
-import {StreamableHTTPClientTransport} from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import {StreamableHTTPClientTransport, StreamableHTTPError} from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type {Transport} from "@modelcontextprotocol/sdk/shared/transport.js";
 import {createOAuthProvider, type FileSystemOAuthClientProvider} from "@/lib/mcp/oauth";
 import {MCPServerStatus, MCPToolStatus} from "@/types/mcp";
@@ -13,6 +13,7 @@ export class McpClient {
     private _transports: Record<string, Transport> = {};
     private _serverClients: Record<string, Client | null> = {};
     private _oauthCallback: Record<string, OauthCallback> = {};
+    private _connectionErrors: Record<string, string> = {};
     private readonly _config: ClientConfig;
 
     constructor(config: ClientConfig) {
@@ -42,15 +43,18 @@ export class McpClient {
         });
 
         const transport = this.createTransport(serverName, conn);
-        this._transports[serverName] = transport;
+
         try {
             await client.connect(transport);
             this._serverClients[serverName] = client;
             return client;
-        } catch (err) {
-            console.warn("MCP Client Connect Failed:", err);
+        } catch (err: any) {
+            this._connectionErrors[serverName] = err.toString();
             this._serverClients[serverName] = null;
+            await transport.close();
             return null;
+        } finally {
+            this._transports[serverName] = transport;
         }
     }
 
@@ -87,16 +91,35 @@ export class McpClient {
         return this._oauthCallback[serverName];
     }
 
+    getAllOauthCallbacks(): Record<string, OauthCallback> {
+        return { ...this._oauthCallback };
+    }
+
+    restoreOauthCallbacks(callbacks: Record<string, OauthCallback>): void {
+        this._oauthCallback = { ...this._oauthCallback, ...callbacks };
+    }
+
     async getConnectionStatus(): Promise<MCPServerStatus[]> {
-        let output: MCPServerStatus[] = [];
-        for (const [serverName, client] of Object.entries(this._serverClients)) {
+        const output: MCPServerStatus[] = [];
+
+        // 모든 설정된 서버에 대해 상태 확인
+        const configuredServers = Object.keys(this._config.mcpServers);
+
+        for (const serverName of configuredServers) {
+            const client = this._serverClients[serverName];
+            const transport = this._transports[serverName];
+            const connectionError = this._connectionErrors[serverName];
+            const oauthCallback = this._oauthCallback[serverName];
+
             try {
                 if (client) {
+                    // 클라이언트가 존재하면 도구 목록을 가져와 연결 상태 확인
                     const listTools = await client.listTools();
                     const tools = listTools.tools.map(t => ({
                         name: t.name,
                         description: t.description
                     } as MCPToolStatus));
+
                     output.push({
                         name: serverName,
                         tools,
@@ -104,10 +127,9 @@ export class McpClient {
                         connectionStatus: {
                             success: true
                         }
-                    })
+                    });
                 } else {
-                    const oauthCallback = this._oauthCallback[serverName];
-                    if (oauthCallback) {
+                    if (connectionError.includes("401") || connectionError.toLowerCase().includes("unauthorized")) {
                         output.push({
                             name: serverName,
                             tools: [],
@@ -115,13 +137,23 @@ export class McpClient {
                             connectionStatus: {
                                 success: false,
                                 isPending: true,
-                            },
+                                error: connectionError,
+                            }
+                        });
+                    } else {
+                        output.push({
+                            name: serverName,
+                            tools: [],
+                            collapse: true,
+                            connectionStatus: {
+                                success: false,
+                                error: connectionError
+                            }
                         });
                     }
                 }
             } catch (err: any) {
-                const oauthCallback = this._oauthCallback[serverName];
-                if (oauthCallback) {
+                if (connectionError.includes("401") && oauthCallback) {
                     output.push({
                         name: serverName,
                         tools: [],
@@ -129,8 +161,9 @@ export class McpClient {
                         connectionStatus: {
                             success: false,
                             isPending: true,
-                        },
-                    })
+                            error: err.toString()
+                        }
+                    });
                 } else {
                     output.push({
                         name: serverName,
@@ -138,8 +171,8 @@ export class McpClient {
                         collapse: true,
                         connectionStatus: {
                             success: false,
-                            error: err.toString()
-                        },
+                            error: err.toString(),
+                        }
                     });
                 }
             }
@@ -162,5 +195,14 @@ export class McpClient {
 
         this._serverClients = {};
         this._transports = {};
+    }
+
+    setOAuthProvider(serverName: string, authProvider: FileSystemOAuthClientProvider) {
+        const oauthCallback = this._oauthCallback[serverName];
+
+        this._oauthCallback[serverName] = {
+            serverUrl: oauthCallback.serverUrl,
+            authProvider,
+        }
     }
 }

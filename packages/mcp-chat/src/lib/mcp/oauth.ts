@@ -36,7 +36,6 @@ export function createOAuthProvider(
 }
 
 export class FileSystemOAuthClientProvider implements OAuthClientProvider {
-  private readonly configManager = getServerConfig();
 
   constructor(
     private readonly _serverName: string,
@@ -54,11 +53,11 @@ export class FileSystemOAuthClientProvider implements OAuthClientProvider {
   }
 
   private getServerData(): OAuthServerData {
-    return this.configManager.getOAuthServerData(this._serverName);
+    return getServerConfig().getOAuthServerData(this._serverName);
   }
 
   private setServerData(data: OAuthServerData): void {
-    this.configManager.setOAuthServerData(this._serverName, data);
+    getServerConfig().setOAuthServerData(this._serverName, data);
   }
 
   async tokens(): Promise<OAuthTokens | undefined> {
@@ -77,6 +76,7 @@ export class FileSystemOAuthClientProvider implements OAuthClientProvider {
   ): void | Promise<void> {
     const serverData = this.getServerData();
     serverData.clientInformation = clientInformation;
+    console.log("save clientInformation", clientInformation);
     this.setServerData(serverData);
   }
 
@@ -85,6 +85,7 @@ export class FileSystemOAuthClientProvider implements OAuthClientProvider {
     | undefined
     | Promise<OAuthClientInformationFull | undefined> {
     const serverData = this.getServerData();
+    console.log("load clientInformation", serverData.clientInformation);
     return serverData.clientInformation;
   }
 
@@ -102,20 +103,16 @@ export class FileSystemOAuthClientProvider implements OAuthClientProvider {
     return serverData.authUrl;
   }
 
-  async clearAuthUrl(): Promise<void> {
-    const serverData = this.getServerData();
-    delete serverData.authUrl;
-    this.setServerData(serverData);
-  }
-
   async saveCodeVerifier(codeVerifier: string): Promise<void> {
     const serverData = this.getServerData();
     serverData.codeVerifier = codeVerifier;
+    console.log("save codeVerifier", codeVerifier);
     this.setServerData(serverData);
   }
 
   async codeVerifier(): Promise<string> {
     const serverData = this.getServerData();
+    console.log("load codeVerifier", serverData.codeVerifier);
     return serverData.codeVerifier ?? "";
   }
 
